@@ -1,6 +1,7 @@
 const { pool } = require('../config/database');
 const Admin = require('../models/Admin');
 const { syncApiConfigToEnv, checkSyncStatus, reloadEnv } = require('../utils/envSync');
+const tripayService = require('../services/tripayService');
 
 const adminController = {
   // ============ DASHBOARD ============
@@ -428,6 +429,17 @@ const adminController = {
       
       // Reload environment variables
       reloadEnv();
+      
+      // 🔥 CRITICAL FIX: Force reload TripayService if TRIPAY config is updated
+      if (apiConfig.service_name === 'TRIPAY') {
+        try {
+          await tripayService.initialize(true); // Force reload config
+          console.log('✅ TripayService configuration reloaded successfully');
+        } catch (tripayError) {
+          console.error('⚠️  Failed to reload TripayService:', tripayError.message);
+          // Don't fail the request, just log the warning
+        }
+      }
       
       // Check final sync status
       const syncStatus = checkSyncStatus(apiConfig.service_name, apiConfig);

@@ -136,6 +136,33 @@
                         <%= config.endpoint_url || 'Not configured' %>
                       </span>
                     </div>
+                    <div class="h-px bg-white/10"></div>
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">Mode:</span>
+                      <% 
+                        const isProduction = config.endpoint_url && config.endpoint_url.includes('tripay.co.id/api') && !config.endpoint_url.includes('sandbox');
+                        const tripayMode = config.additional_config?.mode || (isProduction ? 'production' : 'sandbox');
+                      %>
+                      <span class="px-3 py-1 text-xs rounded-full font-semibold <%= tripayMode === 'production' ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-orange-500/20 text-orange-300 border border-orange-500/30' %>">
+                        <i class="fas <%= tripayMode === 'production' ? 'fa-check-circle' : 'fa-flask' %> mr-1"></i>
+                        <%= tripayMode === 'production' ? 'PRODUCTION' : 'SANDBOX' %>
+                      </span>
+                    </div>
+                    <% if (tripayMode === 'sandbox') { %>
+                      <div class="mt-2 p-2 bg-orange-500/10 border border-orange-500/30 rounded">
+                        <p class="text-xs text-orange-300">
+                          <i class="fas fa-exclamation-triangle mr-1"></i>
+                          Mode Testing - Transaksi simulasi
+                        </p>
+                      </div>
+                    <% } else { %>
+                      <div class="mt-2 p-2 bg-green-500/10 border border-green-500/30 rounded">
+                        <p class="text-xs text-green-300">
+                          <i class="fas fa-shield-check mr-1"></i>
+                          Mode Live - Transaksi real
+                        </p>
+                      </div>
+                    <% } %>
                   </div>
                 <% } else if (config.service_name === 'GOOGLE_OAUTH') { %>
                   <div class="p-3 bg-white/5 rounded-lg space-y-3">
@@ -1069,6 +1096,10 @@
         if (merchantName) data.additional_config.merchant_name = merchantName;
         if (callbackUrl) data.additional_config.callback_url = callbackUrl;
         
+        // 🔥 CRITICAL: Set mode based on endpoint URL
+        const isProduction = endpointUrl && endpointUrl.includes('tripay.co.id/api') && !endpointUrl.includes('sandbox');
+        data.additional_config.mode = isProduction ? 'production' : 'sandbox';
+        
         // Validation
         const config = API_CONFIGS.find(c => c.service_name === serviceName);
         if (!merchantCode && !config.additional_config?.merchant_code) {
@@ -1278,10 +1309,15 @@
         data.api_key = apiKey;
         data.api_secret = privateKey;
         data.endpoint_url = endpointUrl;
+        
+        // 🔥 CRITICAL: Set mode based on endpoint URL
+        const isProduction = endpointUrl && endpointUrl.includes('tripay.co.id/api') && !endpointUrl.includes('sandbox');
+        
         data.additional_config = {
           merchant_code: merchantCode,
           merchant_name: merchantName,
-          callback_url: callbackUrl || window.location.origin + '/api/payment/callback'
+          callback_url: callbackUrl || window.location.origin + '/api/payment/callback',
+          mode: isProduction ? 'production' : 'sandbox'
         };
       } else {
         const apiKey = document.getElementById('add-api_key').value.trim();

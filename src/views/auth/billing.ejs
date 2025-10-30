@@ -322,19 +322,16 @@
                       </div>
                       <div class="flex items-center gap-2">
                         <% if (tx.status === 'UNPAID') { %>
-                          <button onclick="syncPaymentStatus('<%= tx.reference %>')" 
-                                  class="px-3 py-2 bg-blue-500 hover:bg-blue-400 text-white font-semibold rounded-lg transition text-sm"
-                                  title="Refresh payment status">
-                            <i class="fas fa-sync-alt mr-1"></i>
-                            Refresh
+                          <button onclick="viewPaymentDetail('<%= tx.reference %>')" 
+                                  class="px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold rounded-lg transition text-sm">
+                            <i class="fas fa-receipt mr-1"></i>
+                            Lihat Detail & Bayar
                           </button>
-                          <% if (tx.checkout_url) { %>
-                            <a href="<%= tx.checkout_url %>" target="_blank" 
-                               class="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 text-black font-semibold rounded-lg transition text-sm">
-                              <i class="fas fa-external-link-alt mr-1"></i>
-                              Pay Now
-                            </a>
-                          <% } %>
+                          <button onclick="syncPaymentStatus('<%= tx.reference %>')" 
+                                  class="px-3 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg transition text-sm border border-white/20"
+                                  title="Refresh payment status">
+                            <i class="fas fa-sync-alt"></i>
+                          </button>
                         <% } else if (tx.status === 'PAID') { %>
                           <span class="text-green-400 text-sm font-semibold">
                             <i class="fas fa-check-circle mr-1"></i>
@@ -853,6 +850,207 @@
       document.getElementById('promoResult').classList.add('hidden');
       showNotification('✅ Promo code removed', 'success');
     }
+    
+    // View payment detail
+    async function viewPaymentDetail(reference) {
+      try {
+        // Fetch payment detail from backend
+        const response = await fetch(`/api/payment/detail/${reference}`);
+        const data = await response.json();
+        
+        if (!data.success) {
+          showNotification('❌ ' + (data.message || 'Failed to load payment detail'), 'error');
+          return;
+        }
+        
+        // Show payment modal with detail
+        showPaymentDetailModal(data.data);
+        
+      } catch (error) {
+        console.error('Error loading payment detail:', error);
+        showNotification('❌ Failed to load payment detail', 'error');
+      }
+    }
+    
+    // Show payment detail modal
+    function showPaymentDetailModal(paymentData) {
+      const modal = document.createElement('div');
+      modal.id = 'paymentDetailModal';
+      modal.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4';
+      modal.onclick = (e) => {
+        if (e.target === modal) closePaymentDetailModal();
+      };
+      
+      // Format expired time
+      const expiredTime = new Date(paymentData.expired_time);
+      const now = new Date();
+      const isExpired = expiredTime < now;
+      
+      modal.innerHTML = `
+        <div class="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-white/20 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+          <!-- Header -->
+          <div class="sticky top-0 bg-gradient-to-r from-yellow-500 to-yellow-600 p-6 border-b border-white/10">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-2xl font-bold text-black">
+                  <i class="fas fa-receipt mr-2"></i>
+                  Detail Pembayaran
+                </h3>
+                <p class="text-black/70 text-sm mt-1">${paymentData.payment_name}</p>
+              </div>
+              <button onclick="closePaymentDetailModal()" class="text-black hover:text-black/70 text-2xl transition-colors">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Content -->
+          <div class="p-6 space-y-6">
+            
+            ${isExpired ? `
+              <div class="bg-red-500/20 border border-red-500/30 rounded-xl p-4">
+                <p class="text-red-400 font-bold flex items-center gap-2">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  Transaksi ini sudah expired
+                </p>
+                <p class="text-red-300 text-sm mt-1">Silakan buat transaksi baru untuk melanjutkan.</p>
+              </div>
+            ` : `
+              <div class="bg-green-500/20 border border-green-500/30 rounded-xl p-4">
+                <p class="text-green-400 font-semibold flex items-center gap-2">
+                  <i class="fas fa-clock"></i>
+                  Transaksi akan expired pada:
+                </p>
+                <p class="text-white text-lg font-bold mt-1">${expiredTime.toLocaleString('id-ID', { 
+                  day: '2-digit', 
+                  month: 'long', 
+                  year: 'numeric', 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}</p>
+              </div>
+            `}
+            
+            <!-- QR Code (if available) -->
+            ${paymentData.qr_url ? `
+              <div class="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
+                <h4 class="text-lg font-bold text-white mb-4">
+                  <i class="fas fa-qrcode mr-2 text-yellow-400"></i>
+                  Scan QR Code
+                </h4>
+                <div class="inline-block p-4 bg-white rounded-xl">
+                  <img src="${paymentData.qr_url}" alt="QR Code" class="w-64 h-64 mx-auto">
+                </div>
+                <p class="text-gray-400 text-sm mt-4">
+                  Scan QR code di atas menggunakan aplikasi ${paymentData.payment_name}
+                </p>
+              </div>
+            ` : ''}
+            
+            <!-- Payment Code (if available) -->
+            ${paymentData.pay_code ? `
+              <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
+                <p class="text-yellow-300 font-semibold mb-2">
+                  <i class="fas fa-hashtag mr-1"></i>
+                  Payment Code:
+                </p>
+                <div class="flex items-center justify-between bg-black/30 rounded-lg p-3">
+                  <code class="text-yellow-400 font-mono text-xl font-bold">${paymentData.pay_code}</code>
+                  <button onclick="copyToClipboard('${paymentData.pay_code}')" 
+                          class="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 text-black rounded-lg transition font-semibold">
+                    <i class="fas fa-copy mr-1"></i>Copy
+                  </button>
+                </div>
+              </div>
+            ` : ''}
+            
+            <!-- Payment URL (if available) -->
+            ${paymentData.checkout_url ? `
+              <div class="bg-violet-500/10 border border-violet-500/30 rounded-xl p-4">
+                <p class="text-violet-300 font-semibold mb-2">
+                  <i class="fas fa-link mr-1"></i>
+                  Payment URL:
+                </p>
+                <a href="${paymentData.checkout_url}" target="_blank" 
+                   class="block px-4 py-3 bg-gradient-to-r from-violet-500 to-violet-600 hover:from-violet-400 hover:to-violet-500 text-white rounded-lg transition font-semibold text-center">
+                  <i class="fas fa-external-link-alt mr-2"></i>
+                  Buka Halaman Pembayaran
+                </a>
+              </div>
+            ` : ''}
+            
+            <!-- Transaction Details -->
+            <div class="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
+              <h4 class="text-lg font-bold text-white mb-3">
+                <i class="fas fa-info-circle mr-2 text-blue-400"></i>
+                Informasi Transaksi
+              </h4>
+              
+              <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-gray-400">Referensi</span>
+                <span class="font-mono text-white">${paymentData.reference}</span>
+              </div>
+              
+              <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-gray-400">Metode Pembayaran</span>
+                <span class="text-white font-semibold">${paymentData.payment_name}</span>
+              </div>
+              
+              <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-gray-400">Jumlah</span>
+                <span class="text-white font-semibold">Rp ${paymentData.amount.toLocaleString('id-ID')}</span>
+              </div>
+              
+              <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-gray-400">Biaya Admin</span>
+                <span class="text-white font-semibold">Rp ${(paymentData.fee_customer || 0).toLocaleString('id-ID')}</span>
+              </div>
+              
+              <div class="flex justify-between py-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-4">
+                <span class="font-bold text-white">Total Bayar</span>
+                <span class="font-bold text-2xl text-yellow-400 font-mono">Rp ${paymentData.amount_received.toLocaleString('id-ID')}</span>
+              </div>
+              
+              <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-gray-400">Credits</span>
+                <span class="font-semibold text-yellow-400">+${paymentData.credits_amount} Credits</span>
+              </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="flex gap-3">
+              <button onclick="syncPaymentStatus('${paymentData.reference}')" 
+                      class="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition border border-white/20">
+                <i class="fas fa-sync-alt mr-2"></i>
+                Refresh Status
+              </button>
+              <button onclick="closePaymentDetailModal()" 
+                      class="px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-xl transition">
+                <i class="fas fa-times mr-2"></i>
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+    }
+    
+    // Close payment detail modal
+    function closePaymentDetailModal() {
+      const modal = document.getElementById('paymentDetailModal');
+      if (modal) {
+        modal.remove();
+      }
+    }
+    
+    // Close modal on ESC key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closePaymentDetailModal();
+      }
+    });
   </script>
 
   <!-- Mobile Navigation Bar -->

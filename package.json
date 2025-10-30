@@ -65,6 +65,7 @@
     "fix:base-credit": "node src/scripts/fixBaseCreditUSD.js",
     "migrate:tripay": "node src/config/migrateTripayPayment.js",
     "sync:tripay-channels": "node sync-tripay-channels.js",
+    "verify:tripay": "node src/scripts/verifyTripayConfig.js",
     "fix:payment-channels": "bash fix-payment-deployment.sh",
     "verify:payment-channels": "bash verify-payment-channels.sh",
     "update:db-consistency": "node update-database-consistency.js",

@@ -111,6 +111,11 @@ const PaymentController = {
       const priceResult = await pool.query(priceQuery);
       const creditPriceIDR = parseInt(priceResult.rows[0]?.config_value || 2000);
 
+      // 🔥 FIX: Set no-cache headers
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+
       res.json({
         success: true,
         price: creditPriceIDR
@@ -132,6 +137,13 @@ const PaymentController = {
     try {
       const userId = req.user.id;
       const creditsParam = parseInt(req.query.credits) || null;
+
+      console.log('📄 [GET /api/payment/top-up] Rendering page for user:', userId);
+      
+      // 🔥 FIX: Force reload to get latest config from database
+      console.log('   ↳ Force reloading TripayService...');
+      await tripayService.initialize(true); // Force reload EVERY TIME!
+      console.log('   ↳ TripayService mode:', tripayService.config.mode);
 
       // Get user info dan credit price dari database
       const userQuery = 'SELECT id, name, email, credits, avatar_url, role FROM users WHERE id = $1';
@@ -171,6 +183,11 @@ const PaymentController = {
       `;
       const historyResult = await pool.query(historyQuery, [userId]);
 
+      // 🔥 FIX: Set no-cache headers for server-side rendered page
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
       res.render('auth/top-up', {
         user,
         creditPriceIDR,
@@ -195,13 +212,35 @@ const PaymentController = {
    */
   async getPaymentChannels(req, res) {
     try {
+      console.log('🔄 [GET /api/payment/channels] Request received');
+      
+      // 🔥 FIX: Force reload to get latest config from database
+      console.log('   ↳ Force reloading TripayService...');
+      await tripayService.initialize(true); // Force reload EVERY TIME!
+      console.log('   ↳ TripayService mode:', tripayService.config.mode);
+      
+      console.log('   ↳ Fetching channels from database...');
       const channels = await tripayService.getPaymentChannelsGrouped();
+      
+      let totalChannels = 0;
+      for (const group in channels) {
+        totalChannels += channels[group].length;
+      }
+      console.log('   ↳ Retrieved', totalChannels, 'channels');
+      
+      // 🔥 FIX: Set proper cache headers to prevent stale data
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
       res.json({
         success: true,
         data: channels
       });
+      
+      console.log('   ↳ ✅ Response sent with no-cache headers');
     } catch (error) {
-      console.error('Error getting payment channels:', error);
+      console.error('❌ Error getting payment channels:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to get payment channels'

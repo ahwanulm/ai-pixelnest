@@ -478,7 +478,15 @@
     // Load payment channels
     async function loadPaymentChannels() {
       try {
-        const response = await fetch('/api/payment/channels');
+        // 🔥 FIX: Add cache busting and no-cache headers
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/payment/channels?_=${timestamp}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
         const data = await response.json();
         
         if (data.success) {

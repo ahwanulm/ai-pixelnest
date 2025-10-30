@@ -61,7 +61,11 @@ class TripayService {
       }
 
       // Determine mode from endpoint URL if not explicitly set
-      const isProduction = config.endpoint_url && config.endpoint_url.includes('tripay.co.id/api');
+      // Production: https://tripay.co.id/api
+      // Sandbox: https://tripay.co.id/api-sandbox
+      const isProduction = config.endpoint_url && 
+                          config.endpoint_url.includes('tripay.co.id/api') && 
+                          !config.endpoint_url.includes('sandbox');
       const mode = config.additional_config?.mode || (isProduction ? 'production' : 'sandbox');
 
       this.config = {
@@ -295,10 +299,21 @@ class TripayService {
       const channels = await this.getPaymentChannels();
       
       const client = await pool.connect();
+      let inserted = 0;
+      let updated = 0;
+      
       try {
         await client.query('BEGIN');
 
         for (const channel of channels) {
+          // Check if channel exists
+          const checkResult = await client.query(
+            'SELECT code FROM payment_channels WHERE code = $1',
+            [channel.code]
+          );
+          
+          const exists = checkResult.rows.length > 0;
+          
           const query = `
             INSERT INTO payment_channels (
               code, name, group_channel,
@@ -331,8 +346,8 @@ class TripayService {
             channel.fee_merchant?.percent || 0,
             channel.fee_customer?.flat || 0,
             channel.fee_customer?.percent || 0,
-            channel.minimum_fee || 10000,
-            channel.maximum_fee || 0,
+            channel.minimum_amount || 1000,  // ✅ FIX: Use minimum_amount, not minimum_fee
+            channel.maximum_amount || 0,     // ✅ FIX: Use maximum_amount, not maximum_fee
             channel.icon_url || null,
             channel.active || true,
             JSON.stringify({
@@ -340,11 +355,22 @@ class TripayService {
               active: channel.active
             })
           ]);
+          
+          if (exists) {
+            updated++;
+          } else {
+            inserted++;
+          }
         }
 
         await client.query('COMMIT');
         console.log(`✅ Synced ${channels.length} payment channels`);
-        return { success: true, count: channels.length };
+        return { 
+          success: true, 
+          processed: channels.length,
+          inserted: inserted,
+          updated: updated
+        };
       } catch (error) {
         await client.query('ROLLBACK');
         throw error;

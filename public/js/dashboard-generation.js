@@ -2185,10 +2185,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('❌ Failed to create failed job card, creating minimal fallback...');
                 // Create minimal error card as last resort
                 const minimalCard = document.createElement('div');
-                minimalCard.className = 'result-card bg-gradient-to-br from-red-900/20 to-gray-900/40 rounded-xl p-4 border border-red-500/30';
+                minimalCard.className = 'result-card bg-gradient-to-br from-red-900/20 to-gray-900/40 rounded-xl p-4 border border-red-500/30 relative';
                 minimalCard.setAttribute('data-generation-id', failedJob.id);
                 minimalCard.setAttribute('data-status', 'failed');
                 minimalCard.innerHTML = `
+                    <div class="absolute top-2 right-2">
+                        <button onclick="handleDeleteCard(this)" 
+                                class="px-2 py-1.5 bg-red-600/80 hover:bg-red-700 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105 shadow-lg"
+                                title="Delete failed generation">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                     <div class="text-red-400">
                         <div class="font-semibold mb-2">❌ Generation Failed</div>
                         <div class="text-sm text-gray-400">${errorMessage || 'Unknown error'}</div>
@@ -2237,7 +2244,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function createFailedJobCard(jobData, mode, errorMessage) {
         try {
             const card = document.createElement('div');
-            card.className = 'result-card bg-gradient-to-br from-red-900/20 to-gray-900/40 rounded-xl p-4 border border-red-500/30 hover:border-red-500/50 transition-all duration-300';
+            card.className = 'result-card bg-gradient-to-br from-red-900/20 to-gray-900/40 rounded-xl p-4 border border-red-500/30 hover:border-red-500/50 transition-all duration-300 relative';
             card.setAttribute('data-generation-id', jobData.id);
             card.setAttribute('data-status', 'failed');
             
@@ -2252,10 +2259,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const displayError = errorMessage || jobData.error_message || 'Generation failed';
             
             card.innerHTML = `
+                <div class="absolute top-2 right-2">
+                    <button onclick="handleDeleteCard(this)" 
+                            class="px-2 py-1.5 bg-red-600/80 hover:bg-red-700 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105 shadow-lg"
+                            title="Delete failed generation">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
                 <div class="flex items-start gap-3">
                     <div class="text-4xl opacity-50">${icon}</div>
                     <div class="flex-1 min-w-0">
-                        <div class="flex items-start justify-between gap-2 mb-2">
+                        <div class="flex items-start justify-between gap-2 mb-2 pr-8">
                             <h3 class="font-semibold text-red-400">Failed Generation</h3>
                             <span data-status class="px-2 py-1 text-xs rounded-full bg-red-500/20 text-red-400">Failed</span>
                         </div>
@@ -2302,9 +2316,19 @@ document.addEventListener('DOMContentLoaded', function() {
         return div.innerHTML;
     }
     
+    // Track ongoing soft refresh to prevent concurrent calls
+    let softRefreshInProgress = false;
+    
     // ✨ Soft refresh new result (fetches and displays latest generation)
     async function softRefreshNewResult(mode) {
         try {
+            // ✅ FIX: Prevent concurrent soft refresh calls
+            if (softRefreshInProgress) {
+                console.log('⏳ Soft refresh already in progress, skipping...');
+                return;
+            }
+            
+            softRefreshInProgress = true;
             console.log('🔄 Soft refreshing new result for mode:', mode);
             
             // Fetch the latest generations from server (limit=5 to catch multi-track Suno results)
@@ -2313,6 +2337,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (!result.success || !result.data || result.data.length === 0) {
                 console.log('ℹ️ No data to display');
+                softRefreshInProgress = false;
                 return;
             }
             
@@ -2324,14 +2349,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.remove();
             });
             
-            // Filter out already displayed generations
+            // ✅ FIX: Stronger duplicate check - also check by result_url for safety
             const newGenerations = result.data.filter(gen => {
-                const existingCard = resultDisplay.querySelector(`[data-generation-id="${gen.id}"]`);
-                return !existingCard;
+                // Check by generation ID
+                const existingCardById = resultDisplay.querySelector(`[data-generation-id="${gen.id}"]`);
+                if (existingCardById) {
+                    console.log(`⏭️ Skipping generation ${gen.id} - already displayed by ID`);
+                    return false;
+                }
+                
+                // Additional check by result URL (for extra safety)
+                if (gen.result_url) {
+                    const allCards = resultDisplay.querySelectorAll('[data-generation-id]');
+                    for (let card of allCards) {
+                        // For audio cards, check audio source
+                        const audioEl = card.querySelector('audio source');
+                        if (audioEl && audioEl.src === gen.result_url) {
+                            console.log(`⏭️ Skipping generation ${gen.id} - already displayed by URL`);
+                            return false;
+                        }
+                        // For video cards
+                        const videoEl = card.querySelector('video source');
+                        if (videoEl && videoEl.src === gen.result_url) {
+                            console.log(`⏭️ Skipping generation ${gen.id} - already displayed by URL`);
+                            return false;
+                        }
+                        // For image cards
+                        const imgEl = card.querySelector('img.result-image');
+                        if (imgEl && imgEl.src === gen.result_url) {
+                            console.log(`⏭️ Skipping generation ${gen.id} - already displayed by URL`);
+                            return false;
+                        }
+                    }
+                }
+                
+                return true;
             });
             
             if (newGenerations.length === 0) {
                 console.log('ℹ️ All generations already displayed');
+                softRefreshInProgress = false;
                 return;
             }
             
@@ -2377,7 +2434,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     errorMessage: latestGen.error_message,
                     // Include Suno track info if available
                     track_index: latestGen.metadata?.track_index,
-                    total_tracks: latestGen.metadata?.total_tracks
+                    total_tracks: latestGen.metadata?.total_tracks,
+                    track: latestGen.metadata?.track,  // ✅ FIX: Include full track object with duration
+                    all_tracks: latestGen.metadata?.all_tracks
                 };
                 
                 // Add originalPrompt to metadata if available in settings
@@ -2478,8 +2537,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update generations count
             updateGenerationsCount();
             
+            // ✅ Reset flag after all cards are added
+            softRefreshInProgress = false;
+            
         } catch (error) {
             console.error('❌ Error soft refreshing new result:', error);
+            // ✅ Reset flag on error too
+            softRefreshInProgress = false;
         }
     }
     
@@ -4554,6 +4618,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update counter
                 updateGenerationsCount();
                 
+                // ✅ FIX: Clear result display first to prevent duplicates on reload
+                // This is safe because we're loading fresh data from server
+                if (resultDisplay) {
+                    console.log('🧹 Clearing existing cards before loading recent generations');
+                    resultDisplay.innerHTML = '';
+                }
+                
                 // Render each generation
                 data.data.forEach(gen => {
                     // Prepare metadata
@@ -4569,7 +4640,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         errorMessage: gen.error_message,
                         // Include Suno track info if available
                         track_index: gen.metadata?.track_index,
-                        total_tracks: gen.metadata?.total_tracks
+                        total_tracks: gen.metadata?.total_tracks,
+                        track: gen.metadata?.track,  // ✅ FIX: Include full track object with duration
+                        all_tracks: gen.metadata?.all_tracks
                     };
                     
                     if (gen.status === 'completed' && gen.result_url) {
@@ -4768,7 +4841,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             // ✨ CRITICAL: Soft refresh result container IMMEDIATELY to show failed job
                             console.log('🔄 Soft refreshing result container to show failed job...');
-                            loadRecentGenerations(); // No delay - refresh immediately!
+                            
+                            // Use soft refresh for efficiency (only fetches latest 5)
+                            setTimeout(() => {
+                                softRefreshNewResult(job.generation_type || 'image');
+                            }, 300);
                             
                             // ✨ Show user-friendly error notification
                             const errorMsg = error.errorMessage || error.error || error.message || 'Generation failed';
@@ -4808,10 +4885,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         (error) => {
                             console.error(`❌ Job ${job.jobId} failed:`, error);
                             loadingCard.remove();
+                            
+                            // ✨ Soft refresh to show failed job
+                            setTimeout(() => {
+                                softRefreshNewResult(job.generation_type || 'image');
+                            }, 300);
+                            
                             if (typeof showNotification === 'function') {
                                 showNotification(error.message || 'Generation failed', 'error');
                             }
-                            loadRecentGenerations();
                         }
                     );
                 }

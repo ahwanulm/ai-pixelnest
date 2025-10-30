@@ -35,6 +35,7 @@ router.post('/create', ensureAuthenticated, paymentController.createPayment);
 router.get('/history', ensureAuthenticated, paymentController.getPaymentHistory);
 
 // Get payment detail
+router.get('/detail/:reference', ensureAuthenticated, paymentController.getPaymentDetail);
 router.get('/:reference', ensureAuthenticated, paymentController.getPaymentDetail);
 
 // Check payment status
