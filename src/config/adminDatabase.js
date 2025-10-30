@@ -155,13 +155,16 @@ const createAdminTables = async () => {
     const sendgridApiKey = process.env.SENDGRID_API_KEY || '';
     const emailFrom = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@pixelnest.com';
     
+    const sunoApiKey = process.env.SUNO_API_KEY || '';
+    
     await client.query(`
       INSERT INTO api_configs (service_name, api_key, api_secret, endpoint_url, is_active, rate_limit, additional_config) VALUES
       ('FAL_AI', $1, null, 'https://fal.ai/api', true, 100, '{"models": ["flux/dev", "flux-pro", "flux-realism"]}'),
       ('OPENAI', $2, null, 'https://api.openai.com/v1', true, 60, '{"models": ["gpt-4", "gpt-3.5-turbo", "dall-e-3"]}'),
       ('REPLICATE', $3, null, 'https://api.replicate.com/v1', true, 50, '{"models": ["stable-diffusion", "llama-2"]}'),
       ('GOOGLE_OAUTH', $4, $5, $6, true, null, '{"scopes": ["profile", "email"]}'),
-      ('SENDGRID', $7, null, 'https://api.sendgrid.com/v3', true, 100, $8)
+      ('SENDGRID', $7, null, 'https://api.sendgrid.com/v3', true, 100, $8),
+      ('SUNO', $9, null, 'https://api.sunoapi.org', false, 100, '{"default_model":"v5","models":["v3_5","v4","v4_5","v4_5PLUS","v5"],"supported_features":["music_generation","lyrics_generation","music_extension","wav_conversion","vocal_removal"],"callback_url":"https://pixelnest.app/music/callback/suno"}')
       ON CONFLICT (service_name) DO UPDATE SET
         api_key = COALESCE(EXCLUDED.api_key, api_configs.api_key),
         api_secret = COALESCE(EXCLUDED.api_secret, api_configs.api_secret),
@@ -178,7 +181,8 @@ const createAdminTables = async () => {
       JSON.stringify({ 
         email_from: emailFrom,
         email_from_name: 'PixelNest'
-      })
+      }),
+      sunoApiKey
     ]);
 
     // Insert default admin settings

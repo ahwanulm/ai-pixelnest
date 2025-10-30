@@ -18,6 +18,8 @@
     "fix-columns": "node src/config/fixColumnInconsistencies.js",
     "populate-models": "node scripts/populateModels.js",
     "reset-db": "npm run setup-db && npm run populate-models && npm run verify-db",
+    "reset-db:full": "node src/scripts/resetDatabase.js",
+    "nuke-db": "node src/scripts/resetDatabase.js",
     "migrate:auth": "node src/config/migratePasswordAuth.js",
     "migrate:auth-columns": "node src/config/migrateAuthColumns.js",
     "migrate:email-activation": "node src/config/migrateEmailActivation.js",

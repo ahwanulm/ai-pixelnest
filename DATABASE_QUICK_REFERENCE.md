@@ -21,8 +21,13 @@ npm run check-columns
 # Fix column inconsistencies
 npm run fix-columns
 
-# Full database reset
+# Soft reset (setup + populate, no delete)
 npm run reset-db
+
+# 🔴 FULL DATABASE RESET (⚠️ DELETES ALL DATA!)
+npm run reset-db:full
+# atau
+npm run nuke-db
 ```
 
 ---

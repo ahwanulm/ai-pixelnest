@@ -233,13 +233,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.log('➕ Added model from loader:', model.name, model.id);
                         }
                     });
-                    console.log('✅ After sync, total models:', availableModels.length);
-                }
-                
-                // Recalculate cost if we did a reload (pricing might have changed)
-                if (forceReload && selectedModel) {
-                    calculateCreditCost();
-                }
+                console.log('✅ After sync, total models:', availableModels.length);
+            }
+            
+            // ✅ ALWAYS recalculate cost after model restoration/selection
+            // This ensures credits display correctly on page refresh
+            if (selectedModel) {
+                console.log('💰 Recalculating credits for restored/selected model:', selectedModel.name);
+                calculateCreditCost();
+            }
             }
         } catch (error) {
             console.error('❌ Error loading models:', error);
@@ -2314,6 +2316,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            // ✨ CRITICAL: Remove all placeholder cards (data-new="true") to prevent duplicates
+            // This ensures old placeholder cards are replaced with proper database-backed cards
+            const placeholderCards = resultDisplay.querySelectorAll('[data-new="true"]');
+            placeholderCards.forEach(card => {
+                console.log('🗑️ Removing placeholder card before refresh');
+                card.remove();
+            });
+            
             // Filter out already displayed generations
             const newGenerations = result.data.filter(gen => {
                 const existingCard = resultDisplay.querySelector(`[data-generation-id="${gen.id}"]`);
@@ -2423,11 +2433,30 @@ document.addEventListener('DOMContentLoaded', function() {
                         addCompletionPulse(newCard);
                     }, 50);
                 } else if (latestGen.generation_type === 'audio') {
+                    // ✅ Get actual duration from Suno metadata if available
+                    let audioDuration = 5;
+                    if (latestGen.metadata?.track?.duration) {
+                        audioDuration = Math.round(parseFloat(latestGen.metadata.track.duration));
+                    } else if (latestGen.metadata?.track?.audio_length) {
+                        audioDuration = Math.round(parseFloat(latestGen.metadata.track.audio_length));
+                    } else if (latestGen.settings?.duration) {
+                        audioDuration = latestGen.settings.duration;
+                    }
+                    
+                    console.log(`📀 Soft refresh: Creating audio card with ID ${latestGen.id}, track ${metadata.track_index || 1}/${metadata.total_tracks || 1}`);
                     newCard = createAudioCard({
                         url: latestGen.result_url,
-                        duration: latestGen.settings?.duration || 5,
+                        duration: audioDuration,
                         type: latestGen.sub_type || 'audio'
                     }, latestGen.id, metadata);
+                    
+                    // ✅ Verify generation ID was set
+                    const verifyId = newCard.getAttribute('data-generation-id');
+                    if (!verifyId) {
+                        console.error('❌ WARNING: Soft refresh created audio card without generation ID!', latestGen);
+                    } else {
+                        console.log(`✅ Soft refresh: Audio card has generation ID: ${verifyId}`);
+                    }
                     
                     // Add animation
                     newCard.style.opacity = '0';
@@ -4578,11 +4607,22 @@ document.addEventListener('DOMContentLoaded', function() {
                                 audioDuration = gen.settings.duration;
                             }
                             
+                            // ✅ CRITICAL: Always pass generation ID for audio cards
+                            console.log(`📀 Creating audio card with ID: ${gen.id}, track: ${metadata.track_index || 1}/${metadata.total_tracks || 1}`);
                             const audioCard = createAudioCard({
                                 url: gen.result_url,
                                 duration: audioDuration,
                                 type: gen.sub_type || 'audio'
                             }, gen.id, metadata); // Pass metadata
+                            
+                            // ✅ Verify generation ID was set
+                            const verifyId = audioCard.getAttribute('data-generation-id');
+                            if (!verifyId) {
+                                console.error('❌ WARNING: Audio card created without generation ID!', gen);
+                            } else {
+                                console.log(`✅ Audio card created with generation ID: ${verifyId}`);
+                            }
+                            
                             resultDisplay.appendChild(audioCard);
                         }
                     } else if (gen.status === 'failed') {
@@ -4820,13 +4860,32 @@ async function handleDeleteCard(buttonElement) {
         return;
     }
     
-    // If it's a new card (just generated, not from DB), just remove from DOM
-    if (!generationId || card.getAttribute('data-new') === 'true') {
-        card.remove();
-        console.log('🗑️ Removed new card from DOM (not in database yet)');
-        // Show notification for immediate removal
-        if (typeof showNotification === 'function') {
-            showNotification('🗑️ Berhasil dihapus dari galeri', 'success');
+    // ⚠️ Check if this is a placeholder card (new, not yet in DB)
+    const isPlaceholder = card.getAttribute('data-new') === 'true';
+    
+    // If no generation ID
+    if (!generationId || generationId.trim() === '') {
+        if (isPlaceholder) {
+            // It's a placeholder card, safe to just remove from DOM
+            card.remove();
+            console.log('🗑️ Removed placeholder card from DOM (not in database yet)');
+            if (typeof showNotification === 'function') {
+                showNotification('🗑️ Berhasil dihapus dari galeri', 'success');
+            }
+        } else {
+            // ⚠️ This card should have a generation ID but doesn't - something is wrong
+            console.error('❌ Cannot delete: Card is not a placeholder but has no generation ID');
+            console.log('Card element:', card);
+            console.log('Card attributes:', Array.from(card.attributes).map(a => `${a.name}="${a.value}"`));
+            
+            if (typeof showNotification === 'function') {
+                showNotification('⚠️ Error: Card rusak. Memuat ulang halaman untuk memperbaiki...', 'warning');
+            }
+            
+            // Reload page to get fresh data from database
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
         }
         return;
     }
