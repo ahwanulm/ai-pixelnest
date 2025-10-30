@@ -27,13 +27,15 @@ router.post('/callback/suno', async (req, res) => {
         console.log(`   Task ID: ${task_id}`);
         console.log(`   Tracks: ${tracks?.length || 0}`);
         
-        if (callbackType === 'complete' && Array.isArray(tracks)) {
+        // ✅ Process both 'first' and 'complete' callbacks
+        // Suno sends 'first' when first track is ready, 'complete' when all done
+        if ((callbackType === 'first' || callbackType === 'complete') && Array.isArray(tracks) && tracks.length > 0) {
         // Update database with completed tracks
         const { pool } = require('../config/database');
         
         // Find the original generation record first
         const findQuery = `
-          SELECT id, user_id, prompt, model_id, model_name, credits_used, settings, sub_type 
+          SELECT id, user_id, prompt, model_used, credits_used, settings, sub_type 
           FROM ai_generation_history 
           WHERE metadata::text LIKE $1
           AND status = 'processing'
@@ -51,9 +53,18 @@ router.post('/callback/suno', async (req, res) => {
             console.log(`   📝 Found original generation ID: ${originalGen.id}`);
             console.log(`   🎵 Processing ${tracks.length} track(s) from Suno`);
             
-            // For each track, create or update a generation record
-            for (let i = 0; i < tracks.length; i++) {
-              const track = tracks[i];
+            // ✅ Filter tracks that have audio_url (some may still be processing)
+            const readyTracks = tracks.filter(t => t.audio_url && t.audio_url.trim());
+            console.log(`   ✅ ${readyTracks.length} track(s) ready with audio_url`);
+            
+            if (readyTracks.length === 0) {
+              console.log(`   ⏳ No tracks ready yet, waiting for next callback`);
+              return;
+            }
+            
+            // For each ready track, create or update a generation record
+            for (let i = 0; i < readyTracks.length; i++) {
+              const track = readyTracks[i];
               
               try {
                 if (i === 0) {
@@ -72,37 +83,36 @@ router.post('/callback/suno', async (req, res) => {
                     track.audio_url,
                     JSON.stringify({ 
                       track, 
-                      all_tracks: tracks, 
+                      all_tracks: readyTracks, 
                       suno_track_id: track.id,
                       track_index: i + 1,
-                      total_tracks: tracks.length
+                      total_tracks: readyTracks.length
                     }),
                     originalGen.id
                   ]);
                   
-                  console.log(`   ✅ Updated original generation ${originalGen.id} with track ${i + 1}/${tracks.length}`);
+                  console.log(`   ✅ Updated original generation ${originalGen.id} with track ${i + 1}/${readyTracks.length}`);
                 } else {
                   // Create a new record for additional tracks
                   const insertQuery = `
                     INSERT INTO ai_generation_history 
-                    (user_id, model_id, model_name, prompt, result_url, result_data, metadata, status, credits_used, generation_type, sub_type, completed_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+                    (user_id, model_used, prompt, result_url, result_data, metadata, status, credits_used, generation_type, sub_type, completed_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
                     RETURNING id
                   `;
                   
                   const insertResult = await pool.query(insertQuery, [
                     originalGen.user_id,
-                    originalGen.model_id,
-                    originalGen.model_name,
+                    originalGen.model_used,
                     originalGen.prompt,
                     track.audio_url,
                     null, // result_data
                     JSON.stringify({ 
                       track, 
-                      all_tracks: tracks,
+                      all_tracks: readyTracks,
                       suno_track_id: track.id,
                       track_index: i + 1,
-                      total_tracks: tracks.length,
+                      total_tracks: readyTracks.length,
                       task_id: task_id
                     }),
                     'completed',
@@ -111,7 +121,7 @@ router.post('/callback/suno', async (req, res) => {
                     originalGen.sub_type || 'text-to-music'
                   ]);
                   
-                  console.log(`   ✅ Created new generation ${insertResult.rows[0].id} for track ${i + 1}/${tracks.length}`);
+                  console.log(`   ✅ Created new generation ${insertResult.rows[0].id} for track ${i + 1}/${readyTracks.length}`);
                 }
               } catch (trackError) {
                 console.error(`   ❌ Error processing track ${i + 1}:`, trackError.message);

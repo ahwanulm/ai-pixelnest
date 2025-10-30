@@ -311,7 +311,7 @@
                     } else {
                         newValue = 'edit-image'; // Default for other edit models
                     }
-
+                    
                     if (typeSelect.value !== newValue) {
                         typeSelect.value = newValue;
                         // Don't dispatch change event - it causes infinite loops

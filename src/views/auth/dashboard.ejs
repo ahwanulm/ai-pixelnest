@@ -201,40 +201,7 @@
         }
         
         /* Tempo Buttons (Dashboard Audio) */
-        .audio-tempo-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 8px 6px;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            color: rgb(156, 163, 175);
-            min-height: 85px;
-        }
-        
-        .audio-tempo-btn:hover {
-            border-color: rgba(251, 146, 60, 0.6);
-            background: rgba(251, 146, 60, 0.1);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(251, 146, 60, 0.2);
-        }
-        
-        .audio-tempo-btn.active {
-            border-color: rgb(251, 146, 60);
-            background: rgba(251, 146, 60, 0.2);
-            color: rgb(251, 146, 60);
-            box-shadow: 0 2px 8px rgba(251, 146, 60, 0.3);
-        }
-        
-        .audio-tempo-btn i {
-            color: currentColor;
-        }
+        /* Audio tempo buttons - REMOVED (now only in Advanced Options) */
         
     </style>
     
@@ -402,7 +369,7 @@
                                         <div class="flex items-center gap-3">
                                             <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                                                 <i class="fas fa-cubes text-white"></i>
-                                            </div>
+                                </div>
                                             <div class="flex-1">
                                                 <p class="text-sm font-semibold text-white mb-0.5">Text to 3D</p>
                                                 <p class="text-xs text-gray-400">Generate 3D models from text descriptions</p>
@@ -1117,13 +1084,13 @@
                                 </div>
                             </div>
                             
-                            <!-- Tempo -->
+                            <!-- Tempo (Advanced Options - Suno only) -->
                             <div>
                                 <label class="text-xs text-gray-400 font-semibold mb-2 flex items-center justify-between">
                                     <span>Tempo (BPM)</span>
-                                    <span class="text-blue-400" id="audio-tempo-display">120 BPM</span>
+                                    <span class="text-blue-400" id="audio-advanced-tempo-display">120 BPM</span>
                                 </label>
-                                <input type="range" id="audio-tempo" min="60" max="180" value="120" step="5"
+                                <input type="range" id="audio-advanced-tempo" min="60" max="180" value="120" step="5"
                                     class="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-500">
                                 <div class="flex justify-between text-xs text-gray-600 mt-1">
                                     <span>Slow</span>
@@ -1297,40 +1264,7 @@
                         </p>
                     </div>
                     
-                    <!-- Tempo Selection (Only for Suno/Music) -->
-                    <div id="audio-tempo-container" style="display: none;">
-                        <label class="control-label">
-                            <i class="fas fa-gauge-high text-orange-400 mr-1"></i>
-                            Tempo (Speed)
-                        </label>
-                        <div class="grid grid-cols-4 gap-2">
-                            <button type="button" onclick="selectAudioTempo('')" class="audio-tempo-btn active" data-tempo="">
-                                <i class="fas fa-robot text-lg mb-1"></i>
-                                <span class="text-xs font-medium block">Auto</span>
-                                <span class="text-xs text-gray-500">AI Decides</span>
-                            </button>
-                            <button type="button" onclick="selectAudioTempo('slow')" class="audio-tempo-btn" data-tempo="slow">
-                                <i class="fas fa-turtle text-lg mb-1"></i>
-                                <span class="text-xs font-medium block">Slow</span>
-                                <span class="text-xs text-gray-500">60-80 BPM</span>
-                            </button>
-                            <button type="button" onclick="selectAudioTempo('medium')" class="audio-tempo-btn" data-tempo="medium">
-                                <i class="fas fa-walking text-lg mb-1"></i>
-                                <span class="text-xs font-medium block">Medium</span>
-                                <span class="text-xs text-gray-500">90-120 BPM</span>
-                            </button>
-                            <button type="button" onclick="selectAudioTempo('fast')" class="audio-tempo-btn" data-tempo="fast">
-                                <i class="fas fa-rocket text-lg mb-1"></i>
-                                <span class="text-xs font-medium block">Fast</span>
-                                <span class="text-xs text-gray-500">130+ BPM</span>
-                            </button>
-                        </div>
-                        <input type="hidden" id="audio-tempo" value="">
-                        <p class="text-xs text-gray-500 mt-2">
-                            <i class="fas fa-info-circle text-orange-400"></i>
-                            Tempo will be added to style for better control
-                        </p>
-                    </div>
+                    <!-- Tempo Selection - REMOVED (now only in Advanced Options for Suno models) -->
                 </div>
             </div>
 
@@ -4348,112 +4282,23 @@
                 return audioType === 'text-to-music' || selectedModel.toLowerCase().includes('suno');
             }
             
-            // Function to update duration container visibility
-            function updateDurationVisibility() {
+            // Function to update duration container visibility (exposed globally)
+            window.updateDurationVisibility = function updateDurationVisibility() {
                 if (!audioDurationContainer) return;
-                
-                const audioTempoContainer = document.getElementById('audio-tempo-container');
                 
                 if (shouldHideDuration()) {
                     audioDurationContainer.style.display = 'none';
-                    // Show tempo for Suno (text-to-music)
-                    if (audioTempoContainer) {
-                        audioTempoContainer.style.display = 'block';
-                    }
-                    console.log('🎵 Duration hidden, Tempo shown for Suno model');
+                    console.log('🎵 Duration hidden for Suno model (tempo is in Advanced Options)');
                 } else {
                     audioDurationContainer.style.display = 'block';
-                    // Hide tempo for non-Suno
-                    if (audioTempoContainer) {
-                        audioTempoContainer.style.display = 'none';
-                    }
+                    console.log('🎵 Duration shown for non-Suno model');
                 }
             }
             
-            // Select Audio Tempo function
-            window.selectAudioTempo = function(tempo) {
-                // Remove active from all buttons
-                document.querySelectorAll('.audio-tempo-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                
-                // Add active to selected button
-                const selectedBtn = document.querySelector(`.audio-tempo-btn[data-tempo="${tempo}"]`);
-                if (selectedBtn) {
-                    selectedBtn.classList.add('active');
-                }
-                
-                // Update hidden input
-                const tempoInput = document.getElementById('audio-tempo');
-                if (tempoInput) {
-                    tempoInput.value = tempo;
-                }
-                
-                console.log('🎵 Tempo selected:', tempo || 'auto');
-            };
+            // Select Audio Tempo function - REMOVED (tempo now only in Advanced Options)
             
-            // Audio Type Dropdown Handler
-            if (audioTypeBtn && audioTypeDropdown) {
-                // Toggle dropdown
-                audioTypeBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    audioTypeDropdown.classList.toggle('hidden');
-                });
-                
-                // Select option
-                audioTypeOptions.forEach(option => {
-                    option.addEventListener('click', function() {
-                        const type = this.dataset.type;
-                        const desc = this.dataset.desc;
-                        const icon = this.querySelector('i').className;
-                        
-                        // Update selected display
-                        const selectedTypeEl = document.getElementById('selected-audio-type');
-                        const selectedDescEl = document.getElementById('selected-audio-type-desc');
-                        const iconEl = audioTypeBtn.querySelector('.w-8');
-                        
-                        if (selectedTypeEl) {
-                            selectedTypeEl.textContent = this.querySelector('.text-sm').textContent;
-                            selectedTypeEl.classList.remove('text-gray-400');
-                            selectedTypeEl.classList.add('text-white');
-                        }
-                        
-                        if (selectedDescEl) {
-                            selectedDescEl.textContent = desc;
-                            selectedDescEl.classList.remove('text-gray-500');
-                            selectedDescEl.classList.add('text-gray-400');
-                        }
-                        
-                        if (iconEl) {
-                            iconEl.className = this.querySelector('.w-10').className.replace('w-10', 'w-8');
-                            audioTypeBtn.querySelector('.w-8 i').className = icon;
-                        }
-                        
-                        // Update hidden select
-                        if (audioTypeSelect) {
-                            audioTypeSelect.value = type;
-                            audioTypeSelect.dispatchEvent(new Event('change'));
-                        }
-                        
-                        // Update active state
-                        audioTypeOptions.forEach(opt => opt.classList.remove('active'));
-                        this.classList.add('active');
-                        
-                        // Close dropdown
-                        audioTypeDropdown.classList.add('hidden');
-                        
-                        // Update duration visibility
-                        updateDurationVisibility();
-                    });
-                });
-                
-                // Close dropdown on outside click
-                document.addEventListener('click', function(e) {
-                    if (audioTypeDropdown && !audioTypeBtn?.contains(e.target) && !audioTypeDropdown.contains(e.target)) {
-                        audioTypeDropdown.classList.add('hidden');
-                    }
-                });
-            }
+            // Audio Type Dropdown Handler - REMOVED (handled by dashboard-audio.js)
+            // The dropdown functionality is now handled by dashboard-audio.js to avoid conflicts
             
             // Listen for audio model changes
             if (audioModelSelect) {

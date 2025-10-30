@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         'remove-bg': 'Background Removal', // Updated to use specific category
         'text-to-3d': 'Text-to-3D', // ✅ Separate category for text-to-3d
         'image-to-3d': 'Image-to-3D', // ✅ Separate category for image-to-3d
-        // Video types
+        // Video types  
         'text-to-video': 'Text-to-Video',
         'image-to-video': 'Image-to-Video',
         'image-to-video-end': 'Image-to-Video', // Same category as image-to-video

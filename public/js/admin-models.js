@@ -24,7 +24,7 @@ function setupEventListeners() {
   
   // Form submit
   document.getElementById('model-form').addEventListener('submit', handleSubmit);
-
+  
   // ✅ 3D Category auto-configuration listener
   const categorySelect = document.getElementById('model-category');
   if (categorySelect) {
@@ -699,7 +699,7 @@ async function handleSubmit(e) {
     promptRequired = false;
     console.log(`🎲 Image-to-3D Model auto-configured: prompt_required = false`);
   }
-
+  
   const modelData = {
     model_id: modelId,
     name: document.getElementById('model-name').value,

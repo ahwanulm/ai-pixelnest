@@ -431,6 +431,44 @@ const VideoStorage = {
   },
 
   /**
+   * Download 3D model from URL and save to user's folder
+   * @param {string} modelUrl - External 3D model URL (from fal.ai)
+   * @param {number} userId - User ID
+   * @param {string} filename - Original filename from FAL.AI
+   * @returns {Promise<string>} - Local file path (relative to public/)
+   */
+  async downloadAndSaveModel(modelUrl, userId, filename = 'model.zip') {
+    try {
+      console.log('📥 Downloading 3D model from:', modelUrl);
+      console.log('👤 User ID:', userId);
+      console.log('📦 Filename:', filename);
+
+      // Create models folder for user
+      const userDir = path.join(__dirname, '../../public/models', userId.toString());
+      await fs.mkdir(userDir, { recursive: true });
+
+      // Generate unique filename (preserve extension if available)
+      const timestamp = Date.now();
+      const ext = path.extname(filename) || path.extname(new URL(modelUrl).pathname) || '.zip';
+      const baseName = path.basename(filename, ext);
+      const uniqueFilename = `${baseName}-${timestamp}${ext}`;
+      const filepath = path.join(userDir, uniqueFilename);
+
+      // Download model with retry logic (3 attempts)
+      await this.downloadFileWithRetry(modelUrl, filepath, 3);
+
+      // Return relative path
+      const relativePath = `/models/${userId}/${uniqueFilename}`;
+      console.log('✅ 3D model saved successfully:', relativePath);
+
+      return relativePath;
+    } catch (error) {
+      console.error('❌ Error downloading 3D model:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Check if user owns a video
    * @param {string} relativePath - Relative path from public folder
    * @param {number} userId - User ID
@@ -480,6 +518,13 @@ const VideoStorage = {
    */
   async downloadAndStoreAudio(audioUrl, userId) {
     return this.downloadAndSaveAudio(audioUrl, userId);
+  },
+
+  /**
+   * Alias for downloadAndSaveModel (used by worker)
+   */
+  async downloadAndStoreModel(modelUrl, userId, filename) {
+    return this.downloadAndSaveModel(modelUrl, userId, filename);
   }
 };
 

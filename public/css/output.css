@@ -2562,6 +2562,10 @@ h1, h2, h3, h4, h5, h6 {
   max-width: 120px;
 }
 
+.max-w-\[150px\] {
+  max-width: 150px;
+}
+
 .max-w-\[16px\] {
   max-width: 16px;
 }
@@ -2592,14 +2596,6 @@ h1, h2, h3, h4, h5, h6 {
 
 .max-w-xs {
   max-width: 20rem;
-}
-
-.max-w-\[200px\] {
-  max-width: 200px;
-}
-
-.max-w-\[150px\] {
-  max-width: 150px;
 }
 
 .flex-1 {
@@ -3643,6 +3639,10 @@ h1, h2, h3, h4, h5, h6 {
   background-color: rgb(249 115 22 / 0.2);
 }
 
+.bg-orange-500\/5 {
+  background-color: rgb(249 115 22 / 0.05);
+}
+
 .bg-pink-500 {
   --tw-bg-opacity: 1;
   background-color: rgb(236 72 153 / var(--tw-bg-opacity, 1));
@@ -3886,10 +3886,6 @@ h1, h2, h3, h4, h5, h6 {
 
 .bg-zinc-950\/95 {
   background-color: rgb(9 9 11 / 0.95);
-}
-
-.bg-orange-500\/5 {
-  background-color: rgb(249 115 22 / 0.05);
 }
 
 .bg-opacity-80 {

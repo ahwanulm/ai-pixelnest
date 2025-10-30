@@ -241,9 +241,9 @@
             });
         });
         
-        // Tempo slider
-        const tempoSlider = document.getElementById('audio-tempo');
-        const tempoDisplay = document.getElementById('audio-tempo-display');
+        // Tempo slider (Advanced Options)
+        const tempoSlider = document.getElementById('audio-advanced-tempo');
+        const tempoDisplay = document.getElementById('audio-advanced-tempo-display');
         if (tempoSlider && tempoDisplay) {
             tempoSlider.addEventListener('input', function() {
                 selectedTempo = this.value;
@@ -731,6 +731,11 @@
                 const type = this.getAttribute('data-type');
                 const desc = this.getAttribute('data-desc');
                 selectAudioType(type, desc, this);
+                
+                // Call global updateDurationVisibility if available (from dashboard.ejs)
+                if (typeof window.updateDurationVisibility === 'function') {
+                    window.updateDurationVisibility();
+                }
             });
         });
     }
@@ -781,9 +786,9 @@
                     }
                 });
                 
-                // Reset tempo slider
-                const tempoSlider = document.getElementById('audio-tempo');
-                const tempoDisplay = document.getElementById('audio-tempo-display');
+                // Reset tempo slider (Advanced Options)
+                const tempoSlider = document.getElementById('audio-advanced-tempo');
+                const tempoDisplay = document.getElementById('audio-advanced-tempo-display');
                 if (tempoSlider) tempoSlider.value = 120;
                 if (tempoDisplay) tempoDisplay.textContent = '120 BPM';
                 
@@ -868,7 +873,10 @@
         }
         
         // Update hidden select
-        if (audioTypeSelect) audioTypeSelect.value = type;
+        if (audioTypeSelect) {
+            audioTypeSelect.value = type;
+            audioTypeSelect.dispatchEvent(new Event('change'));
+        }
         
         // Update active state
         audioTypeOptions.forEach(opt => opt.classList.remove('active'));

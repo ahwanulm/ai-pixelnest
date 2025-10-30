@@ -449,7 +449,7 @@ const FAL_AI_DEFAULT_MODELS = [
     pricing_type: 'flat',
     pricing_structure: 'simple'
   },
-
+  
   // ========================================
   // 🎵 AUDIO MODELS
   // ========================================

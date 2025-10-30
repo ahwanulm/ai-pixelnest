@@ -197,6 +197,10 @@ const generationQueueController = {
       const result = await pool.query(insertQuery, values);
       const dbJobId = result.rows[0].id;
 
+      // ✨ Small delay to ensure database transaction is fully committed
+      // This prevents race condition where worker reads before commit finishes
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       // 2. Enqueue job to pg-boss (include uploaded files!)
       const queueJobId = await queueManager.enqueue(
         'ai-generation',

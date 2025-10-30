@@ -181,7 +181,10 @@ async function processAIGeneration(jobData, job) {
     );
 
     if (jobCheck.rows.length === 0) {
-      console.log('⚠️ Job not found in database - may have been deleted');
+      console.error('⚠️ Job not found in database - may have been deleted or not yet committed');
+      console.error('   Job ID:', jobId);
+      console.error('   This may indicate a race condition - worker started before DB commit');
+      console.error('   Consider increasing delay in generationQueueController.js');
       const skipError = new Error('Job not found in database');
       skipError.expireJob = true;
       throw skipError;
@@ -291,27 +294,44 @@ async function processAIGeneration(jobData, job) {
       // Callback-based: save as processing
       await pool.query(`
         UPDATE ai_generation_history
-        SET 
+        SET
           status = 'processing',
           progress = 50,
           metadata = $1,
           cost_credits = $2
         WHERE job_id = $3
       `, [JSON.stringify(result), creditsCost, jobId]);
-      
+
       console.log('💾 Processing - awaiting callback');
     } else {
+      // ✅ Handle different storedUrl formats (string for most types, object for 3D)
+      let resultUrl, metadata;
+
+      if (typeof storedUrl === 'object' && storedUrl.url) {
+        // 3D models: store local URL in result_url, model data in metadata
+        resultUrl = storedUrl.url;
+        metadata = JSON.stringify({
+          ...result,
+          model: storedUrl.model // Include model data for frontend
+        });
+      } else {
+        // Regular types: store URL directly
+        resultUrl = storedUrl;
+        metadata = null;
+      }
+
       // Direct result: mark completed
       await pool.query(`
         UPDATE ai_generation_history
-        SET 
+        SET
           status = 'completed',
           progress = 100,
           result_url = $1,
-          cost_credits = $2,
+          metadata = $2,
+          cost_credits = $3,
           completed_at = NOW()
-        WHERE job_id = $3
-      `, [storedUrl, creditsCost, jobId]);
+        WHERE job_id = $4
+      `, [resultUrl, metadata, creditsCost, jobId]);
     }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -808,6 +828,29 @@ async function generateAudio(modelId, prompt, settings, subType, jobId) {
       sunoParams.vocal_gender = settings.advanced.vocal_gender;
     }
     
+    // Add tempo if provided (convert to tags/style description)
+    if (settings.advanced?.tempo) {
+      const tempo = parseInt(settings.advanced.tempo);
+      let tempoDesc = '';
+      
+      if (tempo < 90) {
+        tempoDesc = 'slow tempo';
+      } else if (tempo > 140) {
+        tempoDesc = 'fast tempo';
+      } else {
+        tempoDesc = 'medium tempo';
+      }
+      
+      // Add tempo to tags/style
+      if (sunoParams.tags) {
+        sunoParams.tags += `, ${tempoDesc}`;
+      } else {
+        sunoParams.tags = tempoDesc;
+      }
+      
+      console.log(`   🎵 Tempo: ${tempo} BPM (${tempoDesc})`);
+    }
+    
     console.log(`   🎵 Suno Model: ${modelVersion}`);
     console.log(`   🎨 Custom Mode: ${sunoParams.custom_mode}`);
     console.log(`   🎹 Instrumental: ${sunoParams.make_instrumental}`);
@@ -911,6 +954,30 @@ async function generateAudio(modelId, prompt, settings, subType, jobId) {
  * Handles both single and multiple images
  */
 async function storeResult(userId, result, type) {
+  // ✅ Special handling for 3D models (they return a model object, not images)
+  if (result.model) {
+    console.log('🎲 Processing 3D model result');
+
+    const modelData = result.model;
+    const modelUrl = modelData.url;
+
+    if (!modelUrl) {
+      console.error('❌ No 3D model URL found in result:', JSON.stringify(result, null, 2));
+      throw new Error('No 3D model URL in result');
+    }
+
+    console.log(`📥 Downloading 3D model: ${modelData.file_name || 'model.zip'} (${(modelData.file_size / 1024 / 1024).toFixed(2)} MB)`);
+    const storedPath = await videoStorage.downloadAndStoreModel(modelUrl, userId, modelData.file_name || 'model.zip');
+    console.log(`✅ 3D model stored: ${storedPath}`);
+
+    // ✅ For 3D models, return the model data object instead of just URL
+    // This allows frontend to display the model directly
+    return {
+      url: storedPath, // Local path for database
+      model: modelData  // Model data for frontend display
+    };
+  }
+
   if (type === 'image') {
     // Handle multiple images
     if (result.images && result.images.length > 0) {

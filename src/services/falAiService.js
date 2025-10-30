@@ -62,6 +62,25 @@ const FalAiService = {
   // ============ IMAGE GENERATION ============
   
   /**
+   * Extract 3D model format from filename or URL
+   */
+  extractModelFormat(filenameOrUrl) {
+    const filename = filenameOrUrl.toLowerCase();
+
+    if (filename.includes('.glb')) return 'GLB';
+    if (filename.includes('.gltf')) return 'GLTF';
+    if (filename.includes('.obj')) return 'OBJ';
+    if (filename.includes('.fbx')) return 'FBX';
+    if (filename.includes('.ply')) return 'PLY';
+    if (filename.includes('.stl')) return 'STL';
+
+    // Default to GLB if zip file (common for 3D models)
+    if (filename.includes('.zip')) return 'GLB';
+
+    return 'Unknown';
+  },
+
+  /**
    * Generate image from text
    */
   async generateImage(modelOrOptions, prompt, settings) {
@@ -275,18 +294,50 @@ const FalAiService = {
       const result = await Promise.race([falPromise, timeoutPromise]);
       
       // Handle multiple possible FAL.AI response formats
-      const images = result.images || 
+
+      // ✅ Special handling for 3D models (they return a single model object, not images array)
+      if (model.includes('3d') || model.includes('seed3d')) {
+        console.log('🎲 Processing 3D model response');
+
+        const modelData = result.model || result.output?.model || result;
+        if (!modelData || !modelData.url) {
+          console.error('❌ No 3D model found in FAL.AI response:', JSON.stringify(result, null, 2));
+          throw new Error('No 3D model in FAL.AI response');
+        }
+
+        console.log(`✅ 3D model extracted from FAL.AI response`);
+        console.log(`   📦 File: ${modelData.file_name || 'model.zip'}`);
+        console.log(`   📏 Size: ${(modelData.file_size / 1024 / 1024).toFixed(2)} MB`);
+        console.log(`   🔗 URL: ${modelData.url}`);
+
+        return {
+          success: true,
+          model: {
+            url: modelData.url,
+            content_type: modelData.content_type || 'application/zip',
+            file_name: modelData.file_name || 'model.zip',
+            file_size: modelData.file_size || 0,
+            format: this.extractModelFormat(modelData.file_name || modelData.url)
+          },
+          usage_tokens: result.usage_tokens,
+          seed: result.seed,
+          prompt: result.prompt || prompt
+        };
+      }
+
+      // ✅ Standard image response handling
+      const images = result.images ||
                      result.output?.images ||
                      (result.image ? [result.image] : null) ||
                      (result.output?.image ? [result.output.image] : null);
-      
+
       if (!images || images.length === 0) {
         console.error('❌ No images found in FAL.AI response:', JSON.stringify(result, null, 2));
         throw new Error('No images in FAL.AI response');
       }
-      
+
       console.log(`✅ ${images.length} image(s) extracted from FAL.AI response`);
-      
+
       return {
         success: true,
         images: images.map(img => ({
