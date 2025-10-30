@@ -35,7 +35,7 @@ router.post('/callback/suno', async (req, res) => {
         
         // Find the original generation record first
         const findQuery = `
-          SELECT id, user_id, prompt, model_used, credits_used, settings, sub_type 
+          SELECT id, user_id, prompt, model_used, cost_credits, settings, sub_type 
           FROM ai_generation_history 
           WHERE metadata::text LIKE $1
           AND status = 'processing'
@@ -65,6 +65,17 @@ router.post('/callback/suno', async (req, res) => {
             // For each ready track, create or update a generation record
             for (let i = 0; i < readyTracks.length; i++) {
               const track = readyTracks[i];
+              
+              // 🔍 Log track structure for debugging duration issue
+              console.log(`   🎵 Track ${i + 1} structure:`, {
+                id: track.id,
+                audio_url: track.audio_url ? 'exists' : 'missing',
+                title: track.title,
+                duration: track.duration,
+                audio_length: track.audio_length,
+                length: track.length,
+                allFields: Object.keys(track)
+              });
               
               try {
                 if (i === 0) {
@@ -96,7 +107,7 @@ router.post('/callback/suno', async (req, res) => {
                   // Create a new record for additional tracks
                   const insertQuery = `
                     INSERT INTO ai_generation_history 
-                    (user_id, model_used, prompt, result_url, result_data, metadata, status, credits_used, generation_type, sub_type, completed_at)
+                    (user_id, model_used, prompt, result_url, result_data, metadata, status, cost_credits, generation_type, sub_type, completed_at)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
                     RETURNING id
                   `;
@@ -116,7 +127,7 @@ router.post('/callback/suno', async (req, res) => {
                       task_id: task_id
                     }),
                     'completed',
-                    0, // No additional credits charged for extra tracks
+                    0, // No additional credits charged for extra tracks (track 2 is bonus)
                     'audio',
                     originalGen.sub_type || 'text-to-music'
                   ]);

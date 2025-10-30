@@ -874,34 +874,36 @@ async function generateAudio(modelId, prompt, settings, subType, jobId) {
         message: 'Awaiting Suno callback (~30-60s)',
         metadata: sunoResponse
       };
-      return result;
-    }
+      // ✅ DON'T return early - let the code flow continue to deduct credits
+      // The cost will be persisted in the main flow (line 301)
+    } else {
     
-    const tracks = Array.isArray(sunoResponse) ? sunoResponse : [sunoResponse];
-    
-    console.log(`   🎵 Received ${tracks.length} track(s) from Suno`);
-    
-    // Validate at least one track
-    if (tracks.length === 0 || !tracks[0]?.audio_url) {
-      console.error('❌ Invalid Suno response:', sunoResponse);
-      throw new Error('Invalid Suno API response: no audio_url found');
-    }
-    
-    // Use first track as primary result for database
-    result = {
-      audio_url: tracks[0].audio_url,
-      audio_id: tracks[0].audio_id,
-      video_url: tracks[0].video_url,
-      image_url: tracks[0].image_url,
-      metadata: {
-        ...(tracks[0].metadata || tracks[0]),
-        all_tracks: tracks // Store all tracks in metadata
+      const tracks = Array.isArray(sunoResponse) ? sunoResponse : [sunoResponse];
+      
+      console.log(`   🎵 Received ${tracks.length} track(s) from Suno`);
+      
+      // Validate at least one track
+      if (tracks.length === 0 || !tracks[0]?.audio_url) {
+        console.error('❌ Invalid Suno response:', sunoResponse);
+        throw new Error('Invalid Suno API response: no audio_url found');
       }
-    };
-    
-    console.log(`   ✅ Primary audio: ${result.audio_url?.substring(0, 80)}...`);
-    if (tracks.length > 1) {
-      console.log(`   ✅ Additional audio: ${tracks[1].audio_url?.substring(0, 80)}...`);
+      
+      // Use first track as primary result for database
+      result = {
+        audio_url: tracks[0].audio_url,
+        audio_id: tracks[0].audio_id,
+        video_url: tracks[0].video_url,
+        image_url: tracks[0].image_url,
+        metadata: {
+          ...(tracks[0].metadata || tracks[0]),
+          all_tracks: tracks // Store all tracks in metadata
+        }
+      };
+      
+      console.log(`   ✅ Primary audio: ${result.audio_url?.substring(0, 80)}...`);
+      if (tracks.length > 1) {
+        console.log(`   ✅ Additional audio: ${tracks[1].audio_url?.substring(0, 80)}...`);
+      }
     }
     
   } else if (provider === 'FAL' || !provider) {

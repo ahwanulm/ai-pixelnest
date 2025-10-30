@@ -65,7 +65,7 @@ const PaymentController = {
         
         SELECT 
           'usage' as type,
-          -credits_cost as credits,
+          -cost_credits as credits,
           'Used for ' || generation_type || ' (' || sub_type || ')' as description,
           created_at
         FROM ai_generation_history

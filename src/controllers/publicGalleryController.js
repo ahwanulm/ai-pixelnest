@@ -303,7 +303,7 @@ exports.shareToPublic = async (req, res) => {
         generation.sub_type,
         generation.result_url,
         generation.prompt,
-        generation.credits_cost || generation.cost,
+        generation.cost_credits || generation.cost,
         metadata.width || null,
         metadata.height || null,
         metadata.duration || null

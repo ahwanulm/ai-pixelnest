@@ -67,7 +67,7 @@ const adminJobsController = {
           g.result_url,
           g.status,
           g.progress,
-          g.credits_cost,
+          g.cost_credits,
           g.error_message,
           g.started_at,
           g.completed_at,
@@ -108,7 +108,7 @@ const adminJobsController = {
           COUNT(*) as count,
           COUNT(*) FILTER (WHERE started_at > NOW() - INTERVAL '1 hour') as last_hour,
           COUNT(*) FILTER (WHERE started_at > NOW() - INTERVAL '24 hours') as last_24h,
-          SUM(credits_cost) as total_credits
+          SUM(cost_credits) as total_credits
         FROM ai_generation_history
         GROUP BY status
       `;
@@ -463,7 +463,7 @@ const adminJobsController = {
           COUNT(*) FILTER (WHERE status = 'failed') as failed,
           COUNT(*) FILTER (WHERE started_at > NOW() - INTERVAL '1 hour') as last_hour,
           COUNT(*) FILTER (WHERE started_at > NOW() - INTERVAL '24 hours') as last_24h,
-          SUM(credits_cost) as total_credits_used,
+          SUM(cost_credits) as total_credits_used,
           AVG(EXTRACT(EPOCH FROM (completed_at - started_at))) as avg_processing_time
         FROM ai_generation_history
       `;

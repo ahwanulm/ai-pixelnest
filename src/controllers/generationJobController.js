@@ -72,7 +72,7 @@ const generationJobController = {
           result_url,
           status,
           progress,
-          credits_cost,
+          cost_credits,
           error_message,
           started_at,
           completed_at,
@@ -103,7 +103,7 @@ const generationJobController = {
           resultUrl: job.result_url,
           status: job.status, // 'pending', 'processing', 'completed', 'failed'
           progress: job.progress,
-          creditsCost: job.credits_cost,
+          creditsCost: job.cost_credits,
           errorMessage: job.error_message,
           startedAt: job.started_at,
           completedAt: job.completed_at

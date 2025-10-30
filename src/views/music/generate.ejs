@@ -1313,25 +1313,30 @@
         const data = await response.json();
         
         if (data.success) {
-          showNotification('Music generation started successfully!', 'success');
+          showNotification('Music generation started! Waiting for results...', 'success');
           
           // Update credits display
           if (data.remainingCredits !== undefined) {
             userCreditsEl.textContent = data.remainingCredits + ' credits';
           }
           
-          // Display results
-          displayMusicResults(data.data, formData);
+          // Show processing state
+          displayProcessingState(data.generationId, formData);
+          
+          // Start SSE to listen for completion
+          listenForCompletion(data.generationId, formData);
           
           // Reset form
           musicForm.reset();
         } else {
           showNotification(data.message || 'Failed to generate music', 'error');
+          generateBtn.disabled = false;
+          generateBtn.classList.remove('generating');
+          btnText.innerHTML = '<i class="fas fa-music mr-2"></i>Generate Music';
         }
       } catch (error) {
         console.error('Error:', error);
         showNotification('An error occurred. Please try again.', 'error');
-      } finally {
         generateBtn.disabled = false;
         generateBtn.classList.remove('generating');
         btnText.innerHTML = '<i class="fas fa-music mr-2"></i>Generate Music';
@@ -1455,6 +1460,151 @@
       setTimeout(() => {
         notification.remove();
       }, 5000);
+    }
+    
+    // ========== SSE REAL-TIME UPDATES ==========
+    let eventSource = null;
+    
+    function displayProcessingState(generationId, formData) {
+      resultsSection.classList.remove('hidden');
+      musicResults.innerHTML = `
+        <div class="col-span-full glass-strong rounded-xl p-8 text-center">
+          <div class="animate-pulse mb-4">
+            <i class="fas fa-music text-6xl text-blue-400"></i>
+          </div>
+          <p class="text-xl font-bold mb-2">Generating your music...</p>
+          <p class="text-gray-400 mb-4">This may take 30-60 seconds</p>
+          <div class="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse" style="width: 50%"></div>
+          </div>
+        </div>
+      `;
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    function listenForCompletion(generationId, formData) {
+      console.log('📡 Starting SSE listener for generation:', generationId);
+      
+      // Close existing connection if any
+      if (eventSource) {
+        eventSource.close();
+      }
+      
+      // Connect to SSE endpoint
+      eventSource = new EventSource('/api/sse/generation-updates');
+      
+      eventSource.addEventListener('message', (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'connected') {
+          console.log('✅ SSE connected');
+        }
+      });
+      
+      eventSource.addEventListener('job-completed', async (event) => {
+        const data = JSON.parse(event.data);
+        console.log('✅ Job completed via SSE:', data);
+        
+        // Check if this is our job
+        if (data.generationId === generationId) {
+          console.log('🎵 Our music generation completed!');
+          
+          // Fetch the completed generation data
+          try {
+            const response = await fetch(`/api/generations/${generationId}`);
+            const genData = await response.json();
+            
+            if (genData.success) {
+              // Display the music results
+              const tracks = genData.generation.metadata?.all_tracks || 
+                            genData.generation.result_data?.all_tracks || 
+                            [genData.generation];
+              
+              displayMusicResults({ data: tracks }, formData);
+              showNotification('Music generated successfully!', 'success');
+            }
+          } catch (error) {
+            console.error('Error fetching generation:', error);
+            showNotification('Music completed but failed to load. Please refresh.', 'warning');
+          }
+          
+          // Re-enable button
+          generateBtn.disabled = false;
+          generateBtn.classList.remove('generating');
+          btnText.innerHTML = '<i class="fas fa-music mr-2"></i>Generate Music';
+          
+          // Close SSE
+          if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+          }
+        }
+      });
+      
+      eventSource.addEventListener('job-failed', (event) => {
+        const data = JSON.parse(event.data);
+        
+        if (data.generationId === generationId) {
+          console.error('❌ Music generation failed:', data.error);
+          showNotification(data.error || 'Music generation failed', 'error');
+          
+          // Re-enable button
+          generateBtn.disabled = false;
+          generateBtn.classList.remove('generating');
+          btnText.innerHTML = '<i class="fas fa-music mr-2"></i>Generate Music';
+          
+          // Show error state
+          musicResults.innerHTML = `
+            <div class="col-span-full glass-strong rounded-xl p-8 text-center">
+              <i class="fas fa-exclamation-circle text-6xl text-red-400 mb-4"></i>
+              <p class="text-xl font-bold mb-2">Generation Failed</p>
+              <p class="text-gray-400">${data.error || 'Unknown error occurred'}</p>
+            </div>
+          `;
+          
+          // Close SSE
+          if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+          }
+        }
+      });
+      
+      eventSource.onerror = (error) => {
+        console.error('❌ SSE connection error:', error);
+        // Auto-reconnect handled by browser
+      };
+      
+      // Fallback: Check status via polling after 90 seconds
+      setTimeout(async () => {
+        if (eventSource) {
+          console.log('⏰ SSE timeout, checking status via API...');
+          try {
+            const response = await fetch(`/api/generations/${generationId}`);
+            const data = await response.json();
+            
+            if (data.success && data.generation.status === 'completed') {
+              const tracks = data.generation.metadata?.all_tracks || 
+                            data.generation.result_data?.all_tracks || 
+                            [data.generation];
+              displayMusicResults({ data: tracks }, formData);
+              showNotification('Music generated successfully!', 'success');
+              
+              // Re-enable button
+              generateBtn.disabled = false;
+              generateBtn.classList.remove('generating');
+              btnText.innerHTML = '<i class="fas fa-music mr-2"></i>Generate Music';
+            }
+          } catch (error) {
+            console.error('Fallback check error:', error);
+          }
+          
+          // Close SSE
+          if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+          }
+        }
+      }, 90000); // 90 seconds
     }
   </script>
 </body>

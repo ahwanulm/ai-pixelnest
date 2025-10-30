@@ -1,11 +1,13 @@
 const sunoService = require('../services/sunoService');
 const User = require('../models/User');
 const { pool } = require('../config/database');
+const queueManager = require('../queue/pgBossQueue');
 
 const musicController = {
   /**
    * Generate music from text prompt
    * POST /music/generate
+   * 🔄 QUEUE-BASED: Uses worker for consistent async processing
    */
   async generateMusic(req, res) {
     try {
@@ -19,12 +21,12 @@ const musicController = {
         custom_mode = false,
         vocal_gender = null,
         weirdness = 0.5,
-        style_weight = 0.7
+        style_weight = 0.7,
+        tempo = 120
       } = req.body;
 
       // ⛔ IMPORTANT: Suno AI NEVER uses auto-prompt enhancement
       // User's exact prompt is used without modification
-      // No originalPrompt, no enhancement, direct to Suno API
       
       // Validate prompt
       if (!prompt || prompt.trim().length === 0) {
@@ -43,16 +45,21 @@ const musicController = {
         });
       }
 
-      // Get model pricing from database
+      // Get model from database
       const modelQuery = await pool.query(
-        'SELECT cost FROM ai_models WHERE model_id = $1 AND is_active = true',
+        'SELECT id, model_id, cost, provider FROM ai_models WHERE model_id = $1 AND is_active = true',
         [`suno-${model}`]
       );
       
-      // Calculate credits cost from database or fallback
-      const baseCost = modelQuery.rows.length > 0 
-        ? parseFloat(modelQuery.rows[0].cost) 
-        : 0.5; // Default fallback
+      if (modelQuery.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: `Model suno-${model} not found`
+        });
+      }
+
+      const modelData = modelQuery.rows[0];
+      const baseCost = parseFloat(modelData.cost);
 
       // Check user credits
       const user = await User.findById(userId);
@@ -72,99 +79,111 @@ const musicController = {
         });
       }
 
-      console.log('🎵 Generating music for user:', userId, {
+      console.log('🎵 Enqueueing music generation for user:', userId, {
         prompt: prompt.substring(0, 50) + '...',
         model,
         vocal_gender: vocal_gender || 'auto',
         custom_mode,
         weirdness,
-        style_weight
+        style_weight,
+        tempo
       });
 
-      // Prepare generation parameters
+      // Prepare settings for worker
       const isInstrumental = make_instrumental === 'true' || make_instrumental === true;
-      const generationParams = {
-        prompt,
+      const settings = {
         make_instrumental: isInstrumental,
-        model,
-        wait_audio: true,
         custom_mode: custom_mode === 'true' || custom_mode === true,
-        instrumental: isInstrumental,
-        title,
-        tags,
+        vocal_gender: !isInstrumental && vocal_gender ? vocal_gender : null,
         weirdness: parseFloat(weirdness) || 0.5,
-        style_weight: parseFloat(style_weight) || 0.7
+        style_weight: parseFloat(style_weight) || 0.7,
+        title: title || '',
+        tags: tags || '',
+        advanced: {
+          tempo: parseInt(tempo) || 120
+        }
       };
 
-      // Add vocal_gender only if not instrumental
-      if (!isInstrumental && vocal_gender) {
-        generationParams.vocal_gender = vocal_gender;
-      }
+      // Deduct credits upfront
+      await User.updateCredits(userId, -baseCost, 'Music Generation', `Generating music: ${title || prompt.substring(0, 50)}`);
 
-      // Generate music using Suno API
-      const result = await sunoService.generateMusic(generationParams);
-      
-      // Extract all tracks (Suno returns 2 songs)
-      // result can be: array of tracks OR single track with metadata.all_tracks
-      let allTracks = [];
-      
-      if (Array.isArray(result)) {
-        // Direct array of tracks
-        allTracks = result;
-      } else if (result.metadata && Array.isArray(result.metadata.all_tracks)) {
-        // Tracks stored in metadata
-        allTracks = result.metadata.all_tracks;
-      } else {
-        // Single track
-        allTracks = [result];
-      }
-      
-      console.log(`   📦 Processing ${allTracks.length} track(s) for response`);
-
-      // Deduct credits
-      await User.updateCredits(userId, -baseCost, 'Music Generation', `Generated music: ${title || prompt.substring(0, 50)}`);
-
-      // Save generation to history (save primary track)
-      const saveQuery = `
+      // Save generation to database with 'processing' status
+      const insertQuery = `
         INSERT INTO ai_generation_history 
-        (user_id, model_id, model_name, prompt, result_url, result_data, status, credits_used, generation_type)
+        (user_id, model_used, prompt, status, cost_credits, generation_type, sub_type, settings, metadata)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING *
+        RETURNING id, created_at
       `;
 
-      const primaryTrack = allTracks[0];
-      const resultUrl = primaryTrack.audio_url;
-
-      const saveValues = [
+      const insertValues = [
         userId,
-        `suno-${model}`,
-        `Suno ${model.toUpperCase()}`,
+        modelData.model_id,
         prompt,
-        resultUrl,
-        JSON.stringify({ all_tracks: allTracks }), // Save all tracks
-        'completed',
+        'processing',
         baseCost,
-        'audio'
+        'audio',
+        'music-suno',
+        JSON.stringify(settings),
+        JSON.stringify({ 
+          model,
+          provider: 'Suno',
+          source: 'music-page'
+        })
       ];
 
-      const saveResult = await pool.query(saveQuery, saveValues);
+      const insertResult = await pool.query(insertQuery, insertValues);
+      const generationId = insertResult.rows[0].id;
 
+      console.log(`   💾 Created generation record: ${generationId}`);
+
+      // Small delay to ensure database transaction is committed
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Enqueue job to worker
+      const jobId = await queueManager.enqueue('ai-generation', {
+        generationId,
+        userId,
+        modelId: modelData.id,
+        prompt,
+        settings,
+        generationType: 'audio',
+        subType: 'music-suno'
+      }, {
+        priority: 5, // Higher priority for music
+        retryLimit: 2,
+        retryDelay: 30,
+        expireInSeconds: 60 * 15 // 15 minutes
+      });
+
+      console.log(`   📤 Job enqueued: ${jobId}`);
+
+      // Return job info immediately
       res.json({
         success: true,
-        message: `Music generated successfully! (${allTracks.length} tracks)`,
-        data: {
-          data: allTracks // Array of all tracks for frontend
-        },
-        generation: saveResult.rows[0],
+        message: 'Music generation started',
+        jobId,
+        generationId,
+        status: 'processing',
         creditsUsed: baseCost,
-        remainingCredits: user.credits - baseCost
+        remainingCredits: user.credits - baseCost,
+        estimatedTime: '30-60 seconds'
       });
 
     } catch (error) {
-      console.error('❌ Music generation error:', error);
+      console.error('❌ Music generation enqueue error:', error);
+      
+      // Refund credits if job failed to enqueue
+      if (error.message && !error.message.includes('Insufficient credits')) {
+        try {
+          await User.updateCredits(req.user.id, baseCost, 'Refund', 'Music generation failed to start');
+        } catch (refundError) {
+          console.error('❌ Refund failed:', refundError);
+        }
+      }
+      
       res.status(500).json({
         success: false,
-        message: error.message || 'Failed to generate music'
+        message: error.message || 'Failed to start music generation'
       });
     }
   },

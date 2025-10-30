@@ -3386,7 +3386,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         const audioTypeLabel = metadata?.subType || audio.type || 'Audio';
-        const duration = audio.duration || metadata?.settings?.duration || 5;
+        
+        // ✅ Fix: Read actual duration from Suno track metadata, not requested duration
+        // Priority: 1. metadata.track.duration (actual from Suno), 2. audio.duration, 3. settings.duration (request), 4. default 5s
+        let duration = 5; // default
+        
+        // Try various possible duration field names from Suno API
+        if (metadata?.track?.duration) {
+            duration = Math.round(parseFloat(metadata.track.duration));
+        } else if (metadata?.track?.audio_length) {
+            duration = Math.round(parseFloat(metadata.track.audio_length));
+        } else if (metadata?.track?.length) {
+            duration = Math.round(parseFloat(metadata.track.length));
+        } else if (audio.duration) {
+            duration = Math.round(parseFloat(audio.duration));
+        } else if (metadata?.settings?.duration) {
+            // Fallback to requested duration (may be inaccurate for Suno)
+            duration = Math.round(parseFloat(metadata.settings.duration));
+        }
+        
         const prompt = metadata?.prompt || 'Generated audio';
         const modelName = cleanModelName(metadata?.settings?.model) || 'Unknown model';
         // Fix decimal handling: ensure proper parsing and rounding
@@ -4546,9 +4564,23 @@ document.addEventListener('DOMContentLoaded', function() {
                             }, gen.id, metadata); // Pass metadata
                             resultDisplay.appendChild(videoCard);
                         } else if (gen.generation_type === 'audio') {
+                            // ✅ Try to get actual duration from metadata (Suno track), fallback to settings
+                            let audioDuration = 5;
+                            
+                            // Try various possible duration field names from Suno API
+                            if (gen.metadata?.track?.duration) {
+                                audioDuration = Math.round(parseFloat(gen.metadata.track.duration));
+                            } else if (gen.metadata?.track?.audio_length) {
+                                audioDuration = Math.round(parseFloat(gen.metadata.track.audio_length));
+                            } else if (gen.metadata?.track?.length) {
+                                audioDuration = Math.round(parseFloat(gen.metadata.track.length));
+                            } else if (gen.settings?.duration) {
+                                audioDuration = gen.settings.duration;
+                            }
+                            
                             const audioCard = createAudioCard({
                                 url: gen.result_url,
-                                duration: gen.settings?.duration || 5,
+                                duration: audioDuration,
                                 type: gen.sub_type || 'audio'
                             }, gen.id, metadata); // Pass metadata
                             resultDisplay.appendChild(audioCard);
