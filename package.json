@@ -75,7 +75,11 @@
     "deploy:zip:node": "node create-deployment-zip.js",
     "deploy:vps": "./deploy-vps.sh",
     "deploy:pm2": "sudo bash deploy-pixelnest.sh",
-    "post:deploy": "bash post-deploy.sh"
+    "post:deploy": "bash post-deploy.sh",
+    "test:callback": "node test-suno-callback.js",
+    "test:callback:health": "node test-suno-callback.js --health",
+    "check:suno": "node check-suno-status.js",
+    "check:suno:config": "node check-suno-status.js --config"
   },
   "keywords": [
     "ai",

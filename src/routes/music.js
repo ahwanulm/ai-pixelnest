@@ -6,7 +6,14 @@ const { ensureAuthenticated } = require('../middleware/auth');
 // Callback endpoint - NO auth required (called by Suno API)
 router.post('/callback/suno', async (req, res) => {
   try {
-    console.log('📥 Suno callback received:', JSON.stringify(req.body, null, 2));
+    console.log('\n═══════════════════════════════════════════════════════════');
+    console.log('📥 SUNO CALLBACK RECEIVED');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('🕐 Timestamp:', new Date().toISOString());
+    console.log('🌐 Source IP:', req.ip || req.connection.remoteAddress);
+    console.log('📦 Full Payload:', JSON.stringify(req.body, null, 2));
+    console.log('📋 Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('───────────────────────────────────────────────────────────\n');
     
     const { code, msg, data } = req.body;
     
