@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Concurrent Polling</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #00ff00; }
+        .job { border: 1px solid #333; padding: 10px; margin: 10px 0; background: #222; }
+        .status { font-weight: bold; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #4CAF50; color: white; border: none; }
+        .log { background: #111; padding: 10px; overflow-y: auto; max-height: 400px; font-size: 12px; }
+        .log div { margin: 2px 0; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Concurrent Polling</h1>
+    
+    <div>
+        <button onclick="testSingleJob()">Test Single Job</button>
+        <button onclick="testTwoJobs()">Test 2 Concurrent Jobs</button>
+        <button onclick="testThreeJobs()">Test 3 Concurrent Jobs</button>
+        <button onclick="clearLogs()">Clear Logs</button>
+    </div>
+    
+    <h2>Jobs:</h2>
+    <div id="jobs"></div>
+    
+    <h2>Console Logs:</h2>
+    <div id="logs" class="log"></div>
+    
+    <script src="/js/queueClient.js"></script>
+    <script>
+        const client = new QueueClient();
+        const jobsDiv = document.getElementById('jobs');
+        const logsDiv = document.getElementById('logs');
+        
+        // Override console.log to capture logs
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        
+        function addLog(message, type = 'log') {
+            const div = document.createElement('div');
+            div.style.color = type === 'error' ? '#ff4444' : type === 'warn' ? '#ffaa00' : '#00ff00';
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsDiv.appendChild(div);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addLog(args.join(' '), 'log');
+        };
+        
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addLog(args.join(' '), 'warn');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addLog(args.join(' '), 'error');
+        };
+        
+        function createJobUI(jobId) {
+            const div = document.createElement('div');
+            div.className = 'job';
+            div.id = `job-${jobId}`;
+            div.innerHTML = `
+                <div><strong>Job ID:</strong> ${jobId}</div>
+                <div class="status">Status: <span id="status-${jobId}">Starting...</span></div>
+                <div>Progress: <span id="progress-${jobId}">0%</span></div>
+            `;
+            jobsDiv.appendChild(div);
+        }
+        
+        function updateJobUI(jobId, status, progress) {
+            const statusEl = document.getElementById(`status-${jobId}`);
+            const progressEl = document.getElementById(`progress-${jobId}`);
+            if (statusEl) statusEl.textContent = status;
+            if (progressEl) progressEl.textContent = `${progress}%`;
+        }
+        
+        async function startJob(jobId) {
+            createJobUI(jobId);
+            
+            console.log(`🚀 Starting job ${jobId}`);
+            
+            client.pollJobStatus(
+                jobId,
+                (job) => {
+                    // onUpdate
+                    console.log(`📊 Job ${jobId} update: ${job.status} - ${job.progress}%`);
+                    updateJobUI(jobId, job.status, job.progress);
+                },
+                (job) => {
+                    // onComplete
+                    console.log(`✅ Job ${jobId} completed!`);
+                    updateJobUI(jobId, 'completed', 100);
+                },
+                (error) => {
+                    // onError
+                    console.error(`❌ Job ${jobId} failed:`, error);
+                    updateJobUI(jobId, 'failed', 0);
+                }
+            );
+        }
+        
+        function testSingleJob() {
+            console.log('🧪 Testing single job...');
+            startJob('test-job-1');
+        }
+        
+        function testTwoJobs() {
+            console.log('🧪 Testing 2 concurrent jobs...');
+            startJob('test-job-1');
+            setTimeout(() => startJob('test-job-2'), 100);
+        }
+        
+        function testThreeJobs() {
+            console.log('🧪 Testing 3 concurrent jobs...');
+            startJob('test-job-1');
+            setTimeout(() => startJob('test-job-2'), 100);
+            setTimeout(() => startJob('test-job-3'), 200);
+        }
+        
+        function clearLogs() {
+            logsDiv.innerHTML = '';
+            jobsDiv.innerHTML = '';
+        }
+        
+        console.log('✅ Test page loaded. Click buttons to test concurrent polling.');
+        console.log(`📊 Active pollers: ${client.activePollers.size}`);
+    </script>
+</body>
+</html>

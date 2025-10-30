@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <%- include('../partials/admin-styles') %>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+
+    <div class="flex-1 ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: title }) %>
+
+      <main class="p-8 flex-1">
+        <div class="mb-6 flex items-center justify-between">
+          <div>
+            <p class="text-gray-400">Configure API keys and settings for external services</p>
+          </div>
+          <button onclick="openAddModal()" class="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition flex items-center">
+            <i class="fas fa-plus mr-2"></i> Add New API Config
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <% apiConfigs.filter(config => config.service_name !== 'EMAIL').forEach(config => { %>
+            <div class="glass-strong rounded-xl p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                  <div class="w-12 h-12 <%= config.service_name === 'TRIPAY' ? 'bg-yellow-500/20' : config.service_name === 'GROQ' ? 'bg-orange-500/20' : config.service_name === 'SUNO' ? 'bg-pink-500/20' : config.service_name === 'EMAIL' || config.service_name === 'SENDGRID' ? 'bg-blue-500/20' : 'bg-violet-500/20' %> rounded-lg flex items-center justify-center">
+                    <i class="fas <%= config.service_name === 'TRIPAY' ? 'fa-credit-card' : config.service_name === 'GROQ' ? 'fa-wand-magic-sparkles' : config.service_name === 'SUNO' ? 'fa-music' : config.service_name === 'EMAIL' || config.service_name === 'SENDGRID' ? 'fa-envelope' : config.service_name === 'GOOGLE_OAUTH' ? 'fa-google' : config.service_name === 'OPENAI' ? 'fa-brain' : 'fa-plug' %> <%= config.service_name === 'TRIPAY' ? 'text-yellow-400' : config.service_name === 'GROQ' ? 'text-orange-400' : config.service_name === 'SUNO' ? 'text-pink-400' : config.service_name === 'EMAIL' || config.service_name === 'SENDGRID' ? 'text-blue-400' : 'text-violet-400' %> text-xl"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-lg font-bold text-white"><%= config.service_name %></h3>
+                    <p class="text-sm text-gray-400 truncate" style="max-width: 200px;"><%= config.endpoint_url %></p>
+                  </div>
+                </div>
+                <div class="flex flex-col items-end space-y-1">
+                  <span class="px-3 py-1 text-xs rounded-full <%= config.is_active ? 'badge-success' : 'badge-error' %>">
+                    <%= config.is_active ? 'Active' : 'Inactive' %>
+                  </span>
+                  <% if (config.syncStatus && !config.syncStatus.inSync) { %>
+                    <span class="px-2 py-1 text-xs rounded bg-amber-500/20 text-amber-300 border border-amber-500/30" title="<%= config.syncStatus.message %>">
+                      <i class="fas fa-exclamation-triangle"></i> Out of Sync
+                    </span>
+                  <% } else if (config.syncStatus && config.syncStatus.inSync) { %>
+                    <span class="px-2 py-1 text-xs rounded bg-green-500/20 text-green-300 border border-green-500/30" title="Database and .env are in sync">
+                      <i class="fas fa-check-circle"></i> Synced
+                    </span>
+                  <% } %>
+                </div>
+              </div>
+
+              <div class="space-y-2 mb-4">
+                <% if (config.service_name === 'TRIPAY') { %>
+                  <!-- TRIPAY Payment Gateway Fields -->
+                  <div class="p-3 bg-white/5 rounded-lg space-y-3">
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">Kode Merchant:</span>
+                      <span class="text-white font-mono text-xs text-right">
+                        <%= config.additional_config?.merchant_code || 'Not configured' %>
+                      </span>
+                    </div>
+                    <div class="h-px bg-white/10"></div>
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">Nama Merchant:</span>
+                      <span class="text-white font-mono text-xs text-right">
+                        <%= config.additional_config?.merchant_name || 'Not configured' %>
+                      </span>
+                    </div>
+                    <div class="h-px bg-white/10"></div>
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">API Key:</span>
+                      <div class="flex items-center gap-2 ml-2">
+                        <span class="text-white font-mono text-xs text-right api-key-display" 
+                              data-key="<%= config.api_key || '' %>" 
+                              data-masked="<%= config.api_key ? config.api_key.substring(0, 15) + '...' : 'Not configured' %>"
+                              style="max-width: 180px;">
+                          <%= config.api_key ? config.api_key.substring(0, 15) + '...' : 'Not configured' %>
+                        </span>
+                        <% if (config.api_key) { %>
+                          <button onclick="toggleApiKey(this)" 
+                                  class="text-gray-400 hover:text-white text-xs transition"
+                                  title="Show/Hide">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                        <% } %>
+                      </div>
+                    </div>
+                    <div class="h-px bg-white/10"></div>
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">Private Key:</span>
+                      <div class="flex items-center gap-2 ml-2">
+                        <span class="text-white font-mono text-xs text-right api-secret-display" 
+                              data-secret="<%= config.api_secret || '' %>" 
+                              data-masked="••••••••••••••••">
+                          <%= config.api_secret ? '••••••••••••••••' : 'Not configured' %>
+                        </span>
+                        <% if (config.api_secret) { %>
+                          <button onclick="toggleApiSecret(this)" 
+                                  class="text-gray-400 hover:text-white text-xs transition"
+                                  title="Show/Hide">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                        <% } %>
+                      </div>
+                    </div>
+                    <div class="h-px bg-white/10"></div>
+                    <div class="space-y-1">
+                      <div class="flex items-center justify-between">
+                        <span class="text-gray-400 text-xs font-medium">Callback URL:</span>
+                        <button onclick="copyToClipboard('<%= config.additional_config?.callback_url || 'Not configured' %>')" 
+                                class="text-violet-400 hover:text-violet-300 text-xs">
+                          <i class="fas fa-copy mr-1"></i>Copy
+                        </button>
+                      </div>
+                      <div class="p-2 bg-yellow-500/10 border border-yellow-500/30 rounded">
+                        <code class="text-yellow-300 text-xs break-all"><%= config.additional_config?.callback_url || 'http://localhost:5005/api/payment/callback' %></code>
+                      </div>
+                      <p class="text-xs text-gray-500 italic">
+                        <i class="fas fa-info-circle mr-1"></i>Use this URL in Tripay Dashboard
+                      </p>
+                    </div>
+                    <div class="h-px bg-white/10"></div>
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">Endpoint:</span>
+                      <span class="text-white font-mono text-xs text-right">
+                        <%= config.endpoint_url || 'Not configured' %>
+                      </span>
+                    </div>
+                  </div>
+                <% } else if (config.service_name === 'GOOGLE_OAUTH') { %>
+                  <div class="p-3 bg-white/5 rounded-lg space-y-3">
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">Client ID:</span>
+                      <div class="flex items-center gap-2 ml-2">
+                        <span class="text-white font-mono text-xs text-right break-all api-key-display" 
+                              data-key="<%= config.api_key || '' %>" 
+                              data-masked="<%= config.api_key ? config.api_key.substring(0, 20) + '...' : 'Not configured' %>"
+                              style="max-width: 180px;">
+                          <%= config.api_key ? config.api_key.substring(0, 20) + '...' : 'Not configured' %>
+                        </span>
+                        <% if (config.api_key) { %>
+                          <button onclick="toggleApiKey(this)" 
+                                  class="text-gray-400 hover:text-white text-xs transition"
+                                  title="Show/Hide">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                        <% } %>
+                      </div>
+                    </div>
+                    <div class="h-px bg-white/10"></div>
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">Client Secret:</span>
+                      <div class="flex items-center gap-2 ml-2">
+                        <span class="text-white font-mono text-xs text-right api-secret-display" 
+                              data-secret="<%= config.api_secret || '' %>" 
+                              data-masked="••••••••••••••••">
+                          <%= config.api_secret ? '••••••••••••••••' : 'Not configured' %>
+                        </span>
+                        <% if (config.api_secret) { %>
+                          <button onclick="toggleApiSecret(this)" 
+                                  class="text-gray-400 hover:text-white text-xs transition"
+                                  title="Show/Hide">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                        <% } %>
+                      </div>
+                    </div>
+                    <div class="h-px bg-white/10"></div>
+                    <div class="space-y-1">
+                      <div class="flex items-center justify-between">
+                        <span class="text-gray-400 text-xs font-medium">Callback URL:</span>
+                        <button onclick="copyToClipboard('<%= config.endpoint_url %>')" 
+                                class="text-violet-400 hover:text-violet-300 text-xs">
+                          <i class="fas fa-copy mr-1"></i>Copy
+                        </button>
+                      </div>
+                      <div class="p-2 bg-violet-500/10 border border-violet-500/30 rounded">
+                        <code class="text-violet-300 text-xs break-all"><%= config.endpoint_url || 'http://localhost:5005/auth/google/callback' %></code>
+                      </div>
+                      <p class="text-xs text-gray-500 italic">
+                        <i class="fas fa-info-circle mr-1"></i>Use this URL in Google Cloud Console
+                      </p>
+                    </div>
+                  </div>
+                <% } else if (config.service_name === 'GROQ') { %>
+                  <!-- GROQ AI Service Fields -->
+                  <div class="p-3 bg-white/5 rounded-lg space-y-3">
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">API Key:</span>
+                      <div class="flex items-center gap-2 ml-2">
+                        <span class="text-white font-mono text-xs text-right api-key-display" 
+                              data-key="<%= config.api_key || '' %>" 
+                              data-masked="<%= config.api_key ? config.api_key.substring(0, 15) + '...' : 'Not configured' %>"
+                              style="max-width: 180px;">
+                          <%= config.api_key ? config.api_key.substring(0, 15) + '...' : 'Not configured' %>
+                        </span>
+                        <% if (config.api_key) { %>
+                          <button onclick="toggleApiKey(this)" 
+                                  class="text-gray-400 hover:text-white text-xs transition"
+                                  title="Show/Hide">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                        <% } %>
+                      </div>
+                    </div>
+                    <div class="h-px bg-white/10"></div>
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">Model:</span>
+                      <span class="text-white font-mono text-xs text-right">
+                        <%= config.additional_config?.default_model || 'llama-3.3-70b-versatile' %>
+                      </span>
+                    </div>
+                    <div class="h-px bg-white/10"></div>
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">Endpoint:</span>
+                      <span class="text-white font-mono text-xs text-right">
+                        <%= config.endpoint_url || 'Not configured' %>
+                      </span>
+                    </div>
+                    <div class="mt-3 p-2 bg-orange-500/10 border border-orange-500/30 rounded">
+                      <p class="text-xs text-orange-300">
+                        <i class="fas fa-wand-magic-sparkles mr-1"></i>Used for intelligent prompt enhancement
+                      </p>
+                    </div>
+                  </div>
+                <% } else if (config.service_name === 'SUNO') { %>
+                  <!-- SUNO AI Music Generation -->
+                  <div class="p-3 bg-white/5 rounded-lg space-y-3">
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">API Key:</span>
+                      <div class="flex items-center gap-2 ml-2">
+                        <span class="text-white font-mono text-xs text-right api-key-display" 
+                              data-key="<%= config.api_key || '' %>" 
+                              data-masked="<%= config.api_key ? config.api_key.substring(0, 15) + '...' : 'Not configured' %>"
+                              style="max-width: 180px;">
+                          <%= config.api_key ? config.api_key.substring(0, 15) + '...' : 'Not configured' %>
+                        </span>
+                        <% if (config.api_key) { %>
+                          <button onclick="toggleApiKey(this)" 
+                                  class="text-gray-400 hover:text-white text-xs transition"
+                                  title="Show/Hide">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                        <% } %>
+                      </div>
+                    </div>
+                    <div class="h-px bg-white/10"></div>
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">Endpoint:</span>
+                      <span class="text-white font-mono text-xs text-right">
+                        <%= config.endpoint_url || 'Not configured' %>
+                      </span>
+                    </div>
+                    <div class="h-px bg-white/10"></div>
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">Callback URL:</span>
+                      <div class="flex items-center gap-2 ml-2">
+                        <span class="text-white font-mono text-xs text-right" style="max-width: 180px; word-break: break-all;">
+                          <%= config.additional_config?.callback_url || 'Not configured' %>
+                        </span>
+                        <% if (config.additional_config?.callback_url) { %>
+                          <button onclick="copyToClipboard('<%= config.additional_config.callback_url %>')" 
+                                  class="text-pink-400 hover:text-pink-300 text-xs transition"
+                                  title="Copy">
+                            <i class="fas fa-copy"></i>
+                          </button>
+                        <% } %>
+                      </div>
+                    </div>
+                    <div class="mt-3 p-2 bg-pink-500/10 border border-pink-500/30 rounded">
+                      <p class="text-xs text-pink-300">
+                        <i class="fas fa-music mr-1"></i>Used for AI music generation via Suno API
+                      </p>
+                    </div>
+                  </div>
+                <% } else if (config.service_name === 'SENDGRID') { %>
+                  <!-- SENDGRID Email Service Fields -->
+                  <div class="p-3 bg-white/5 rounded-lg space-y-3">
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">API Key:</span>
+                      <div class="flex items-center gap-2 ml-2">
+                        <span class="text-white font-mono text-xs text-right api-key-display" 
+                              data-key="<%= config.api_key || '' %>" 
+                              data-masked="<%= config.api_key ? config.api_key.substring(0, 15) + '...' : 'Not configured' %>"
+                              style="max-width: 180px;">
+                          <%= config.api_key ? config.api_key.substring(0, 15) + '...' : 'Not configured' %>
+                        </span>
+                        <% if (config.api_key) { %>
+                          <button onclick="toggleApiKey(this)" 
+                                  class="text-gray-400 hover:text-white text-xs transition"
+                                  title="Show/Hide">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                        <% } %>
+                      </div>
+                    </div>
+                    <div class="h-px bg-white/10"></div>
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">Email From:</span>
+                      <span class="text-white font-mono text-xs text-right">
+                        <%= config.additional_config?.email_from || 'Not configured' %>
+                      </span>
+                    </div>
+                    <div class="h-px bg-white/10"></div>
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">Sender Name:</span>
+                      <span class="text-white font-mono text-xs text-right">
+                        <%= config.additional_config?.email_from_name || 'Not configured' %>
+                      </span>
+                    </div>
+                    <div class="h-px bg-white/10"></div>
+                    <div class="flex items-start justify-between">
+                      <span class="text-gray-400 text-xs font-medium">Endpoint:</span>
+                      <span class="text-white font-mono text-xs text-right">
+                        <%= config.endpoint_url || 'Not configured' %>
+                      </span>
+                    </div>
+                    <div class="mt-3 p-2 bg-blue-500/10 border border-blue-500/30 rounded">
+                      <p class="text-xs text-blue-300">
+                        <i class="fas fa-info-circle mr-1"></i>Get your API key from 
+                        <a href="https://app.sendgrid.com/settings/api_keys" target="_blank" class="underline hover:text-blue-200">
+                          SendGrid Dashboard
+                        </a>
+                      </p>
+                    </div>
+                  </div>
+                <% } else { %>
+                  <div class="flex items-center justify-between text-sm p-2 bg-white/5 rounded">
+                    <span class="text-gray-400">API Key:</span>
+                    <div class="flex items-center gap-2">
+                      <span class="text-white font-mono text-xs api-key-display" 
+                            data-key="<%= config.api_key || '' %>" 
+                            data-masked="••••••••">
+                        <%= config.api_key ? '••••••••' : 'Not set' %>
+                      </span>
+                      <% if (config.api_key) { %>
+                        <button onclick="toggleApiKey(this)" 
+                                class="text-gray-400 hover:text-white text-xs transition"
+                                title="Show/Hide">
+                          <i class="fas fa-eye"></i>
+                        </button>
+                      <% } %>
+                    </div>
+                  </div>
+                  <% if (config.rate_limit) { %>
+                    <div class="flex items-center justify-between text-sm p-2 bg-white/5 rounded">
+                      <span class="text-gray-400">Rate Limit:</span>
+                      <span class="text-white font-medium"><%= config.rate_limit %> req/min</span>
+                    </div>
+                  <% } %>
+                <% } %>
+              </div>
+
+              <div class="flex space-x-2">
+                <button onclick="editApiConfig('<%= config.service_name %>')" class="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition">
+                  <i class="fas fa-edit mr-2"></i> Configure
+                </button>
+                <button onclick="toggleApiStatus('<%= config.service_name %>', <%= !config.is_active %>)" 
+                        class="flex-1 px-4 py-2 <%= config.is_active ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' %> text-white rounded-lg transition">
+                  <i class="fas <%= config.is_active ? 'fa-ban' : 'fa-check' %> mr-2"></i> <%= config.is_active ? 'Disable' : 'Enable' %>
+                </button>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </main>
+
+      <%- include('../partials/admin-footer') %>
+    </div>
+  </div>
+
+  <!-- Add New API Config Modal -->
+  <div id="addModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="glass-strong rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <h3 class="text-2xl font-bold text-white mb-6">Add New API Configuration</h3>
+      <form id="addForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">
+            Service Name <span class="text-red-500">*</span>
+          </label>
+          <select id="add-service_name" name="service_name" required
+                  onchange="toggleAddServiceFields(this.value)"
+                  class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500">
+            <option value="">-- Select Service --</option>
+            <option value="TRIPAY">TRIPAY (Payment Gateway)</option>
+            <option value="GROQ">GROQ (AI Prompt Enhancement)</option>
+            <option value="OPENAI">OPENAI (AI Models)</option>
+            <option value="REPLICATE">REPLICATE (AI Models)</option>
+            <option value="CUSTOM">CUSTOM (Other Service)</option>
+          </select>
+        </div>
+
+        <!-- Tripay Fields for Add -->
+        <div id="add-tripay-fields" class="hidden space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Kode Merchant <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="add-tripay-merchant-code" name="merchant_code"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="T41400">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Nama Merchant
+            </label>
+            <input type="text" id="add-tripay-merchant-name" name="merchant_name"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 text-sm"
+                   placeholder="Merchant Sandbox">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              API Key <span class="text-red-500">*</span>
+            </label>
+            <input type="password" id="add-tripay-api-key" name="api_key"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="DEV-xxxxxxxxxxxxx">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Private Key <span class="text-red-500">*</span>
+            </label>
+            <input type="password" id="add-tripay-private-key" name="api_secret"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="xxxxx-xxxxx-xxxxx">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Callback URL <span class="text-red-500">*</span>
+            </label>
+            <input type="url" id="add-tripay-callback-url" name="callback_url"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="https://your-domain.com/api/payment/callback">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Endpoint URL <span class="text-red-500">*</span>
+            </label>
+            <select id="add-tripay-endpoint" name="endpoint_url"
+                    class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 text-sm">
+              <option value="https://tripay.co.id/api-sandbox">Sandbox (Testing)</option>
+              <option value="https://tripay.co.id/api">Production (Live)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Generic Fields for Add -->
+        <div id="add-generic-fields" class="hidden space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              API Key <span class="text-red-500">*</span>
+            </label>
+            <input type="password" id="add-api_key" name="api_key"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="Enter API key">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Endpoint URL</label>
+            <input type="url" id="add-endpoint_url" name="endpoint_url"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm">
+          </div>
+        </div>
+
+        <div class="flex items-center pt-4 border-t" style="border-color: rgba(255, 255, 255, 0.1);">
+          <input type="checkbox" id="add-is_active" name="is_active" class="w-5 h-5 text-violet-600 rounded mr-2" checked>
+          <label for="add-is_active" class="text-sm font-medium text-gray-300">
+            Enable this API service
+          </label>
+        </div>
+
+        <div class="flex justify-end space-x-3 mt-6 pt-6 border-t" style="border-color: rgba(255, 255, 255, 0.1);">
+          <button type="button" onclick="closeAddModal()" class="px-6 py-2 glass rounded-lg hover:bg-white/10 transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition">
+            <i class="fas fa-plus mr-2"></i> Add Configuration
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit API Config Modal -->
+  <div id="editModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="glass-strong rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <h3 class="text-2xl font-bold text-white mb-6">Configure <span id="modal-service-name"></span></h3>
+      <form id="editForm" class="space-y-4">
+        <input type="hidden" id="edit-service_name" name="service_name">
+        
+        <!-- Tripay Payment Gateway specific fields -->
+        <div id="tripay-fields" class="hidden space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Kode Merchant <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="edit-tripay-merchant-code" name="merchant_code"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="T41400">
+            <p class="text-xs text-gray-400 mt-1">Merchant code dari Tripay Dashboard</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Nama Merchant
+            </label>
+            <input type="text" id="edit-tripay-merchant-name" name="merchant_name"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 text-sm"
+                   placeholder="Merchant Sandbox">
+            <p class="text-xs text-gray-400 mt-1">Nama merchant Anda</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              API Key <span class="text-red-500">*</span>
+            </label>
+            <input type="password" id="edit-tripay-api-key" name="api_key"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="DEV-xxxxxxxxxxxxx">
+            <p class="text-xs text-gray-400 mt-1">API Key dari Tripay Dashboard. Leave empty to keep current value</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Private Key <span class="text-red-500">*</span>
+            </label>
+            <input type="password" id="edit-tripay-private-key" name="api_secret"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="xxxxx-xxxxx-xxxxx">
+            <p class="text-xs text-gray-400 mt-1">Private Key dari Tripay Dashboard. Leave empty to keep current value</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Callback URL <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <input type="url" id="edit-tripay-callback-url" name="callback_url"
+                     class="w-full px-4 py-2 pr-10 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                     placeholder="http://localhost:5005/api/payment/callback">
+              <button type="button" onclick="copyTripayCallback()" 
+                      class="absolute right-2 top-1/2 -translate-y-1/2 text-violet-400 hover:text-violet-300 p-2">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+            <div class="mt-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+              <p class="text-xs text-amber-300 font-medium mb-1">
+                <i class="fas fa-exclamation-triangle mr-1"></i>
+                IMPORTANT: Copy this exact URL
+              </p>
+              <p class="text-xs text-gray-400">
+                Paste ke <strong>URL Callback</strong> di Tripay Dashboard → Settings → Merchant. URL harus sama persis (termasuk port).
+              </p>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Endpoint URL <span class="text-red-500">*</span>
+            </label>
+            <select id="edit-tripay-endpoint" name="endpoint_url"
+                    class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 text-sm">
+              <option value="https://tripay.co.id/api-sandbox">Sandbox (Testing)</option>
+              <option value="https://tripay.co.id/api">Production (Live)</option>
+            </select>
+            <p class="text-xs text-gray-400 mt-1">Pilih Sandbox untuk testing, Production untuk live transactions</p>
+          </div>
+
+          <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+            <div class="flex items-start">
+              <i class="fas fa-info-circle text-blue-400 mt-1 mr-3"></i>
+              <div class="text-sm text-gray-300">
+                <p class="font-medium mb-2">Setup Tripay Payment Gateway:</p>
+                <ol class="list-decimal ml-4 space-y-2 text-xs text-gray-400">
+                  <li>
+                    <strong class="text-gray-300">Login ke Tripay Dashboard</strong><br>
+                    <a href="https://tripay.co.id/member/login" target="_blank" class="text-blue-400 hover:underline">tripay.co.id/member/login</a>
+                  </li>
+                  <li>
+                    <strong class="text-gray-300">Get API Credentials</strong><br>
+                    Settings → API → Copy API Key & Private Key
+                  </li>
+                  <li>
+                    <strong class="text-gray-300">Copy Merchant Code</strong><br>
+                    Settings → Merchant Information → Copy Merchant Code (contoh: T41400)
+                  </li>
+                  <li>
+                    <strong class="text-amber-300">Set Callback URL</strong><br>
+                    Settings → Merchant → Paste <strong>Callback URL</strong> dari form ini
+                  </li>
+                  <li>
+                    <strong class="text-gray-300">Choose Environment</strong><br>
+                    Gunakan <strong>Sandbox</strong> untuk testing, <strong>Production</strong> untuk transaksi live
+                  </li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Groq AI specific fields -->
+        <div id="groq-fields" class="hidden space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Groq API Key <span class="text-red-500">*</span>
+            </label>
+            <input type="password" id="edit-groq-api-key" name="api_key"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="gsk_xxxxxxxxxxxxx">
+            <p class="text-xs text-gray-400 mt-1">Get from Groq Console → API Keys. Leave empty to keep current value</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Default Model
+            </label>
+            <select id="edit-groq-model" name="default_model"
+                    class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 text-sm">
+              <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Recommended)</option>
+              <option value="llama-3.1-8b-instant">Llama 3.1 8B (Fast)</option>
+              <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+              <option value="gemma2-9b-it">Gemma 2 9B</option>
+            </select>
+            <p class="text-xs text-gray-400 mt-1">Model used for prompt enhancement</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Endpoint URL
+            </label>
+            <input type="url" id="edit-groq-endpoint" name="endpoint_url"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   value="https://api.groq.com/openai/v1" readonly>
+            <p class="text-xs text-gray-400 mt-1">Groq API endpoint (default)</p>
+          </div>
+
+          <div class="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+            <div class="flex items-start">
+              <i class="fas fa-info-circle text-orange-400 mt-1 mr-3"></i>
+              <div class="text-sm text-gray-300">
+                <p class="font-medium mb-2">Setup Groq API:</p>
+                <ol class="list-decimal ml-4 space-y-2 text-xs text-gray-400">
+                  <li>
+                    <strong class="text-gray-300">Create Groq Account</strong><br>
+                    <a href="https://console.groq.com/" target="_blank" class="text-orange-400 hover:underline">console.groq.com</a>
+                  </li>
+                  <li>
+                    <strong class="text-gray-300">Get API Key</strong><br>
+                    Go to API Keys → Create API Key → Copy key (starts with gsk_)
+                  </li>
+                  <li>
+                    <strong class="text-gray-300">Paste API Key</strong><br>
+                    Paste the API key in the field above
+                  </li>
+                  <li>
+                    <strong class="text-gray-300">Select Model</strong><br>
+                    Choose a model (Llama 3.3 70B recommended for best results)
+                  </li>
+                </ol>
+                <div class="mt-3 p-2 bg-green-500/10 border border-green-500/30 rounded">
+                  <p class="text-xs text-green-300">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    <strong>Free Tier:</strong> Groq offers generous free tier with fast inference!
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Google OAuth specific fields -->
+        <div id="google-oauth-fields" class="hidden space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Google Client ID <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="edit-google-client-id" name="api_key"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="Enter Google Client ID">
+            <p class="text-xs text-gray-400 mt-1">Get from Google Cloud Console</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Google Client Secret <span class="text-red-500">*</span>
+            </label>
+            <input type="password" id="edit-google-client-secret" name="api_secret"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="Enter Google Client Secret">
+            <p class="text-xs text-gray-400 mt-1">Leave empty to keep current value</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Callback URL <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <input type="url" id="edit-google-callback-url" name="endpoint_url"
+                     class="w-full px-4 py-2 pr-10 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                     placeholder="http://localhost:5005/auth/google/callback">
+              <button type="button" onclick="copyCallbackFromInput()" 
+                      class="absolute right-2 top-1/2 -translate-y-1/2 text-violet-400 hover:text-violet-300 p-2">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+            <div class="mt-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+              <p class="text-xs text-amber-300 font-medium mb-1">
+                <i class="fas fa-exclamation-triangle mr-1"></i>
+                IMPORTANT: Copy this exact URL
+              </p>
+              <p class="text-xs text-gray-400">
+                Paste ke <strong>Authorized redirect URIs</strong> di Google Cloud Console → Credentials. URL harus sama persis (termasuk port).
+              </p>
+            </div>
+          </div>
+
+          <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+            <div class="flex items-start">
+              <i class="fas fa-info-circle text-blue-400 mt-1 mr-3"></i>
+              <div class="text-sm text-gray-300">
+                <p class="font-medium mb-2">Step-by-step Setup:</p>
+                <ol class="list-decimal ml-4 space-y-2 text-xs text-gray-400">
+                  <li>
+                    <strong class="text-gray-300">Go to Google Cloud Console</strong><br>
+                    <a href="https://console.cloud.google.com/" target="_blank" class="text-blue-400 hover:underline">console.cloud.google.com</a>
+                  </li>
+                  <li>
+                    <strong class="text-gray-300">Create/Select Project</strong><br>
+                    Pilih atau buat project baru
+                  </li>
+                  <li>
+                    <strong class="text-gray-300">Enable Google+ API</strong><br>
+                    APIs & Services → Library → Google+ API → Enable
+                  </li>
+                  <li>
+                    <strong class="text-gray-300">Create OAuth 2.0 Client ID</strong><br>
+                    Credentials → Create → OAuth 2.0 Client ID → Web application
+                  </li>
+                  <li>
+                    <strong class="text-gray-300 text-amber-300">Add Callback URL</strong><br>
+                    Paste <strong>Callback URL</strong> dari form ini ke <strong>Authorized redirect URIs</strong>
+                  </li>
+                  <li>
+                    <strong class="text-gray-300">Copy Credentials</strong><br>
+                    Copy Client ID & Client Secret ke form ini
+                  </li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- SendGrid Email Service specific fields -->
+        <div id="sendgrid-fields" class="hidden space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              SendGrid API Key <span class="text-red-500">*</span>
+            </label>
+            <input type="password" id="edit-sendgrid-api-key" name="api_key"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="SG.xxxxxxxxxxxxxxxx">
+            <p class="text-xs text-gray-400 mt-1">Get from SendGrid Dashboard → Settings → API Keys. Leave empty to keep current value</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Email From (Sender Email) <span class="text-red-500">*</span>
+            </label>
+            <input type="email" id="edit-sendgrid-email-from" name="email_from"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="noreply@yourdomain.com">
+            <p class="text-xs text-gray-400 mt-1">This email address must be verified in SendGrid</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Sender Name
+            </label>
+            <input type="text" id="edit-sendgrid-email-from-name" name="email_from_name"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 text-sm"
+                   placeholder="PixelNest">
+            <p class="text-xs text-gray-400 mt-1">Display name for email sender</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Endpoint URL
+            </label>
+            <input type="url" id="edit-sendgrid-endpoint" name="endpoint_url"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   value="https://api.sendgrid.com/v3" readonly>
+            <p class="text-xs text-gray-400 mt-1">SendGrid API endpoint (default)</p>
+          </div>
+
+          <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+            <div class="flex items-start">
+              <i class="fas fa-info-circle text-blue-400 mt-1 mr-3"></i>
+              <div class="text-sm text-gray-300">
+                <p class="font-medium mb-2">Setup SendGrid Email Service:</p>
+                <ol class="list-decimal ml-4 space-y-2 text-xs text-gray-400">
+                  <li>
+                    <strong class="text-gray-300">Create SendGrid Account</strong><br>
+                    <a href="https://signup.sendgrid.com/" target="_blank" class="text-blue-400 hover:underline">signup.sendgrid.com</a>
+                  </li>
+                  <li>
+                    <strong class="text-gray-300">Create API Key</strong><br>
+                    Dashboard → Settings → API Keys → Create API Key → Full Access
+                  </li>
+                  <li>
+                    <strong class="text-gray-300">Verify Sender Email</strong><br>
+                    Settings → Sender Authentication → Verify a Single Sender
+                  </li>
+                  <li>
+                    <strong class="text-gray-300">Copy API Key</strong><br>
+                    Copy the API key and paste it above (starts with SG.xxx)
+                  </li>
+                  <li>
+                    <strong class="text-gray-300">Configure Email From</strong><br>
+                    Use the verified email address as "Email From"
+                  </li>
+                </ol>
+                <div class="mt-3 p-2 bg-amber-500/10 border border-amber-500/30 rounded">
+                  <p class="text-xs text-amber-300">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    <strong>Important:</strong> Your sender email must be verified in SendGrid before you can send emails.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUNO AI Music Generation Fields -->
+        <div id="suno-fields" class="hidden space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Suno API Key <span class="text-red-500">*</span>
+            </label>
+            <input type="password" id="edit-suno-api-key" name="api_key"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="Enter your Suno API Key">
+            <p class="text-xs text-gray-400 mt-1">Get from <a href="https://sunoapi.org" target="_blank" class="text-pink-400 hover:underline">sunoapi.org</a>. Leave empty to keep current value</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Endpoint URL <span class="text-red-500">*</span>
+            </label>
+            <input type="url" id="edit-suno-endpoint" name="endpoint_url"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="https://api.sunoapi.org">
+            <p class="text-xs text-gray-400 mt-1">Default: https://api.sunoapi.org</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Callback URL <span class="text-red-500">*</span>
+            </label>
+            <input type="url" id="edit-suno-callback-url" name="callback_url"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="https://pixelnest.app/music/callback/suno">
+            <p class="text-xs text-gray-400 mt-1">URL where Suno API will send generation callbacks</p>
+          </div>
+
+          <div class="p-4 bg-pink-500/10 border border-pink-500/30 rounded-lg">
+            <div class="flex items-start">
+              <i class="fas fa-info-circle text-pink-400 mt-1 mr-3"></i>
+              <div class="text-sm text-gray-300">
+                <p class="font-medium mb-2">Setup Suno API:</p>
+                <ol class="list-decimal ml-4 space-y-2 text-xs text-gray-400">
+                  <li>
+                    <strong class="text-gray-300">Get API Key</strong><br>
+                    Visit <a href="https://sunoapi.org" target="_blank" class="text-pink-400 hover:underline">sunoapi.org</a> to get your API key
+                  </li>
+                  <li>
+                    <strong class="text-gray-300">Configure Callback</strong><br>
+                    Set callback URL to receive generation notifications
+                  </li>
+                  <li>
+                    <strong class="text-gray-300">Test Integration</strong><br>
+                    Go to /music to test music generation
+                  </li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generic API fields -->
+        <div id="generic-api-fields" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              API Key <span class="text-red-500">*</span>
+            </label>
+            <input type="password" id="edit-api_key" name="api_key"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm"
+                   placeholder="Enter API key">
+            <p class="text-xs text-gray-400 mt-1">Leave empty to keep current value</p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Endpoint URL</label>
+            <input type="url" id="edit-endpoint_url" name="endpoint_url"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500 font-mono text-sm">
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Rate Limit (requests/min)</label>
+            <input type="number" id="edit-rate_limit" name="rate_limit"
+                   class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:border-violet-500">
+          </div>
+        </div>
+        
+        <div class="flex items-center pt-4 border-t" style="border-color: rgba(255, 255, 255, 0.1);">
+          <input type="checkbox" id="edit-is_active" name="is_active" class="w-5 h-5 text-violet-600 rounded mr-2">
+          <label for="edit-is_active" class="text-sm font-medium text-gray-300">
+            Enable this API service
+          </label>
+        </div>
+        
+        <div class="flex justify-end space-x-3 mt-6 pt-6 border-t" style="border-color: rgba(255, 255, 255, 0.1);">
+          <button type="button" onclick="closeEditModal()" class="px-6 py-2 glass rounded-lg hover:bg-white/10 transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition">
+            <i class="fas fa-save mr-2"></i> Save Configuration
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <%- include('../partials/admin-scripts') %>
+
+  <script>
+    const API_CONFIGS = <%- JSON.stringify(apiConfigs) %>;
+
+    async function apiRequest(url, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Request failed');
+      }
+      
+      return data;
+    }
+
+    function editApiConfig(serviceName) {
+      const config = API_CONFIGS.find(c => c.service_name === serviceName);
+      if (!config) return;
+      
+      document.getElementById('modal-service-name').textContent = serviceName;
+      document.getElementById('edit-service_name').value = serviceName;
+      
+      // Show/hide fields based on service type
+      const isTripay = serviceName === 'TRIPAY';
+      const isGroq = serviceName === 'GROQ';
+      const isGoogleOAuth = serviceName === 'GOOGLE_OAUTH';
+      const isSendGrid = serviceName === 'SENDGRID';
+      const isSuno = serviceName === 'SUNO';
+      
+      document.getElementById('tripay-fields').classList.toggle('hidden', !isTripay);
+      document.getElementById('groq-fields').classList.toggle('hidden', !isGroq);
+      document.getElementById('google-oauth-fields').classList.toggle('hidden', !isGoogleOAuth);
+      document.getElementById('sendgrid-fields').classList.toggle('hidden', !isSendGrid);
+      document.getElementById('suno-fields').classList.toggle('hidden', !isSuno);
+      document.getElementById('generic-api-fields').classList.toggle('hidden', isTripay || isGroq || isGoogleOAuth || isSendGrid || isSuno);
+      
+      if (isTripay) {
+        // Populate Tripay fields
+        document.getElementById('edit-tripay-merchant-code').value = config.additional_config?.merchant_code || '';
+        document.getElementById('edit-tripay-merchant-name').value = config.additional_config?.merchant_name || '';
+        document.getElementById('edit-tripay-api-key').value = '';
+        document.getElementById('edit-tripay-private-key').value = '';
+        document.getElementById('edit-tripay-callback-url').value = config.additional_config?.callback_url || 'http://localhost:5005/api/payment/callback';
+        document.getElementById('edit-tripay-endpoint').value = config.endpoint_url || 'https://tripay.co.id/api-sandbox';
+      } else if (isGroq) {
+        // Populate Groq fields
+        document.getElementById('edit-groq-api-key').value = '';
+        document.getElementById('edit-groq-model').value = config.additional_config?.default_model || 'llama-3.3-70b-versatile';
+        document.getElementById('edit-groq-endpoint').value = config.endpoint_url || 'https://api.groq.com/openai/v1';
+      } else if (isGoogleOAuth) {
+        document.getElementById('edit-google-client-id').value = config.api_key || '';
+        document.getElementById('edit-google-callback-url').value = config.endpoint_url || 'http://localhost:5005/auth/google/callback';
+        document.getElementById('edit-google-client-secret').value = '';
+        
+        // Highlight callback URL field for first-time setup
+        if (!config.api_key) {
+          setTimeout(() => {
+            document.getElementById('edit-google-callback-url').focus();
+            document.getElementById('edit-google-callback-url').select();
+          }, 300);
+        }
+      } else if (isSendGrid) {
+        // Populate SendGrid fields
+        document.getElementById('edit-sendgrid-api-key').value = '';
+        document.getElementById('edit-sendgrid-email-from').value = config.additional_config?.email_from || 'noreply@pixelnest.com';
+        document.getElementById('edit-sendgrid-email-from-name').value = config.additional_config?.email_from_name || 'PixelNest';
+        document.getElementById('edit-sendgrid-endpoint').value = config.endpoint_url || 'https://api.sendgrid.com/v3';
+      } else if (isSuno) {
+        // Populate Suno fields
+        document.getElementById('edit-suno-api-key').value = '';
+        document.getElementById('edit-suno-endpoint').value = config.endpoint_url || 'https://api.sunoapi.org';
+        document.getElementById('edit-suno-callback-url').value = config.additional_config?.callback_url || 'https://pixelnest.app/music/callback/suno';
+      } else {
+        document.getElementById('edit-api_key').value = '';
+        document.getElementById('edit-endpoint_url').value = config.endpoint_url || '';
+        document.getElementById('edit-rate_limit').value = config.rate_limit || '';
+      }
+      
+      document.getElementById('edit-is_active').checked = config.is_active;
+      
+      document.getElementById('editModal').classList.remove('hidden');
+      document.getElementById('editModal').classList.add('flex');
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.add('hidden');
+      document.getElementById('editModal').classList.remove('flex');
+    }
+
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const serviceName = document.getElementById('edit-service_name').value;
+      const isTripay = serviceName === 'TRIPAY';
+      const isGroq = serviceName === 'GROQ';
+      const isGoogleOAuth = serviceName === 'GOOGLE_OAUTH';
+      const isSendGrid = serviceName === 'SENDGRID';
+      const isSuno = serviceName === 'SUNO';
+      
+      const data = {
+        is_active: document.getElementById('edit-is_active').checked
+      };
+      
+      if (isTripay) {
+        // Handle Tripay fields
+        const merchantCode = document.getElementById('edit-tripay-merchant-code').value.trim();
+        const merchantName = document.getElementById('edit-tripay-merchant-name').value.trim();
+        const apiKey = document.getElementById('edit-tripay-api-key').value.trim();
+        const privateKey = document.getElementById('edit-tripay-private-key').value.trim();
+        const callbackUrl = document.getElementById('edit-tripay-callback-url').value.trim();
+        const endpointUrl = document.getElementById('edit-tripay-endpoint').value;
+        
+        if (apiKey) data.api_key = apiKey;
+        if (privateKey) data.api_secret = privateKey;
+        if (endpointUrl) data.endpoint_url = endpointUrl;
+        
+        // Build additional_config object
+        data.additional_config = {};
+        if (merchantCode) data.additional_config.merchant_code = merchantCode;
+        if (merchantName) data.additional_config.merchant_name = merchantName;
+        if (callbackUrl) data.additional_config.callback_url = callbackUrl;
+        
+        // Validation
+        const config = API_CONFIGS.find(c => c.service_name === serviceName);
+        if (!merchantCode && !config.additional_config?.merchant_code) {
+          showToast('Kode Merchant is required', 'error');
+          return;
+        }
+        if (!apiKey && !config.api_key) {
+          showToast('API Key is required', 'error');
+          return;
+        }
+      } else if (isGroq) {
+        // Handle Groq fields
+        const apiKey = document.getElementById('edit-groq-api-key').value.trim();
+        const defaultModel = document.getElementById('edit-groq-model').value.trim();
+        const endpointUrl = document.getElementById('edit-groq-endpoint').value.trim();
+        
+        if (apiKey) data.api_key = apiKey;
+        if (endpointUrl) data.endpoint_url = endpointUrl;
+        
+        // Build additional_config object
+        data.additional_config = {};
+        if (defaultModel) data.additional_config.default_model = defaultModel;
+        
+        // Validation
+        const config = API_CONFIGS.find(c => c.service_name === serviceName);
+        if (!apiKey && !config.api_key) {
+          showToast('Groq API Key is required', 'error');
+          return;
+        }
+      } else if (isGoogleOAuth) {
+        const clientId = document.getElementById('edit-google-client-id').value.trim();
+        const clientSecret = document.getElementById('edit-google-client-secret').value.trim();
+        const callbackUrl = document.getElementById('edit-google-callback-url').value.trim();
+        
+        if (clientId) data.api_key = clientId;
+        if (clientSecret) data.api_secret = clientSecret;
+        if (callbackUrl) data.endpoint_url = callbackUrl;
+        
+        if (!clientId && !API_CONFIGS.find(c => c.service_name === serviceName).api_key) {
+          showToast('Google Client ID is required', 'error');
+          return;
+        }
+      } else if (isSendGrid) {
+        // Handle SendGrid fields
+        const apiKey = document.getElementById('edit-sendgrid-api-key').value.trim();
+        const emailFrom = document.getElementById('edit-sendgrid-email-from').value.trim();
+        const emailFromName = document.getElementById('edit-sendgrid-email-from-name').value.trim();
+        const endpointUrl = document.getElementById('edit-sendgrid-endpoint').value.trim();
+        
+        if (apiKey) data.api_key = apiKey;
+        if (endpointUrl) data.endpoint_url = endpointUrl;
+        
+        // Build additional_config object
+        data.additional_config = {};
+        if (emailFrom) data.additional_config.email_from = emailFrom;
+        if (emailFromName) data.additional_config.email_from_name = emailFromName;
+        
+        // Validation
+        const config = API_CONFIGS.find(c => c.service_name === serviceName);
+        if (!emailFrom && !config.additional_config?.email_from) {
+          showToast('Email From is required', 'error');
+          return;
+        }
+      } else if (isSuno) {
+        // Handle Suno fields
+        const apiKey = document.getElementById('edit-suno-api-key').value.trim();
+        const endpointUrl = document.getElementById('edit-suno-endpoint').value.trim();
+        const callbackUrl = document.getElementById('edit-suno-callback-url').value.trim();
+        
+        if (apiKey) data.api_key = apiKey;
+        if (endpointUrl) data.endpoint_url = endpointUrl;
+        
+        // Build additional_config object with callback_url
+        const config = API_CONFIGS.find(c => c.service_name === serviceName);
+        data.additional_config = {
+          ...(config.additional_config || {}),  // Preserve existing config
+          callback_url: callbackUrl || 'https://pixelnest.app/music/callback/suno'
+        };
+        
+        // Validation
+        if (!apiKey && !config.api_key) {
+          showToast('Suno API Key is required', 'error');
+          return;
+        }
+        if (!callbackUrl && !config.additional_config?.callback_url) {
+          showToast('Callback URL is required', 'error');
+          return;
+        }
+      } else {
+        const apiKey = document.getElementById('edit-api_key').value.trim();
+        const endpointUrl = document.getElementById('edit-endpoint_url').value.trim();
+        const rateLimit = document.getElementById('edit-rate_limit').value;
+        
+        if (apiKey) data.api_key = apiKey;
+        if (endpointUrl) data.endpoint_url = endpointUrl;
+        if (rateLimit) data.rate_limit = parseInt(rateLimit);
+      }
+
+      // Debug log
+      console.log('📤 Submitting Suno config:', data);
+      if (isSuno && data.additional_config) {
+        console.log('   Callback URL:', data.additional_config.callback_url);
+      }
+      
+      try {
+        showLoading();
+        const result = await apiRequest('/admin/api-configs/' + serviceName, {
+          method: 'PUT',
+          body: JSON.stringify(data)
+        });
+        
+        hideLoading();
+        
+        // Show success message
+        showToast(serviceName + ' configuration updated successfully!', 'success');
+        
+        // Show warning if .env sync failed
+        if (result.warning || !result.envSynced) {
+          setTimeout(() => {
+            showToast('⚠️  Database updated but .env may need manual sync', 'warning');
+          }, 1500);
+        }
+        
+        // Show sync status info
+        if (result.syncStatus && !result.syncStatus.inSync) {
+          setTimeout(() => {
+            showToast('Restart server to apply changes: npm run dev', 'info');
+          }, 3000);
+        }
+        
+        setTimeout(() => location.reload(), 4000);
+      } catch (error) {
+        hideLoading();
+        showToast(error.message, 'error');
+      }
+    });
+
+    async function toggleApiStatus(serviceName, newStatus) {
+      const statusText = newStatus ? 'enable' : 'disable';
+      if (!confirm('Are you sure you want to ' + statusText + ' ' + serviceName + '?')) {
+        return;
+      }
+
+      try {
+        showLoading();
+        await apiRequest('/admin/api-configs/' + serviceName, {
+          method: 'PUT',
+          body: JSON.stringify({ is_active: newStatus })
+        });
+        
+        hideLoading();
+        showToast(serviceName + ' ' + statusText + 'd successfully!', 'success');
+        setTimeout(() => location.reload(), 500);
+      } catch (error) {
+        hideLoading();
+        showToast(error.message, 'error');
+      }
+    }
+
+    // Add New API Config functions
+    function openAddModal() {
+      document.getElementById('addModal').classList.remove('hidden');
+      document.getElementById('addModal').classList.add('flex');
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').classList.add('hidden');
+      document.getElementById('addModal').classList.remove('flex');
+      document.getElementById('addForm').reset();
+    }
+
+    function toggleAddServiceFields(serviceName) {
+      const isTripay = serviceName === 'TRIPAY';
+      document.getElementById('add-tripay-fields').classList.toggle('hidden', !isTripay);
+      document.getElementById('add-generic-fields').classList.toggle('hidden', isTripay || !serviceName);
+    }
+
+    // Handle Add Form submission
+    document.getElementById('addForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const serviceName = document.getElementById('add-service_name').value;
+      if (!serviceName) {
+        showToast('Please select a service type', 'error');
+        return;
+      }
+
+      const isTripay = serviceName === 'TRIPAY';
+      const data = {
+        service_name: serviceName,
+        is_active: document.getElementById('add-is_active').checked
+      };
+
+      if (isTripay) {
+        const merchantCode = document.getElementById('add-tripay-merchant-code').value.trim();
+        const merchantName = document.getElementById('add-tripay-merchant-name').value.trim();
+        const apiKey = document.getElementById('add-tripay-api-key').value.trim();
+        const privateKey = document.getElementById('add-tripay-private-key').value.trim();
+        const callbackUrl = document.getElementById('add-tripay-callback-url').value.trim();
+        const endpointUrl = document.getElementById('add-tripay-endpoint').value;
+
+        if (!merchantCode || !apiKey || !privateKey) {
+          showToast('Please fill all required Tripay fields', 'error');
+          return;
+        }
+
+        data.api_key = apiKey;
+        data.api_secret = privateKey;
+        data.endpoint_url = endpointUrl;
+        data.additional_config = {
+          merchant_code: merchantCode,
+          merchant_name: merchantName,
+          callback_url: callbackUrl || window.location.origin + '/api/payment/callback'
+        };
+      } else {
+        const apiKey = document.getElementById('add-api_key').value.trim();
+        const endpointUrl = document.getElementById('add-endpoint_url').value.trim();
+
+        if (!apiKey) {
+          showToast('API Key is required', 'error');
+          return;
+        }
+
+        data.api_key = apiKey;
+        data.endpoint_url = endpointUrl;
+      }
+
+      try {
+        showLoading();
+        const result = await apiRequest('/admin/api-configs', {
+          method: 'POST',
+          body: JSON.stringify(data)
+        });
+        
+        hideLoading();
+        showToast(serviceName + ' configuration added successfully!', 'success');
+        closeAddModal();
+        
+        setTimeout(() => location.reload(), 1500);
+      } catch (error) {
+        hideLoading();
+        showToast(error.message, 'error');
+      }
+    });
+
+    // Close modal on ESC key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeEditModal();
+        closeAddModal();
+      }
+    });
+
+    // Copy to clipboard function
+    function copyToClipboard(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('Callback URL copied to clipboard!', 'success');
+        }).catch(err => {
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showToast('Callback URL copied to clipboard!', 'success');
+      } catch (err) {
+        showToast('Failed to copy URL', 'error');
+      }
+      document.body.removeChild(textArea);
+    }
+
+    // Copy callback URL from input field
+    function copyCallbackFromInput() {
+      const input = document.getElementById('edit-google-callback-url');
+      const url = input.value.trim();
+      if (!url) {
+        showToast('Please enter a callback URL first', 'error');
+        return;
+      }
+      copyToClipboard(url);
+    }
+
+    // Copy Tripay callback URL
+    function copyTripayCallback() {
+      const input = document.getElementById('edit-tripay-callback-url');
+      const url = input.value.trim();
+      if (!url) {
+        showToast('Please enter a callback URL first', 'error');
+        return;
+      }
+      copyToClipboard(url);
+    }
+
+    // Toggle API Key visibility
+    function toggleApiKey(button) {
+      const container = button.parentElement;
+      const display = container.querySelector('.api-key-display');
+      const icon = button.querySelector('i');
+      
+      const fullKey = display.getAttribute('data-key');
+      const maskedKey = display.getAttribute('data-masked');
+      const isHidden = icon.classList.contains('fa-eye');
+      
+      if (isHidden) {
+        // Show full key
+        display.textContent = fullKey;
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+        button.title = 'Hide';
+        display.style.maxWidth = 'none';
+        display.style.wordBreak = 'break-all';
+      } else {
+        // Hide key
+        display.textContent = maskedKey;
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+        button.title = 'Show';
+        display.style.maxWidth = '180px';
+      }
+    }
+
+    // Toggle API Secret visibility
+    function toggleApiSecret(button) {
+      const container = button.parentElement;
+      const display = container.querySelector('.api-secret-display');
+      const icon = button.querySelector('i');
+      
+      const fullSecret = display.getAttribute('data-secret');
+      const maskedSecret = display.getAttribute('data-masked');
+      const isHidden = icon.classList.contains('fa-eye');
+      
+      if (isHidden) {
+        // Show full secret
+        display.textContent = fullSecret;
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+        button.title = 'Hide';
+        display.style.wordBreak = 'break-all';
+      } else {
+        // Hide secret
+        display.textContent = maskedSecret;
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+        button.title = 'Show';
+      }
+    }
+
+    // Auto-hide all keys after 30 seconds if shown
+    let autoHideTimers = [];
+    
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('button[onclick^="toggleApi"]')) {
+        // Clear existing timers
+        autoHideTimers.forEach(timer => clearTimeout(timer));
+        autoHideTimers = [];
+        
+        // Set new timer to auto-hide after 30 seconds
+        const timer = setTimeout(() => {
+          document.querySelectorAll('.fa-eye-slash').forEach(icon => {
+            const button = icon.closest('button');
+            if (button && button.onclick) {
+              button.click();
+            }
+          });
+          showToast('API keys auto-hidden for security', 'info');
+        }, 30000);
+        
+        autoHideTimers.push(timer);
+      }
+    });
+  </script>
+</body>
+</html>

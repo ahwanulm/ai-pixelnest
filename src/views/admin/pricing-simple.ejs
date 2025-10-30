@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing Settings - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <%- include('../partials/admin-styles') %>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+
+    <div class="flex-1 ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: 'Pricing Settings' }) %>
+
+      <main class="p-4 md:p-8 flex-1">
+        <div class="max-w-4xl mx-auto">
+          <!-- Header -->
+          <div class="mb-6">
+            <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">💰 Pricing Settings</h1>
+            <p class="text-sm md:text-base text-gray-400">Simple & clear pricing configuration</p>
+          </div>
+
+          <!-- Credit Price Card -->
+          <div class="glass-strong rounded-xl p-6 mb-6">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h3 class="text-xl font-bold text-white mb-1">🇮🇩 Harga Credit</h3>
+                <p class="text-sm text-gray-400">Harga yang dibayar user untuk 1 credit</p>
+              </div>
+              <div class="text-right">
+                <div class="text-3xl font-bold text-green-400" id="current-price">
+                  Rp <%= parseInt(config.credit_price_idr || 1500).toLocaleString('id-ID') %>
+                </div>
+                <div class="text-xs text-gray-500">per credit</div>
+              </div>
+            </div>
+
+            <form id="price-form" class="space-y-4">
+              <div>
+                <label class="block text-sm font-semibold text-gray-300 mb-2">
+                  Set Harga Baru
+                </label>
+                <div class="flex gap-3">
+                  <div class="flex-1 relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">Rp</span>
+                    <input 
+                      type="number" 
+                      id="credit_price_idr" 
+                      name="credit_price_idr"
+                      min="1000" 
+                      max="10000" 
+                      step="100"
+                      value="<%= parseInt(config.credit_price_idr || 1500) %>"
+                      class="w-full pl-12 pr-4 py-4 bg-gray-800 border border-gray-700 rounded-lg text-white text-lg font-bold focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      required
+                    >
+                  </div>
+                  <button 
+                    type="submit" 
+                    class="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-lg shadow-lg transition-all"
+                  >
+                    <i class="fas fa-save mr-2"></i>Update
+                  </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">
+                  <i class="fas fa-info-circle mr-1"></i>
+                  Recommended: Rp 1,500 - Rp 2,500 per credit
+                </p>
+              </div>
+            </form>
+          </div>
+
+          <!-- Examples Card -->
+          <div class="glass-strong rounded-xl p-6 mb-6">
+            <h3 class="text-lg font-bold text-white mb-4">📊 Contoh Harga dengan Setting Ini</h3>
+            
+            <div class="space-y-4" id="price-examples">
+              <!-- Will be filled by JavaScript -->
+            </div>
+          </div>
+
+          <!-- How It Works -->
+          <div class="glass-strong rounded-xl p-6 border-l-4 border-blue-500">
+            <h3 class="text-lg font-bold text-white mb-3 flex items-center">
+              <i class="fas fa-lightbulb text-yellow-400 mr-2"></i>
+              Cara Kerja
+            </h3>
+            <div class="space-y-2 text-sm text-gray-300">
+              <p>✅ <strong>Harga Credit:</strong> Anda tentukan berapa user bayar per credit (misal Rp 1,500)</p>
+              <p>✅ <strong>Profit Otomatis:</strong> System sudah set profit margin (Video: 25%, Image: 20%)</p>
+              <p>✅ <strong>Proportional:</strong> Video per-second models dihitung proporsional sesuai durasi</p>
+              <p>✅ <strong>Simple:</strong> Tidak perlu atur base credit atau margin, semua otomatis!</p>
+            </div>
+          </div>
+
+          <!-- Current Models Pricing -->
+          <div class="glass-strong rounded-xl p-6 mt-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold text-white">🎬 Model Prices</h3>
+              <button onclick="loadModelPrices()" class="text-sm text-blue-400 hover:text-blue-300">
+                <i class="fas fa-sync-alt mr-1"></i>Refresh
+              </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+              <table class="w-full" id="models-table">
+                <thead>
+                  <tr class="border-b border-gray-700">
+                    <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Model</th>
+                    <th class="text-right py-3 px-4 text-sm font-semibold text-gray-400">Credits</th>
+                    <th class="text-right py-3 px-4 text-sm font-semibold text-gray-400">User Pays</th>
+                  </tr>
+                </thead>
+                <tbody id="models-tbody">
+                  <tr>
+                    <td colspan="3" class="text-center py-8 text-gray-500">
+                      <i class="fas fa-spinner fa-spin mr-2"></i>Loading...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Update price preview
+    document.getElementById('credit_price_idr').addEventListener('input', function(e) {
+      const price = parseInt(e.target.value) || 1500;
+      document.getElementById('current-price').textContent = 
+        'Rp ' + price.toLocaleString('id-ID');
+      updateExamples(price);
+    });
+
+    // Update examples
+    function updateExamples(creditPrice) {
+      const examples = [
+        { name: 'Sora 2 (5s)', credits: 18.8 },
+        { name: 'Kling 2.5 Pro (10s)', credits: 43.8 },
+        { name: 'MiniMax Video', credits: 7.8 },
+        { name: 'FLUX 1.1 Pro', credits: 1.0 }
+      ];
+
+      const html = examples.map(ex => {
+        const price = Math.ceil(ex.credits * creditPrice);
+        return `
+          <div class="flex justify-between items-center p-3 bg-gray-800/50 rounded-lg">
+            <div>
+              <div class="text-white font-medium">${ex.name}</div>
+              <div class="text-xs text-gray-500">${ex.credits} credits</div>
+            </div>
+            <div class="text-green-400 font-bold">
+              Rp ${price.toLocaleString('id-ID')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('price-examples').innerHTML = html;
+    }
+
+    // Load model prices
+    async function loadModelPrices() {
+      try {
+        const creditPrice = parseInt(document.getElementById('credit_price_idr').value) || 1500;
+        
+        const response = await fetch('/admin/api/models');
+        const data = await response.json();
+        
+        if (data.success) {
+          const models = data.models
+            .filter(m => m.cost > 0)
+            .sort((a, b) => b.cost - a.cost)
+            .slice(0, 10);
+
+          const html = models.map(model => {
+            const userPays = Math.ceil(model.cost * creditPrice);
+            return `
+              <tr class="border-b border-gray-700/50">
+                <td class="py-3 px-4">
+                  <div class="text-white font-medium">${model.name}</div>
+                  <div class="text-xs text-gray-500">${model.type}</div>
+                </td>
+                <td class="text-right py-3 px-4">
+                  <span class="text-yellow-400 font-mono">${parseFloat(model.cost).toFixed(1)}</span>
+                </td>
+                <td class="text-right py-3 px-4">
+                  <span class="text-green-400 font-bold">Rp ${userPays.toLocaleString('id-ID')}</span>
+                </td>
+              </tr>
+            `;
+          }).join('');
+
+          document.getElementById('models-tbody').innerHTML = html;
+        }
+      } catch (error) {
+        console.error('Error loading models:', error);
+      }
+    }
+
+    // Form submit
+    document.getElementById('price-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const creditPrice = parseInt(document.getElementById('credit_price_idr').value);
+      
+      if (creditPrice < 1000) {
+        alert('⚠️ Minimum Rp 1,000 per credit');
+        return;
+      }
+
+      try {
+        const response = await fetch('/admin/api/pricing/credit-price', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credit_price_idr: creditPrice })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert('✅ Harga credit berhasil diupdate!\n\nSemua harga model akan otomatis menyesuaikan.');
+          loadModelPrices();
+        } else {
+          alert('❌ Error: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Terjadi kesalahan');
+      }
+    });
+
+    // Init
+    updateExamples(<%= parseInt(config.credit_price_idr || 1500) %>);
+    loadModelPrices();
+  </script>
+
+  <%- include('../partials/admin-scripts') %>
+</body>
+</html>
+
+
+
+

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <%- include('../partials/admin-styles') %>
+  <style>
+    .credits-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .credits-value {
+      font-weight: 600;
+      color: white;
+      min-width: 60px;
+    }
+    .edit-credits-btn {
+      opacity: 0;
+      transition: all 0.2s;
+      padding: 4px 8px;
+      background: rgba(139, 92, 246, 0.2);
+      color: #a78bfa;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+    .edit-credits-btn:hover {
+      background: rgba(139, 92, 246, 0.3);
+      color: #c4b5fd;
+      border-color: rgba(139, 92, 246, 0.5);
+    }
+    tr:hover .edit-credits-btn {
+      opacity: 1;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(5px);
+    }
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+      border-radius: 16px;
+      max-width: 500px;
+      width: 90%;
+      padding: 2rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .quick-amount-btn {
+      padding: 8px 16px;
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 8px;
+      color: #a78bfa;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+    .quick-amount-btn:hover {
+      background: rgba(139, 92, 246, 0.2);
+      border-color: rgba(139, 92, 246, 0.5);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+
+    <div class="flex-1 ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: title }) %>
+
+      <main class="p-8 flex-1">
+        <!-- Search Bar -->
+        <div class="glass-strong rounded-xl p-6 mb-6">
+          <form method="GET" action="/admin/users" class="flex flex-wrap gap-4">
+            <input type="text" name="search" value="<%= search %>" 
+                   placeholder="Search users..." 
+                   class="flex-1 min-w-[200px] px-4 py-2 rounded-lg">
+            <select name="role" class="px-4 py-2 rounded-lg">
+              <option value="">All Roles</option>
+              <option value="user" <%= filters.role === 'user' ? 'selected' : '' %>>User</option>
+              <option value="admin" <%= filters.role === 'admin' ? 'selected' : '' %>>Admin</option>
+            </select>
+            <button type="submit" class="px-6 py-2 bg-violet-600 hover:bg-violet-700 rounded-lg transition">
+              <i class="fas fa-search mr-2"></i> Search
+            </button>
+          </form>
+        </div>
+
+        <!-- Users Table -->
+        <div class="glass-strong rounded-xl overflow-hidden">
+          <table class="min-w-full">
+            <thead>
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">User</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Role</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Credits</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Joined</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (users.length === 0) { %>
+                <tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">No users found</td></tr>
+              <% } else { %>
+                <% users.forEach(user => { %>
+                  <tr>
+                    <td class="px-6 py-4">
+                      <div class="flex items-center">
+                        <img src="<%= user.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name) %>" 
+                             class="w-10 h-10 rounded-full mr-3">
+                        <div>
+                          <div class="font-medium text-white"><%= user.name %></div>
+                          <div class="text-sm text-gray-400"><%= user.email %></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <span class="px-2 py-1 text-xs rounded-full <%= user.role === 'admin' ? 'badge-info' : 'badge-success' %>">
+                        <%= user.role || 'user' %>
+                      </span>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="credits-cell">
+                        <span class="credits-value" id="credits-<%= user.id %>"><%= user.credits || 0 %></span>
+                        <button onclick='openQuickEditCredits(<%= JSON.stringify({id: user.id, name: user.name, credits: user.credits || 0}) %>)' 
+                                class="edit-credits-btn">
+                          <i class="fas fa-edit"></i> Edit
+                        </button>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <span class="px-2 py-1 text-xs rounded-full <%= user.is_active ? 'badge-success' : 'badge-error' %>">
+                        <%= user.is_active ? 'Active' : 'Inactive' %>
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-400"><%= new Date(user.created_at).toLocaleDateString() %></td>
+                    <td class="px-6 py-4 text-right">
+                      <a href="/admin/users/<%= user.id %>" class="text-violet-400 hover:text-violet-300">
+                        <i class="fas fa-eye"></i> View
+                      </a>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
+
+          <!-- Pagination -->
+          <% if (pagination.pages > 1) { %>
+            <div class="px-6 py-4 flex justify-between items-center border-t" style="border-color: rgba(255, 255, 255, 0.1);">
+              <div class="text-sm text-gray-400">Page <%= pagination.page %> of <%= pagination.pages %></div>
+              <div class="flex space-x-2">
+                <% if (pagination.page > 1) { %>
+                  <a href="?page=<%= pagination.page - 1 %>&search=<%= search %>" class="px-4 py-2 glass rounded-lg hover:bg-white/10">Previous</a>
+                <% } %>
+                <% if (pagination.page < pagination.pages) { %>
+                  <a href="?page=<%= pagination.page + 1 %>&search=<%= search %>" class="px-4 py-2 glass rounded-lg hover:bg-white/10">Next</a>
+                <% } %>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      </main>
+
+      <%- include('../partials/admin-footer') %>
+    </div>
+  </div>
+
+  <!-- Quick Edit Credits Modal -->
+  <div id="quickEditCreditsModal" class="modal">
+    <div class="modal-content">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h3 class="text-xl font-bold text-white">Edit Credits</h3>
+          <p class="text-sm text-gray-400 mt-1" id="editUserName"></p>
+        </div>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-white">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <form onsubmit="updateQuickCredits(event)" id="quickEditForm">
+        <input type="hidden" id="editUserId">
+        
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-2">Current Credits</label>
+          <div class="px-4 py-3 bg-white/5 border border-white/10 rounded-lg">
+            <span class="text-2xl font-bold text-blue-400" id="currentCredits">0</span>
+          </div>
+        </div>
+        
+        <!-- Quick Amount Buttons -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-2">Quick Add</label>
+          <div class="grid grid-cols-4 gap-2">
+            <button type="button" onclick="setAmount(10)" class="quick-amount-btn">+10</button>
+            <button type="button" onclick="setAmount(50)" class="quick-amount-btn">+50</button>
+            <button type="button" onclick="setAmount(100)" class="quick-amount-btn">+100</button>
+            <button type="button" onclick="setAmount(500)" class="quick-amount-btn">+500</button>
+          </div>
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-2">Amount to Add/Subtract</label>
+          <input type="number" id="quickCreditAmount" name="amount" required 
+                 placeholder="Enter amount (use - for deduction)"
+                 class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none" />
+          <p class="text-xs text-gray-400 mt-1">
+            <i class="fas fa-info-circle"></i> Positive to add, negative to subtract
+          </p>
+        </div>
+        
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-300 mb-2">Description (Optional)</label>
+          <textarea id="quickCreditDescription" name="description" rows="2"
+                    placeholder="Reason for adjustment..."
+                    class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none"></textarea>
+        </div>
+        
+        <div class="flex gap-3">
+          <button type="submit" class="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition font-medium">
+            <i class="fas fa-save mr-2"></i> Save Changes
+          </button>
+          <button type="button" onclick="closeModal()" 
+                  class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <%- include('../partials/admin-scripts') %>
+  
+  <script>
+    let currentEditUser = null;
+    
+    // Open quick edit modal
+    function openQuickEditCredits(user) {
+      currentEditUser = user;
+      document.getElementById('editUserId').value = user.id;
+      document.getElementById('editUserName').textContent = user.name;
+      document.getElementById('currentCredits').textContent = user.credits;
+      document.getElementById('quickCreditAmount').value = '';
+      document.getElementById('quickCreditDescription').value = '';
+      document.getElementById('quickEditCreditsModal').classList.add('active');
+      
+      // Focus on amount input
+      setTimeout(() => {
+        document.getElementById('quickCreditAmount').focus();
+      }, 100);
+    }
+    
+    // Close modal
+    function closeModal() {
+      document.getElementById('quickEditCreditsModal').classList.remove('active');
+      currentEditUser = null;
+    }
+    
+    // Set quick amount
+    function setAmount(amount) {
+      document.getElementById('quickCreditAmount').value = amount;
+      document.getElementById('quickCreditAmount').focus();
+    }
+    
+    // Update credits
+    async function updateQuickCredits(e) {
+      e.preventDefault();
+      
+      const userId = document.getElementById('editUserId').value;
+      const amount = parseInt(document.getElementById('quickCreditAmount').value);
+      const description = document.getElementById('quickCreditDescription').value || 'Quick admin adjustment';
+      
+      if (isNaN(amount) || amount === 0) {
+        alert('Please enter a valid amount');
+        return;
+      }
+      
+      // Show loading
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+      submitBtn.disabled = true;
+      
+      try {
+        const response = await fetch(`/admin/users/${userId}/credits`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount, description })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Update credits display in table
+          const newCredits = currentEditUser.credits + amount;
+          document.getElementById('credits-' + userId).textContent = newCredits;
+          
+          // Show success message
+          showNotification('✓ Credits updated successfully!', 'success');
+          
+          // Close modal
+          closeModal();
+        } else {
+          showNotification('✗ Error: ' + data.message, 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('✗ Failed to update credits', 'error');
+      } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
+    }
+    
+    // Show notification
+    function showNotification(message, type) {
+      const notification = document.createElement('div');
+      notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-[10000] ${
+        type === 'success' ? 'bg-green-600' : 'bg-red-600'
+      }`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.3s';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+    
+    // Close modal on ESC
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+    
+    // Close modal on outside click
+    document.getElementById('quickEditCreditsModal').addEventListener('click', (e) => {
+      if (e.target.id === 'quickEditCreditsModal') {
+        closeModal();
+      }
+    });
+  </script>
+</body>
+</html>

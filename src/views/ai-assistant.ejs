@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PixelNest AI Assistant - Intelligent virtual assistant for your business">
+    <title>AI Assistant - PixelNest</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+    <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/output.css">
+</head>
+<body class="text-white">
+    <%- include('partials/header') %>
+    
+    <main class="mt-20">
+        <!-- Hero Section -->
+        <section class="relative py-20 overflow-hidden">
+            <div class="section-container relative z-10">
+                <div class="text-center mb-16">
+                    <span class="inline-block px-4 py-1.5 glass rounded-full text-xs font-mono font-semibold uppercase tracking-[0.2em] mb-6 text-pink-400">
+                        AI Tools
+                    </span>
+                    <h1 class="text-5xl md:text-6xl font-black mb-6 tracking-tight">
+                        AI Assistant
+                    </h1>
+                    <p class="text-lg text-gray-400 font-light max-w-2xl mx-auto">
+                        Your intelligent virtual assistant that works 24/7 to help your team and customers succeed.
+                    </p>
+                </div>
+
+                <!-- Key Benefits -->
+                <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+                    <div class="glass rounded-2xl p-8 text-center">
+                        <div class="text-5xl mb-4">🤖</div>
+                        <h3 class="text-2xl font-bold mb-3 gradient-text">Always Available</h3>
+                        <p class="text-gray-300">24/7 support without breaks, holidays, or time zones. Your assistant never sleeps.</p>
+                    </div>
+                    <div class="glass rounded-2xl p-8 text-center">
+                        <div class="text-5xl mb-4">💡</div>
+                        <h3 class="text-2xl font-bold mb-3 gradient-text">Intelligent</h3>
+                        <p class="text-gray-300">Understands context, learns from interactions, and provides relevant, helpful responses.</p>
+                    </div>
+                    <div class="glass rounded-2xl p-8 text-center">
+                        <div class="text-5xl mb-4">⚡</div>
+                        <h3 class="text-2xl font-bold mb-3 gradient-text">Instant Responses</h3>
+                        <p class="text-gray-300">Answer thousands of questions simultaneously with zero wait time.</p>
+                    </div>
+                </div>
+
+                <!-- What It Can Do -->
+                <div class="max-w-6xl mx-auto mb-16">
+                    <h2 class="text-3xl font-black text-center mb-12 tracking-tight">What Your AI Assistant Can Do</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass rounded-2xl p-8">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold mb-2 text-violet-400">Customer Support</h3>
+                                    <p class="text-gray-300 text-sm mb-3">Handle customer inquiries, troubleshoot issues, and provide instant solutions to common problems.</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">FAQ Answers</span>
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">Issue Resolution</span>
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">Product Info</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass rounded-2xl p-8">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-fuchsia-600 to-pink-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold mb-2 text-fuchsia-400">Lead Qualification</h3>
+                                    <p class="text-gray-300 text-sm mb-3">Engage visitors, ask qualifying questions, and route qualified leads to your sales team automatically.</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">Lead Capture</span>
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">Qualification</span>
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">Scheduling</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass rounded-2xl p-8">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold mb-2 text-blue-400">Knowledge Base</h3>
+                                    <p class="text-gray-300 text-sm mb-3">Search and retrieve information from your company's knowledge base, documents, and policies instantly.</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">Document Search</span>
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">Policy Lookup</span>
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">Training</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass rounded-2xl p-8">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-violet-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold mb-2 text-purple-400">Appointment Scheduling</h3>
+                                    <p class="text-gray-300 text-sm mb-3">Book meetings, check availability, send reminders, and manage your calendar automatically.</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">Booking</span>
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">Reminders</span>
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">Rescheduling</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass rounded-2xl p-8">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-pink-600 to-red-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold mb-2 text-pink-400">Order Processing</h3>
+                                    <p class="text-gray-300 text-sm mb-3">Handle order inquiries, track shipments, process returns, and update customers on their purchases.</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">Order Status</span>
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">Tracking</span>
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">Returns</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass rounded-2xl p-8">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-cyan-600 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold mb-2 text-cyan-400">Internal Support</h3>
+                                    <p class="text-gray-300 text-sm mb-3">Help employees find information, submit requests, and get HR or IT support instantly.</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">HR Queries</span>
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">IT Help</span>
+                                        <span class="text-xs px-2 py-1 glass-strong rounded">Onboarding</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Features -->
+                <div class="max-w-6xl mx-auto mb-16">
+                    <h2 class="text-3xl font-black text-center mb-12 tracking-tight">Powerful Features</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="glass rounded-2xl p-6 text-center">
+                            <div class="text-3xl mb-3">🌍</div>
+                            <h3 class="text-lg font-bold mb-2 text-violet-400">Multi-Language</h3>
+                            <p class="text-sm text-gray-300">Support customers in their native language with automatic translation.</p>
+                        </div>
+
+                        <div class="glass rounded-2xl p-6 text-center">
+                            <div class="text-3xl mb-3">🔗</div>
+                            <h3 class="text-lg font-bold mb-2 text-fuchsia-400">Integrations</h3>
+                            <p class="text-sm text-gray-300">Connect with CRM, helpdesk, and other tools you already use.</p>
+                        </div>
+
+                        <div class="glass rounded-2xl p-6 text-center">
+                            <div class="text-3xl mb-3">📊</div>
+                            <h3 class="text-lg font-bold mb-2 text-blue-400">Analytics</h3>
+                            <p class="text-sm text-gray-300">Track conversations, measure satisfaction, and identify trends.</p>
+                        </div>
+
+                        <div class="glass rounded-2xl p-6 text-center">
+                            <div class="text-3xl mb-3">🎨</div>
+                            <h3 class="text-lg font-bold mb-2 text-purple-400">Customizable</h3>
+                            <p class="text-sm text-gray-300">Match your brand with custom colors, logo, and personality.</p>
+                        </div>
+
+                        <div class="glass rounded-2xl p-6 text-center">
+                            <div class="text-3xl mb-3">🧠</div>
+                            <h3 class="text-lg font-bold mb-2 text-pink-400">Self-Learning</h3>
+                            <p class="text-sm text-gray-300">Continuously improves from interactions and feedback.</p>
+                        </div>
+
+                        <div class="glass rounded-2xl p-6 text-center">
+                            <div class="text-3xl mb-3">🔒</div>
+                            <h3 class="text-lg font-bold mb-2 text-cyan-400">Secure</h3>
+                            <p class="text-sm text-gray-300">Enterprise-grade security and data protection compliance.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deployment Options -->
+                <div class="max-w-4xl mx-auto mb-16">
+                    <h2 class="text-3xl font-black text-center mb-12 tracking-tight">Where It Works</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass rounded-2xl p-8">
+                            <h3 class="text-xl font-bold mb-4 gradient-text">Website Chat Widget</h3>
+                            <p class="text-gray-300 mb-4">Embed directly on your website. Engage visitors and convert them into customers.</p>
+                            <div class="glass-strong rounded-lg p-4 text-sm text-gray-400">
+                                <code>• Customizable design<br>• Mobile responsive<br>• Proactive engagement</code>
+                            </div>
+                        </div>
+
+                        <div class="glass rounded-2xl p-8">
+                            <h3 class="text-xl font-bold mb-4 gradient-text">Messaging Platforms</h3>
+                            <p class="text-gray-300 mb-4">Deploy on WhatsApp, Telegram, Facebook Messenger, and more.</p>
+                            <div class="glass-strong rounded-lg p-4 text-sm text-gray-400">
+                                <code>• Multi-platform support<br>• Unified inbox<br>• Rich media messages</code>
+                            </div>
+                        </div>
+
+                        <div class="glass rounded-2xl p-8">
+                            <h3 class="text-xl font-bold mb-4 gradient-text">Mobile Apps</h3>
+                            <p class="text-gray-300 mb-4">Integrate into your iOS or Android app for in-app support.</p>
+                            <div class="glass-strong rounded-lg p-4 text-sm text-gray-400">
+                                <code>• Native integration<br>• Push notifications<br>• Offline support</code>
+                            </div>
+                        </div>
+
+                        <div class="glass rounded-2xl p-8">
+                            <h3 class="text-xl font-bold mb-4 gradient-text">Internal Systems</h3>
+                            <p class="text-gray-300 mb-4">Deploy internally for employee support and productivity.</p>
+                            <div class="glass-strong rounded-lg p-4 text-sm text-gray-400">
+                                <code>• Slack/Teams integration<br>• SSO authentication<br>• Private deployment</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing Info -->
+                <div class="max-w-4xl mx-auto mb-16">
+                    <div class="glass rounded-2xl p-12 text-center">
+                        <h2 class="text-3xl font-black mb-6 tracking-tight">Simple, Transparent Pricing</h2>
+                        <p class="text-gray-300 mb-8">
+                            Starting from just <span class="text-3xl font-black gradient-text">500K IDR/month</span>
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div>
+                                <div class="text-2xl font-bold text-violet-400 mb-1">✓</div>
+                                <p class="text-sm text-gray-300">Unlimited conversations</p>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-fuchsia-400 mb-1">✓</div>
+                                <p class="text-sm text-gray-300">All features included</p>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-blue-400 mb-1">✓</div>
+                                <p class="text-sm text-gray-300">24/7 support</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CTA -->
+                <div class="max-w-4xl mx-auto">
+                    <div class="glass-strong rounded-2xl p-12 text-center">
+                        <h2 class="text-3xl font-black mb-4 tracking-tight">Ready to Deploy Your AI Assistant?</h2>
+                        <p class="text-gray-300 mb-8">Start with a 14-day free trial. No credit card required.</p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                            <a href="/auth/register" class="btn-primary px-8 py-3">Start Free Trial</a>
+                            <a href="/contact-page" class="btn-outline px-8 py-3">Schedule Demo</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <%- include('partials/footer') %>
+</body>
+</html>
+

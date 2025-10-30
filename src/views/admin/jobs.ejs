@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <%- include('../partials/admin-styles') %>
+  <style>
+    .status-badge {
+      padding: 0.375rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .status-pending { 
+      background: rgba(245, 158, 11, 0.2);
+      color: #fcd34d;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    .status-processing { 
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    
+    .status-completed { 
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    
+    .status-failed { 
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .status-cancelled { 
+      background: rgba(107, 114, 128, 0.2);
+      color: #9ca3af;
+      border: 1px solid rgba(107, 114, 128, 0.3);
+    }
+    
+    .progress-bar {
+      height: 4px;
+      background: rgba(139, 92, 246, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+      transition: width 0.3s ease;
+    }
+    
+    .alert-box {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .btn-action {
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      transition: all 0.3s ease;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .btn-cleanup {
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    .btn-cleanup:hover {
+      background: rgba(245, 158, 11, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    .btn-refresh {
+      background: rgba(139, 92, 246, 0.2);
+      color: #a78bfa;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+    
+    .btn-refresh:hover {
+      background: rgba(139, 92, 246, 0.3);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+    
+    <!-- Main Content -->
+    <div class="flex-1 ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: title }) %>
+      
+      <!-- Page Content -->
+      <main class="p-8 flex-1">
+      <!-- Header -->
+      <div class="mb-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-bold mb-2 flex items-center">
+              <i class="fas fa-tasks mr-3" style="color: #a78bfa;"></i>
+              Generation Jobs Management
+            </h1>
+            <p class="text-gray-400">Monitor and manage all AI generation jobs</p>
+          </div>
+          
+          <div class="flex gap-3">
+            <button onclick="runCleanup()" class="btn-action btn-cleanup">
+              <i class="fas fa-broom mr-2"></i>
+              Run Cleanup
+            </button>
+            <button onclick="refreshPage()" class="btn-action btn-refresh">
+              <i class="fas fa-sync mr-2"></i>
+              Refresh
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      <% if (alerts.stuckPending > 0 || alerts.stuckProcessing > 0) { %>
+        <div class="alert-box">
+          <div class="flex items-center gap-3">
+            <i class="fas fa-exclamation-triangle text-red-400 text-xl"></i>
+            <div>
+              <p class="font-semibold text-red-300">⚠️ Stuck Jobs Detected!</p>
+              <p class="text-sm text-red-200 mt-1">
+                <% if (alerts.stuckPending > 0) { %>
+                  <%= alerts.stuckPending %> pending job(s) stuck for > 30 minutes. 
+                <% } %>
+                <% if (alerts.stuckProcessing > 0) { %>
+                  <%= alerts.stuckProcessing %> processing job(s) stuck for > 15 minutes.
+                <% } %>
+                <button onclick="runCleanup()" class="ml-3 underline hover:text-white transition-colors">Run cleanup now</button>
+              </p>
+            </div>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Statistics Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <% 
+          const statusMap = {};
+          stats.forEach(s => { statusMap[s.status] = s; });
+          
+          const pending = statusMap['pending'] || { count: 0, last_hour: 0 };
+          const processing = statusMap['processing'] || { count: 0, last_hour: 0 };
+          const completed = statusMap['completed'] || { count: 0, last_24h: 0, total_credits: 0 };
+          const failed = statusMap['failed'] || { count: 0, last_24h: 0 };
+        %>
+        
+        <!-- Pending -->
+        <div class="stat-card rounded-xl p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-400 text-sm font-medium">Pending</p>
+              <h3 class="text-3xl font-bold text-white mt-2"><%= pending.count.toLocaleString() %></h3>
+            </div>
+            <div class="w-14 h-14 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+              <i class="fas fa-clock text-yellow-400 text-2xl"></i>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400 mt-4">
+            <span class="text-yellow-400 font-semibold"><%= pending.last_hour %></span> in last hour
+          </p>
+        </div>
+
+        <!-- Processing -->
+        <div class="stat-card rounded-xl p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-400 text-sm font-medium">Processing</p>
+              <h3 class="text-3xl font-bold text-white mt-2"><%= processing.count.toLocaleString() %></h3>
+            </div>
+            <div class="w-14 h-14 rounded-xl bg-blue-500/20 flex items-center justify-center">
+              <i class="fas fa-spinner fa-spin text-blue-400 text-2xl"></i>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400 mt-4">
+            <span class="text-blue-400 font-semibold"><%= processing.last_hour %></span> in last hour
+          </p>
+        </div>
+
+        <!-- Completed -->
+        <div class="stat-card rounded-xl p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-400 text-sm font-medium">Completed</p>
+              <h3 class="text-3xl font-bold text-white mt-2"><%= completed.count.toLocaleString() %></h3>
+            </div>
+            <div class="w-14 h-14 rounded-xl bg-green-500/20 flex items-center justify-center">
+              <i class="fas fa-check-circle text-green-400 text-2xl"></i>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400 mt-4">
+            <span class="text-green-400 font-semibold"><%= completed.last_24h %></span> in 24h (<%= (completed.total_credits || 0).toLocaleString() %> credits)
+          </p>
+        </div>
+
+        <!-- Failed -->
+        <div class="stat-card rounded-xl p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-400 text-sm font-medium">Failed</p>
+              <h3 class="text-3xl font-bold text-white mt-2"><%= failed.count.toLocaleString() %></h3>
+            </div>
+            <div class="w-14 h-14 rounded-xl bg-red-500/20 flex items-center justify-center">
+              <i class="fas fa-times-circle text-red-400 text-2xl"></i>
+            </div>
+          </div>
+          <p class="text-sm text-gray-400 mt-4">
+            <span class="text-red-400 font-semibold"><%= failed.last_24h %></span> in last 24h
+          </p>
+        </div>
+      </div>
+
+      <!-- Type Statistics -->
+      <div style="background: var(--bg-surface); border: 1px solid var(--border);" class="rounded-xl p-6 mb-8">
+        <h3 class="text-lg font-semibold mb-4" style="color: white;">
+          <i class="fas fa-chart-pie mr-2" style="color: #a78bfa;"></i>Jobs by Type
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <% typeStats.forEach(ts => { %>
+            <div style="background: rgba(24, 24, 27, 0.6); border: 1px solid var(--border);" class="rounded-lg p-4">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-sm text-white font-medium capitalize flex items-center gap-2">
+                  <% if (ts.generation_type === 'image') { %>
+                    <img src="/assets/icons/generation-image.svg" alt="Image" class="w-8 h-8">
+                  <% } else if (ts.generation_type === 'video') { %>
+                    <img src="/assets/icons/generation-video.svg" alt="Video" class="w-8 h-8">
+                  <% } else if (ts.generation_type === 'audio') { %>
+                    <img src="/assets/icons/generation-audio.svg" alt="Audio" class="w-8 h-8">
+                  <% } %>
+                  <%= ts.generation_type %>
+                </span>
+                <span class="text-2xl font-bold text-white"><%= ts.count %></span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-xs mt-3">
+                <div class="text-center">
+                  <div class="text-green-400 font-semibold text-base"><%= ts.completed %></div>
+                  <div class="text-gray-500 mt-1">Done</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-red-400 font-semibold text-base"><%= ts.failed %></div>
+                  <div class="text-gray-500 mt-1">Failed</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-blue-400 font-semibold text-base"><%= ts.active %></div>
+                  <div class="text-gray-500 mt-1">Active</div>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div style="background: var(--bg-surface); border: 1px solid var(--border);" class="rounded-xl p-6 mb-6">
+        <form method="GET" action="/admin/jobs" class="flex flex-wrap gap-4">
+          <!-- Status Filter -->
+          <div class="flex-1 min-w-[200px]">
+            <label class="block text-sm font-medium mb-2 text-gray-400">Status</label>
+            <select name="status" style="background: var(--bg-dark); border: 1px solid var(--border); color: white;" class="w-full px-4 py-2 rounded-lg focus:outline-none focus:border-violet-500">
+              <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>All Status</option>
+              <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>Pending</option>
+              <option value="processing" <%= filters.status === 'processing' ? 'selected' : '' %>>Processing</option>
+              <option value="completed" <%= filters.status === 'completed' ? 'selected' : '' %>>Completed</option>
+              <option value="failed" <%= filters.status === 'failed' ? 'selected' : '' %>>Failed</option>
+            </select>
+          </div>
+
+          <!-- Type Filter -->
+          <div class="flex-1 min-w-[200px]">
+            <label class="block text-sm font-medium mb-2 text-gray-400">Type</label>
+            <select name="type" style="background: var(--bg-dark); border: 1px solid var(--border); color: white;" class="w-full px-4 py-2 rounded-lg focus:outline-none focus:border-violet-500">
+              <option value="all" <%= filters.type === 'all' ? 'selected' : '' %>>All Types</option>
+              <option value="image" <%= filters.type === 'image' ? 'selected' : '' %>>Image</option>
+              <option value="video" <%= filters.type === 'video' ? 'selected' : '' %>>Video</option>
+              <option value="audio" <%= filters.type === 'audio' ? 'selected' : '' %>>Audio</option>
+            </select>
+          </div>
+
+          <!-- Search -->
+          <div class="flex-1 min-w-[250px]">
+            <label class="block text-sm font-medium mb-2 text-gray-400">Search</label>
+            <input 
+              type="text" 
+              name="search" 
+              value="<%= filters.search %>"
+              placeholder="Job ID or prompt..."
+              style="background: var(--bg-dark); border: 1px solid var(--border); color: white;"
+              class="w-full px-4 py-2 rounded-lg focus:outline-none focus:border-violet-500"
+            >
+          </div>
+
+          <!-- Buttons -->
+          <div class="flex items-end gap-2">
+            <button type="submit" class="btn-primary px-6 py-2 rounded-lg">
+              <i class="fas fa-filter mr-2"></i>Filter
+            </button>
+            <a href="/admin/jobs" style="background: rgba(107, 114, 128, 0.3); color: #9ca3af; border: 1px solid rgba(107, 114, 128, 0.5);" class="px-6 py-2 rounded-lg transition-all hover:bg-gray-700 inline-flex items-center">
+              <i class="fas fa-redo mr-2"></i>Reset
+            </a>
+          </div>
+        </form>
+      </div>
+
+      <!-- Bulk Actions -->
+      <div id="bulk-actions" style="background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3);" class="rounded-lg p-4 mb-4 hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-white">
+            <span id="selected-count" class="font-semibold" style="color: #a78bfa;">0</span> job(s) selected
+          </span>
+          <div class="flex gap-2">
+            <button onclick="bulkCancel()" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);" class="px-4 py-2 rounded-lg text-sm transition-all hover:bg-yellow-700">
+              <i class="fas fa-ban mr-2"></i>Cancel Selected
+            </button>
+            <button onclick="bulkDelete()" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);" class="px-4 py-2 rounded-lg text-sm transition-all hover:bg-red-700">
+              <i class="fas fa-trash mr-2"></i>Delete Selected
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Jobs Table -->
+      <div style="background: var(--bg-surface); border: 1px solid var(--border);" class="rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead style="background: var(--bg-surface); border-bottom: 1px solid var(--border);">
+              <tr>
+                <th class="px-4 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <input type="checkbox" id="select-all" class="rounded" onchange="toggleSelectAll(this)">
+                </th>
+                <th class="px-4 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Job ID</th>
+                <th class="px-4 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">User</th>
+                <th class="px-4 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Type</th>
+                <th class="px-4 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Prompt</th>
+                <th class="px-4 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                <th class="px-4 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Progress</th>
+                <th class="px-4 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Time</th>
+                <th class="px-4 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Credits</th>
+                <th class="px-4 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody style="border-bottom: 1px solid var(--border);">
+              <% if (jobs.length === 0) { %>
+                <tr>
+                  <td colspan="10" class="px-4 py-12 text-center text-gray-400">
+                    <i class="fas fa-inbox text-4xl mb-3 opacity-50"></i>
+                    <p>No jobs found</p>
+                  </td>
+                </tr>
+              <% } else { %>
+                <% jobs.forEach(job => { %>
+                  <tr class="table-row" data-job-id="<%= job.id %>">
+                    <td class="px-4 py-3">
+                      <input type="checkbox" class="job-checkbox rounded" value="<%= job.id %>" onchange="updateBulkActions()">
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="flex items-center gap-2">
+                        <code class="text-xs text-violet-300"><%= job.job_id ? job.job_id.substring(0, 12) + '...' : 'N/A' %></code>
+                        <% if (job.job_id) { %>
+                          <button onclick="copyToClipboard('<%= job.job_id %>')" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-copy text-xs"></i>
+                          </button>
+                        <% } %>
+                      </div>
+                      <div class="text-xs text-gray-500 mt-1">ID: <%= job.id %></div>
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="text-sm"><%= job.username || 'Unknown' %></div>
+                      <div class="text-xs text-gray-500"><%= job.email %></div>
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="flex items-center gap-3">
+                        <% if (job.generation_type === 'image') { %>
+                          <img src="/assets/icons/generation-image.svg" alt="Image" class="w-7 h-7 flex-shrink-0">
+                        <% } else if (job.generation_type === 'video') { %>
+                          <img src="/assets/icons/generation-video.svg" alt="Video" class="w-7 h-7 flex-shrink-0">
+                        <% } else if (job.generation_type === 'audio') { %>
+                          <img src="/assets/icons/generation-audio.svg" alt="Audio" class="w-7 h-7 flex-shrink-0">
+                        <% } %>
+                        <div>
+                          <div class="text-sm capitalize font-medium text-white"><%= job.generation_type %></div>
+                          <div class="text-xs text-gray-500"><%= job.sub_type %></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="max-w-[250px] text-sm">
+                        <% 
+                          // Get first 2 words only
+                          const words = job.prompt.trim().split(/\s+/);
+                          const firstTwoWords = words.slice(0, 2).join(' ');
+                          const hasMore = words.length > 2;
+                        %>
+                        <div class="flex items-center gap-2">
+                          <span class="text-gray-300">
+                            <%= firstTwoWords %><% if (hasMore) { %>...<% } %>
+                          </span>
+                          <% if (hasMore) { %>
+                            <button onclick="showPromptPopup('<%= job.prompt.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ") %>')" 
+                                    class="text-violet-400 hover:text-violet-300 text-xs underline whitespace-nowrap transition-colors"
+                                    title="Show full prompt">
+                              more
+                            </button>
+                          <% } %>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="status-badge status-<%= job.status %>">
+                        <%= job.status %>
+                      </span>
+                      <% if (job.status === 'failed' && job.error_message) { %>
+                        <i class="fas fa-info-circle text-red-400 text-xs ml-2 cursor-help" 
+                           title="<%= job.error_message %>"></i>
+                      <% } %>
+                    </td>
+                    <td class="px-4 py-3">
+                      <% if (['pending', 'processing'].includes(job.status)) { %>
+                        <% const progress = job.progress !== null && job.progress !== undefined ? job.progress : 0; %>
+                        <div class="flex items-center gap-2">
+                          <div class="progress-bar w-16">
+                            <div class="progress-fill" style="width: <%= progress %>%"></div>
+                          </div>
+                          <span class="text-xs text-gray-400 font-semibold"><%= progress %>%</span>
+                        </div>
+                      <% } else { %>
+                        <span class="text-xs text-gray-500">-</span>
+                      <% } %>
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="text-xs">
+                        <div class="text-gray-400">Started:</div>
+                        <% if (job.started_at) { %>
+                          <div><%= new Date(job.started_at).toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) %></div>
+                          <% if (['pending', 'processing'].includes(job.status) && job.minutes_elapsed > 0) { %>
+                            <div class="text-yellow-400 mt-1">
+                              <%= Math.round(job.minutes_elapsed) %>m ago
+                            </div>
+                          <% } %>
+                        <% } else { %>
+                          <div class="text-gray-500">N/A</div>
+                        <% } %>
+                        <% if (job.completed_at) { %>
+                          <div class="text-gray-500 mt-1">
+                            Done: <%= new Date(job.completed_at).toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) %>
+                          </div>
+                        <% } %>
+                      </div>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="text-sm"><%= job.credits_cost || 0 %></span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="flex gap-2">
+                        <button onclick="viewDetails(<%= job.id %>)" 
+                                style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);"
+                                class="p-2 hover:bg-blue-600/40 rounded transition-all"
+                                title="View Details">
+                          <i class="fas fa-eye text-xs"></i>
+                        </button>
+                        <% if (['pending', 'processing'].includes(job.status)) { %>
+                          <button onclick="cancelJob(<%= job.id %>)" 
+                                  style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);"
+                                  class="p-2 hover:bg-yellow-600/40 rounded transition-all"
+                                  title="Cancel">
+                            <i class="fas fa-ban text-xs"></i>
+                          </button>
+                        <% } %>
+                        <button onclick="deleteJob(<%= job.id %>)" 
+                                style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);"
+                                class="p-2 hover:bg-red-600/40 rounded transition-all"
+                                title="Delete">
+                          <i class="fas fa-trash text-xs"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <% if (pagination.totalPages > 1) { %>
+          <div class="px-6 py-4" style="border-top: 1px solid var(--border);">
+            <div class="flex items-center justify-between">
+              <div class="text-sm text-gray-400">
+                Showing page <span class="font-semibold text-white"><%= pagination.page %></span> of <%= pagination.totalPages %> 
+                (<span class="font-semibold"><%= pagination.totalJobs.toLocaleString() %></span> total jobs)
+              </div>
+              <div class="flex gap-2">
+                <% if (pagination.hasPrev) { %>
+                  <a href="?page=<%= pagination.page - 1 %>&status=<%= filters.status %>&type=<%= filters.type %>&search=<%= filters.search %>" 
+                     style="background: rgba(139, 92, 246, 0.2); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3);"
+                     class="px-4 py-2 hover:bg-violet-600/30 rounded-lg transition-all inline-flex items-center">
+                    <i class="fas fa-chevron-left mr-2"></i> Previous
+                  </a>
+                <% } %>
+                <% if (pagination.hasNext) { %>
+                  <a href="?page=<%= pagination.page + 1 %>&status=<%= filters.status %>&type=<%= filters.type %>&search=<%= filters.search %>" 
+                     style="background: rgba(139, 92, 246, 0.2); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3);"
+                     class="px-4 py-2 hover:bg-violet-600/30 rounded-lg transition-all inline-flex items-center">
+                    Next <i class="fas fa-chevron-right ml-2"></i>
+                  </a>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </main>
+  </div>
+
+  <!-- Prompt Popup Modal -->
+  <div id="prompt-popup" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4" onclick="event.target === this && closePromptPopup()">
+    <div style="background: var(--bg-surface); border: 1px solid var(--border);" class="rounded-xl max-w-2xl w-full modal-enter">
+      <div class="p-5 flex items-center justify-between" style="border-bottom: 1px solid var(--border);">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <i class="fas fa-comment-dots" style="color: #a78bfa;"></i>
+          Full Prompt
+        </h3>
+        <button onclick="closePromptPopup()" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);" class="p-2 rounded-lg hover:bg-red-600/40 transition-all">
+          <i class="fas fa-times text-sm"></i>
+        </button>
+      </div>
+      <div class="p-6">
+        <div id="prompt-popup-content" class="text-gray-300 leading-relaxed whitespace-pre-wrap" style="max-height: 60vh; overflow-y: auto;">
+          <!-- Prompt content will be inserted here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Job Details Modal -->
+  <div id="details-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" onclick="event.target === this && closeDetailsModal()">
+    <div style="background: var(--bg-surface); border: 1px solid var(--border);" class="rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto modal-enter">
+      <div class="p-6 flex items-center justify-between" style="border-bottom: 1px solid var(--border);">
+        <h2 class="text-xl font-bold text-white">
+          <i class="fas fa-info-circle mr-2" style="color: #a78bfa;"></i>
+          Job Details
+        </h2>
+        <button onclick="closeDetailsModal()" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);" class="p-2 rounded-lg hover:bg-red-600/40 transition-all">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div id="details-content" class="p-6">
+        <!-- Content loaded via AJAX -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Select All
+    function toggleSelectAll(checkbox) {
+      document.querySelectorAll('.job-checkbox').forEach(cb => {
+        cb.checked = checkbox.checked;
+      });
+      updateBulkActions();
+    }
+
+    // Update Bulk Actions
+    function updateBulkActions() {
+      const selected = document.querySelectorAll('.job-checkbox:checked').length;
+      const bulkActions = document.getElementById('bulk-actions');
+      document.getElementById('selected-count').textContent = selected;
+      
+      if (selected > 0) {
+        bulkActions.classList.remove('hidden');
+      } else {
+        bulkActions.classList.add('hidden');
+      }
+    }
+
+    // Get Selected IDs
+    function getSelectedIds() {
+      return Array.from(document.querySelectorAll('.job-checkbox:checked')).map(cb => parseInt(cb.value));
+    }
+
+    // Cancel Job
+    async function cancelJob(id) {
+      if (!confirm('Cancel this job?')) return;
+      
+      try {
+        const res = await fetch(`/admin/api/jobs/${id}/cancel`, { method: 'POST' });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert('Job cancelled successfully');
+          location.reload();
+        } else {
+          alert(data.message || 'Failed to cancel job');
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // Delete Job
+    async function deleteJob(id) {
+      if (!confirm('Delete this job permanently?')) return;
+      
+      try {
+        const res = await fetch(`/admin/api/jobs/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert('Job deleted successfully');
+          location.reload();
+        } else {
+          alert(data.message || 'Failed to delete job');
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // Bulk Cancel
+    async function bulkCancel() {
+      const ids = getSelectedIds();
+      if (ids.length === 0) return;
+      if (!confirm(`Cancel ${ids.length} job(s)?`)) return;
+      
+      try {
+        const res = await fetch('/admin/api/jobs/bulk-cancel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert(data.message || 'Failed to cancel jobs');
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // Bulk Delete
+    async function bulkDelete() {
+      const ids = getSelectedIds();
+      if (ids.length === 0) return;
+      if (!confirm(`Delete ${ids.length} job(s) permanently?`)) return;
+      
+      try {
+        const res = await fetch('/admin/api/jobs/bulk-delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert(data.message || 'Failed to delete jobs');
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // Run Cleanup
+    async function runCleanup() {
+      if (!confirm('Run cleanup to mark expired jobs as failed?')) return;
+      
+      try {
+        const res = await fetch('/admin/api/jobs/cleanup', { method: 'POST' });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert('Cleanup completed!\n\n' + (data.output || ''));
+          location.reload();
+        } else {
+          alert(data.message || 'Failed to run cleanup');
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // View Details
+    async function viewDetails(id) {
+      document.getElementById('details-modal').classList.remove('hidden');
+      document.getElementById('details-content').innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl"></i></div>';
+      
+      try {
+        const res = await fetch(`/admin/api/jobs/${id}`);
+        const data = await res.json();
+        
+        if (data.success) {
+          const job = data.job;
+          
+          // Safe helpers
+          const formatDate = (date) => date ? new Date(date).toLocaleString() : 'N/A';
+          const safeValue = (val, fallback = 'N/A') => val !== null && val !== undefined ? val : fallback;
+          const safeJSON = (obj) => {
+            try {
+              return obj ? JSON.stringify(obj, null, 2) : 'N/A';
+            } catch (e) {
+              return 'Invalid JSON';
+            }
+          };
+          
+          document.getElementById('details-content').innerHTML = `
+            <div class="space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="text-xs text-gray-400 uppercase font-semibold">Job ID</label>
+                  <div class="text-sm mt-1 text-white"><code style="background: rgba(139, 92, 246, 0.15); padding: 2px 6px; border-radius: 4px; color: #a78bfa;">${safeValue(job.job_id)}</code></div>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-400 uppercase font-semibold">Database ID</label>
+                  <div class="text-sm mt-1 text-white">${job.id}</div>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-400 uppercase font-semibold">User</label>
+                  <div class="text-sm mt-1 text-white">${safeValue(job.username, 'Unknown')} <span class="text-gray-500">(${safeValue(job.email, 'N/A')})</span></div>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-400 uppercase font-semibold">Type</label>
+                  <div class="text-sm mt-1 capitalize text-white">${safeValue(job.generation_type)} - ${safeValue(job.sub_type)}</div>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-400 uppercase font-semibold">Status</label>
+                  <div class="text-sm mt-1"><span class="status-badge status-${job.status}">${job.status}</span></div>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-400 uppercase font-semibold">Progress</label>
+                  <div class="text-sm mt-1 text-white">${safeValue(job.progress, 0)}%</div>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-400 uppercase font-semibold">Credits Cost</label>
+                  <div class="text-sm mt-1 text-white">${safeValue(job.credits_cost, 0)}</div>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-400 uppercase font-semibold">Elapsed Time</label>
+                  <div class="text-sm mt-1 text-white">${Math.round(safeValue(job.minutes_elapsed, 0))} minutes</div>
+                </div>
+              </div>
+              
+              <div>
+                <label class="text-xs text-gray-400 uppercase font-semibold">Prompt</label>
+                <div class="text-sm mt-1 p-3 rounded text-white" style="background: rgba(24, 24, 27, 0.6); border: 1px solid var(--border);">${safeValue(job.prompt)}</div>
+              </div>
+              
+              ${job.result_url ? `
+                <div>
+                  <label class="text-xs text-gray-400 uppercase font-semibold">Result URL</label>
+                  <div class="text-sm mt-1 p-3 rounded break-all" style="background: rgba(24, 24, 27, 0.6); border: 1px solid var(--border);">
+                    <a href="${job.result_url}" target="_blank" style="color: #a78bfa;" class="hover:underline">${job.result_url}</a>
+                  </div>
+                </div>
+              ` : ''}
+              
+              ${job.error_message ? `
+                <div>
+                  <label class="text-xs text-gray-400 uppercase font-semibold">Error Message</label>
+                  <div class="text-sm mt-1 p-3 rounded" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444;">${job.error_message}</div>
+                </div>
+              ` : ''}
+              
+              <div>
+                <label class="text-xs text-gray-400 uppercase font-semibold">Settings</label>
+                <div class="text-xs mt-1 p-3 rounded" style="background: rgba(24, 24, 27, 0.6); border: 1px solid var(--border);">
+                  <pre class="overflow-x-auto text-gray-300" style="font-family: 'JetBrains Mono', monospace;">${safeJSON(job.settings)}</pre>
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="text-xs text-gray-400 uppercase font-semibold">Started At</label>
+                  <div class="text-sm mt-1 text-white">${formatDate(job.started_at)}</div>
+                </div>
+                ${job.completed_at ? `
+                  <div>
+                    <label class="text-xs text-gray-400 uppercase font-semibold">Completed At</label>
+                    <div class="text-sm mt-1 text-white">${formatDate(job.completed_at)}</div>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        } else {
+          document.getElementById('details-content').innerHTML = '<div class="text-center py-8 text-red-400">Failed to load details</div>';
+        }
+      } catch (error) {
+        document.getElementById('details-content').innerHTML = '<div class="text-center py-8 text-red-400">Error: ' + error.message + '</div>';
+      }
+    }
+
+    function closeDetailsModal() {
+      document.getElementById('details-modal').classList.add('hidden');
+    }
+
+    function refreshPage() {
+      location.reload();
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Copied to clipboard!');
+      });
+    }
+
+    // Show prompt popup
+    function showPromptPopup(prompt) {
+      const popup = document.getElementById('prompt-popup');
+      const content = document.getElementById('prompt-popup-content');
+      
+      content.textContent = prompt;
+      popup.classList.remove('hidden');
+      
+      // Add animation
+      setTimeout(() => {
+        popup.querySelector('.modal-enter').style.animation = 'modalFadeIn 0.3s ease-out';
+      }, 10);
+    }
+
+    // Close prompt popup
+    function closePromptPopup() {
+      const popup = document.getElementById('prompt-popup');
+      popup.classList.add('hidden');
+    }
+    
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closePromptPopup();
+      }
+    });
+
+    // Auto-refresh every 30 seconds for active jobs
+    <% if (jobs.some(j => ['pending', 'processing'].includes(j.status))) { %>
+      setTimeout(() => location.reload(), 30000);
+    <% } %>
+  </script>
+</body>
+</html>
+

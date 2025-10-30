@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+    <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+    
+    <main>
+        <section class="success-section">
+            <div class="container">
+                <div class="success-content">
+                    <div class="success-icon">✓</div>
+                    <h1>Thank You, <%= name %>!</h1>
+                    <p>Your message has been received successfully.</p>
+                    <p>We'll get back to you within 24 hours.</p>
+                    <div class="success-actions">
+                        <a href="/" class="btn btn-primary">Back to Home</a>
+                        <a href="/services" class="btn btn-outline">Explore Services</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <%- include('partials/footer') %>
+    
+    <script src="/js/main.js"></script>
+</body>
+</html>
+

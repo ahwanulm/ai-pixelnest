@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <%- include('../partials/admin-styles') %>
+  <style>
+    .status-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .status-paid { 
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    .status-unpaid { 
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .status-expired { 
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .status-failed { 
+      background: rgba(220, 38, 38, 0.2);
+      color: #dc2626;
+      border: 1px solid rgba(220, 38, 38, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+
+    <!-- Main Content -->
+    <div class="flex-1 lg:ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: title }) %>
+
+      <!-- Page Content -->
+      <main class="p-4 md:p-8 flex-1">
+      
+      <!-- Header -->
+      <div class="mb-6 md:mb-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-white">
+              <i class="fas fa-credit-card mr-2 md:mr-3 text-violet-400"></i>
+              Payment Transactions
+            </h1>
+            <p class="text-gray-400 mt-2 text-sm md:text-base">Kelola dan monitor transaksi pembayaran Tripay</p>
+          </div>
+          <button 
+            onclick="syncPaymentChannels()" 
+            class="btn-primary px-4 py-2 rounded-lg flex items-center justify-center gap-2 w-full md:w-auto"
+          >
+            <i class="fas fa-sync"></i>
+            Sync Channels
+          </button>
+        </div>
+      </div>
+
+      <!-- Statistics Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6 md:mb-8">
+        <div class="stat-card rounded-xl p-4 md:p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-400 text-xs md:text-sm font-medium">Total Transaksi</p>
+              <p class="text-xl md:text-2xl font-bold text-white mt-1"><%= stats.total_transactions %></p>
+            </div>
+            <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+              <i class="fas fa-receipt text-blue-400 text-lg md:text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card rounded-xl p-4 md:p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-400 text-xs md:text-sm font-medium">Berhasil</p>
+              <p class="text-xl md:text-2xl font-bold text-green-400 mt-1"><%= stats.paid_count %></p>
+            </div>
+            <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+              <i class="fas fa-check-circle text-green-400 text-lg md:text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card rounded-xl p-4 md:p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-400 text-xs md:text-sm font-medium">Pending</p>
+              <p class="text-xl md:text-2xl font-bold text-yellow-400 mt-1"><%= stats.unpaid_count %></p>
+            </div>
+            <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+              <i class="fas fa-clock text-yellow-400 text-lg md:text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card rounded-xl p-4 md:p-6">
+          <div class="flex items-center justify-between">
+            <div class="min-w-0 flex-1 pr-2">
+              <p class="text-gray-400 text-xs md:text-sm font-medium">Total Revenue</p>
+              <p class="text-base md:text-xl font-bold text-violet-400 mt-1 truncate">
+                Rp <%= parseInt(stats.total_revenue).toLocaleString('id-ID') %>
+              </p>
+              <p class="text-xs text-gray-500 mt-1">(Setelah dikurangi fee)</p>
+            </div>
+            <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-violet-500/20 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-money-bill-wave text-violet-400 text-lg md:text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card rounded-xl p-4 md:p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-400 text-xs md:text-sm font-medium">Credits Terjual</p>
+              <p class="text-xl md:text-2xl font-bold text-indigo-400 mt-1">
+                <%= parseInt(stats.total_credits_sold).toLocaleString('id-ID') %>
+              </p>
+            </div>
+            <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+              <i class="fas fa-coins text-indigo-400 text-lg md:text-xl"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="glass rounded-xl p-4 md:p-6 mb-4 md:mb-6">
+        <form method="GET" action="/admin/payment-transactions" class="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4">
+          <div class="flex-1 md:min-w-[200px]">
+            <input 
+              type="text" 
+              name="search" 
+              placeholder="Cari reference, user, email..."
+              value="<%= filters.search %>"
+              class="w-full px-3 md:px-4 py-2 text-sm md:text-base rounded-lg bg-zinc-800/50 border border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+            >
+          </div>
+          
+          <div class="w-full md:w-auto md:min-w-[150px]">
+            <select 
+              name="status" 
+              class="w-full px-3 md:px-4 py-2 text-sm md:text-base rounded-lg bg-zinc-800/50 border border-white/10 text-white focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+            >
+              <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>Semua Status</option>
+              <option value="PAID" <%= filters.status === 'PAID' ? 'selected' : '' %>>PAID</option>
+              <option value="UNPAID" <%= filters.status === 'UNPAID' ? 'selected' : '' %>>UNPAID</option>
+              <option value="EXPIRED" <%= filters.status === 'EXPIRED' ? 'selected' : '' %>>EXPIRED</option>
+              <option value="FAILED" <%= filters.status === 'FAILED' ? 'selected' : '' %>>FAILED</option>
+            </select>
+          </div>
+          
+          <button type="submit" class="btn-primary px-4 md:px-6 py-2 rounded-lg text-sm md:text-base">
+            <i class="fas fa-search mr-2"></i>Filter
+          </button>
+          
+          <a href="/admin/payment-transactions" class="px-4 md:px-6 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white hover:bg-zinc-700/50 transition text-center text-sm md:text-base">
+            <i class="fas fa-times mr-2"></i>Reset
+          </a>
+        </form>
+      </div>
+
+      <!-- Transactions Table -->
+      <div class="glass rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead>
+              <tr class="border-b border-white/10">
+                <th class="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Transaksi
+                </th>
+                <th class="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  User
+                </th>
+                <th class="hidden lg:table-cell px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Metode Pembayaran
+                </th>
+                <th class="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Jumlah
+                </th>
+                <th class="hidden sm:table-cell px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Credits
+                </th>
+                <th class="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Status
+                </th>
+                <th class="hidden lg:table-cell px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Tanggal
+                </th>
+                <th class="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Aksi
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/10">
+              <% if (transactions.length === 0) { %>
+                <tr>
+                  <td colspan="8" class="px-6 py-12 text-center text-gray-400">
+                    <i class="fas fa-inbox text-4xl mb-4 block"></i>
+                    <p>Tidak ada transaksi ditemukan</p>
+                  </td>
+                </tr>
+              <% } else { %>
+                <% transactions.forEach(transaction => { %>
+                  <tr class="transition hover:bg-violet-500/5">
+                    <td class="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                      <div class="text-xs md:text-sm font-medium text-white"><%= transaction.reference %></div>
+                      <div class="text-xs text-gray-400 md:hidden"><%= transaction.user_name %></div>
+                    </td>
+                    <td class="hidden md:table-cell px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-white"><%= transaction.user_name %></div>
+                      <div class="text-xs text-gray-400"><%= transaction.user_email %></div>
+                    </td>
+                    <td class="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm text-white"><%= transaction.payment_name %></div>
+                      <div class="text-xs text-gray-400"><%= transaction.payment_method %></div>
+                    </td>
+                    <td class="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                      <div class="text-xs md:text-sm font-semibold text-white">
+                        Rp <%= parseInt(transaction.amount).toLocaleString('id-ID') %>
+                      </div>
+                      <% if (transaction.fee_customer > 0) { %>
+                        <div class="text-xs text-gray-400">
+                          Fee: <%= parseInt(transaction.fee_customer).toLocaleString('id-ID') %>
+                        </div>
+                      <% } %>
+                    </td>
+                    <td class="hidden sm:table-cell px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                      <span class="text-xs md:text-sm font-bold text-blue-400">
+                        +<%= transaction.credits_amount %>
+                      </span>
+                    </td>
+                    <td class="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                      <% 
+                        let statusClass = 'status-unpaid';
+                        if (transaction.status === 'PAID') statusClass = 'status-paid';
+                        else if (transaction.status === 'EXPIRED') statusClass = 'status-expired';
+                        else if (transaction.status === 'FAILED') statusClass = 'status-failed';
+                      %>
+                      <span class="status-badge <%= statusClass %> text-xs">
+                        <%= transaction.status %>
+                      </span>
+                    </td>
+                    <td class="hidden lg:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                      <%= new Date(transaction.created_at).toLocaleString('id-ID') %>
+                    </td>
+                    <td class="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap text-xs md:text-sm">
+                      <button 
+                        onclick="viewDetail(<%= transaction.id %>)"
+                        class="text-violet-400 hover:text-violet-300 font-medium transition"
+                      >
+                        <i class="fas fa-eye mr-1"></i><span class="hidden md:inline">Detail</span>
+                      </button>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <% if (pagination.totalPages > 1) { %>
+          <div class="px-4 md:px-6 py-3 md:py-4 border-t border-white/10 bg-zinc-900/30">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0">
+              <div class="text-xs md:text-sm text-gray-400 text-center md:text-left">
+                Menampilkan <%= ((pagination.page - 1) * pagination.limit) + 1 %> - 
+                <%= Math.min(pagination.page * pagination.limit, pagination.total) %> 
+                dari <%= pagination.total %> transaksi
+              </div>
+              
+              <div class="flex gap-1 md:gap-2 flex-wrap justify-center">
+                <% if (pagination.page > 1) { %>
+                  <a 
+                    href="?page=<%= pagination.page - 1 %>&status=<%= filters.status %>&search=<%= filters.search %>"
+                    class="px-3 md:px-4 py-2 bg-zinc-800/50 border border-white/10 text-white rounded-lg hover:bg-zinc-700/50 transition text-sm md:text-base"
+                  >
+                    <i class="fas fa-chevron-left"></i>
+                  </a>
+                <% } %>
+                
+                <% for (let i = Math.max(1, pagination.page - 2); i <= Math.min(pagination.totalPages, pagination.page + 2); i++) { %>
+                  <a 
+                    href="?page=<%= i %>&status=<%= filters.status %>&search=<%= filters.search %>"
+                    class="px-3 md:px-4 py-2 <%= i === pagination.page ? 'btn-primary' : 'bg-zinc-800/50 border border-white/10 text-white hover:bg-zinc-700/50' %> rounded-lg transition text-sm md:text-base"
+                  >
+                    <%= i %>
+                  </a>
+                <% } %>
+                
+                <% if (pagination.page < pagination.totalPages) { %>
+                  <a 
+                    href="?page=<%= pagination.page + 1 %>&status=<%= filters.status %>&search=<%= filters.search %>"
+                    class="px-3 md:px-4 py-2 bg-zinc-800/50 border border-white/10 text-white rounded-lg hover:bg-zinc-700/50 transition text-sm md:text-base"
+                  >
+                    <i class="fas fa-chevron-right"></i>
+                  </a>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% } %>
+      </div>
+
+    </main>
+    
+    <!-- Footer inside content-area -->
+    <%- include('../partials/admin-footer') %>
+  </div>
+  
+  </div>
+
+  <!-- Detail Modal (fixed position, outside main layout) -->
+  <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-2 md:p-4">
+    <div class="glass-strong rounded-xl shadow-2xl max-w-3xl w-full max-h-[95vh] md:max-h-[90vh] overflow-y-auto border border-white/10 modal-enter">
+      <div class="p-4 md:p-6">
+        <div class="flex justify-between items-center mb-4 md:mb-6">
+          <h3 class="text-lg md:text-2xl font-bold text-white">
+            <i class="fas fa-receipt mr-2 text-violet-400"></i>
+            Transaction Detail
+          </h3>
+          <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white transition">
+            <i class="fas fa-times text-xl md:text-2xl"></i>
+          </button>
+        </div>
+        <div id="detailContent">
+          <!-- Will be filled by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%- include('../partials/admin-scripts') %>
+
+  <script>
+    // View transaction detail
+    async function viewDetail(id) {
+      try {
+        const response = await fetch(`/admin/api/payment-transactions/${id}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          showDetailModal(data.data);
+        } else {
+          alert('Failed to load transaction detail');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to load transaction detail');
+      }
+    }
+
+    // Show detail modal
+    function showDetailModal(transaction) {
+      const modal = document.getElementById('detailModal');
+      const content = document.getElementById('detailContent');
+      
+      let statusClass = 'status-unpaid';
+      if (transaction.status === 'PAID') statusClass = 'status-paid';
+      else if (transaction.status === 'EXPIRED') statusClass = 'status-expired';
+      else if (transaction.status === 'FAILED') statusClass = 'status-failed';
+      
+      content.innerHTML = `
+        <div class="space-y-3 md:space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+            <div>
+              <p class="text-xs md:text-sm text-gray-400">Reference</p>
+              <p class="font-semibold text-white text-sm md:text-base break-all">${transaction.reference}</p>
+            </div>
+            <div>
+              <p class="text-xs md:text-sm text-gray-400">Merchant Reference</p>
+              <p class="font-semibold text-white text-sm md:text-base break-all">${transaction.merchant_ref}</p>
+            </div>
+          </div>
+
+          <div class="border-t border-white/10 pt-3 md:pt-4">
+            <p class="text-xs md:text-sm text-gray-400 mb-2">User</p>
+            <div class="bg-zinc-800/50 p-2 md:p-3 rounded border border-white/10">
+              <p class="font-semibold text-white text-sm md:text-base">${transaction.user_name}</p>
+              <p class="text-xs md:text-sm text-gray-400 break-all">${transaction.user_email}</p>
+            </div>
+          </div>
+
+          <div class="border-t border-white/10 pt-3 md:pt-4">
+            <p class="text-xs md:text-sm text-gray-400 mb-2">Payment Method</p>
+            <div class="bg-zinc-800/50 p-2 md:p-3 rounded border border-white/10">
+              <p class="font-semibold text-white text-sm md:text-base">${transaction.payment_name}</p>
+              <p class="text-xs md:text-sm text-gray-400">${transaction.payment_method}</p>
+            </div>
+          </div>
+
+          <div class="border-t border-white/10 pt-3 md:pt-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+              <div>
+                <p class="text-xs md:text-sm text-gray-400">Amount</p>
+                <p class="font-bold text-base md:text-lg text-white">Rp ${parseInt(transaction.amount).toLocaleString('id-ID')}</p>
+              </div>
+              <div>
+                <p class="text-xs md:text-sm text-gray-400">Fee Customer</p>
+                <p class="font-semibold text-sm md:text-base text-white">Rp ${parseInt(transaction.fee_customer || 0).toLocaleString('id-ID')}</p>
+              </div>
+              <div>
+                <p class="text-xs md:text-sm text-gray-400">Amount Received</p>
+                <p class="font-bold text-base md:text-lg text-green-400">Rp ${parseInt(transaction.amount_received).toLocaleString('id-ID')}</p>
+              </div>
+              <div>
+                <p class="text-xs md:text-sm text-gray-400">Credits</p>
+                <p class="font-bold text-base md:text-lg text-blue-400">+${transaction.credits_amount} Credits</p>
+              </div>
+            </div>
+          </div>
+
+          ${transaction.pay_code ? `
+            <div class="border-t border-white/10 pt-3 md:pt-4">
+              <p class="text-xs md:text-sm text-gray-400 mb-2">Payment Code</p>
+              <div class="bg-yellow-500/10 border border-yellow-500/30 p-2 md:p-3 rounded">
+                <code class="text-base md:text-lg font-mono font-bold text-yellow-400 break-all">${transaction.pay_code}</code>
+              </div>
+            </div>
+          ` : ''}
+
+          <div class="border-t border-white/10 pt-3 md:pt-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+              <div>
+                <p class="text-xs md:text-sm text-gray-400">Status</p>
+                <span class="status-badge ${statusClass} inline-block mt-1">
+                  ${transaction.status}
+                </span>
+              </div>
+              <div>
+                <p class="text-xs md:text-sm text-gray-400">Created At</p>
+                <p class="font-semibold text-white text-sm md:text-base mt-1">${new Date(transaction.created_at).toLocaleString('id-ID')}</p>
+              </div>
+            </div>
+          </div>
+
+          ${transaction.paid_at ? `
+            <div class="border-t border-white/10 pt-3 md:pt-4">
+              <p class="text-xs md:text-sm text-gray-400">Paid At</p>
+              <p class="font-semibold text-green-400 text-sm md:text-base mt-1">${new Date(transaction.paid_at).toLocaleString('id-ID')}</p>
+            </div>
+          ` : ''}
+
+          ${transaction.checkout_url ? `
+            <div class="border-t border-white/10 pt-3 md:pt-4">
+              <a href="${transaction.checkout_url}" target="_blank" class="btn-primary block w-full px-3 md:px-4 py-2 md:py-3 text-center rounded-lg text-sm md:text-base">
+                <i class="fas fa-external-link-alt mr-2"></i>
+                Open Checkout URL
+              </a>
+            </div>
+          ` : ''}
+        </div>
+      `;
+      
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    // Close detail modal
+    function closeDetailModal() {
+      const modal = document.getElementById('detailModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // Sync payment channels
+    async function syncPaymentChannels() {
+      if (!confirm('Sync payment channels dari Tripay?')) return;
+      
+      try {
+        const response = await fetch('/admin/api/payment-channels/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          alert(data.message);
+        } else {
+          alert('Failed to sync: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to sync payment channels');
+      }
+    }
+  </script>
+
+</body>
+</html>
+

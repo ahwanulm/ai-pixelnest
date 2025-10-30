@@ -1,0 +1,318 @@
+<!-- Mobile Header - Consistent across all pages -->
+<% if (typeof isAuthenticated !== 'undefined' && isAuthenticated) { %>
+<div id="mobile-header" class="lg:hidden fixed top-0 left-0 right-0 bg-zinc-950 border-b border-white/10" style="z-index: 10001;">
+    <div class="px-4 py-3 flex items-center justify-between">
+        <!-- Logo & App Name -->
+        <a href="/dashboard" class="flex items-center gap-2">
+            <img src="/assets/img/logo/logo.png" alt="PixelNest Logo" class="h-8 w-auto">
+            <span class="font-black text-base tracking-tight">PIXELNEST</span>
+        </a>
+        
+        <!-- Right Side Actions -->
+        <div class="flex items-center gap-2">
+            <!-- Top-Up Button -->
+            <a href="/api/payment/top-up" class="flex items-center justify-center h-7 px-2 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg hover:from-yellow-400 hover:to-yellow-500 transition-all duration-300 hover:scale-105 shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/40 active:scale-95" title="Top Up Credits">
+                <svg class="w-3.5 h-3.5 text-black font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+            </a>
+            
+            <!-- Credits Badge -->
+            <div class="flex items-center gap-1 bg-yellow-500/10 px-2 h-7 rounded-lg border border-yellow-500/20">
+                <svg class="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-xs font-mono font-bold text-yellow-400"><%= (typeof user !== 'undefined' && user ? (user.credits || 0).toFixed(1) : '0.0') %></span>
+            </div>
+            
+            <!-- Notification Bell -->
+            <div class="relative z-50">
+                <button onclick="toggleMobileNotificationPanel()" id="mobile-notification-button" class="relative flex items-center justify-center w-8 h-8 bg-white/5 border border-white/10 rounded-lg hover:bg-violet-500/10 hover:border-violet-500/30 transition-all duration-300 active:scale-95 cursor-pointer" title="Notifications">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                    <div id="mobile-notification-badge" class="hidden absolute -top-1 -right-1 min-w-[16px] h-[16px] bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-lg shadow-red-500/40">
+                        <span id="mobile-notification-count" class="text-[9px] font-bold text-white font-mono px-0.5"></span>
+                    </div>
+                </button>
+            </div>
+            
+            <!-- Three Dots Menu -->
+            <button id="mobile-menu-dots-btn" class="flex items-center justify-center w-8 h-8 bg-zinc-800 border border-white/10 rounded-lg hover:bg-zinc-700 hover:border-white/20 transition-all duration-300 active:scale-95">
+                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Menu Dropdown -->
+    <div id="mobile-dots-dropdown" class="hidden absolute top-full right-2 mt-1 w-64 bg-zinc-900/98 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden" style="z-index: 10002;">
+        <!-- User Info Header -->
+        <div class="px-4 py-3 bg-gradient-to-br from-violet-600/20 via-fuchsia-600/20 to-violet-600/10 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <% if (user && user.avatar_url) { %>
+                    <img src="<%= user.avatar_url %>" alt="<%= user.name %>" class="w-10 h-10 rounded-full ring-2 ring-violet-500/40 object-cover flex-shrink-0">
+                <% } else if (user) { %>
+                    <div class="w-10 h-10 bg-gradient-to-br from-violet-500 to-fuchsia-600 rounded-full flex items-center justify-center text-sm font-bold ring-2 ring-violet-500/40 flex-shrink-0">
+                        <%= user.name.charAt(0).toUpperCase() %>
+                    </div>
+                <% } %>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-white truncate"><%= user ? user.name : 'Guest' %></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Menu Items (No Profile/Usage - they're in navbar) -->
+        <div class="py-2">
+            <a href="/tutorial" class="mobile-menu-item">
+                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+                <span>Tutorial</span>
+            </a>
+            <a href="/#blog" class="mobile-menu-item">
+                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+                </svg>
+                <span>Blog</span>
+            </a>
+            <a href="/pricing-page" class="mobile-menu-item">
+                <svg class="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>Pricing</span>
+            </a>
+            <a href="/contact" class="mobile-menu-item">
+                <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                <span>Contact</span>
+            </a>
+            
+            <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
+                <div class="border-t border-white/10 my-2"></div>
+                <a href="/admin" class="mobile-menu-item text-violet-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    <span>Admin Panel</span>
+                </a>
+            <% } %>
+            
+            <div class="border-t border-white/10 my-2"></div>
+            <a href="/logout" class="mobile-menu-item text-red-400 hover:text-red-300 hover:bg-red-500/10">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
+                <span>Logout</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Mobile Notification Panel -->
+    <div id="mobile-notification-panel" class="hidden absolute top-full right-2 left-2 mt-1 bg-zinc-900/98 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden" style="z-index: 10003;">
+        <div class="p-4 border-b border-white/10">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-white">Notifications</h3>
+                <button onclick="markAllMobileNotificationsAsRead()" class="text-xs text-violet-400 hover:text-violet-300 transition-colors">
+                    Mark all as read
+                </button>
+            </div>
+        </div>
+        
+        <div id="mobile-notifications-container" class="max-h-80 overflow-y-auto">
+            <!-- Notifications will be rendered here -->
+        </div>
+        
+        <div class="p-3 border-t border-white/10 text-center">
+            <a href="/dashboard" class="text-xs text-gray-400 hover:text-white transition-colors">
+                View all notifications →
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+#mobile-header {
+    -webkit-backdrop-filter: blur(32px);
+}
+
+.mobile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    color: #d1d5db;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.mobile-menu-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+}
+
+.mobile-menu-item:active {
+    transform: scale(0.98);
+}
+</style>
+
+<script>
+(function() {
+    const dotsMenuBtn = document.getElementById('mobile-menu-dots-btn');
+    const dotsDropdown = document.getElementById('mobile-dots-dropdown');
+    
+    // Toggle Dots Dropdown
+    if (dotsMenuBtn && dotsDropdown) {
+        dotsMenuBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            dotsDropdown.classList.toggle('hidden');
+        });
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (dotsDropdown && !dotsDropdown.contains(e.target) && 
+            !dotsMenuBtn?.contains(e.target)) {
+            dotsDropdown.classList.add('hidden');
+        }
+    });
+    
+    // Mobile Notification System
+    let mobileNotifications = [];
+    let mobileUnreadCount = 0;
+    
+    // Fetch mobile notifications
+    async function fetchMobileNotifications() {
+        try {
+            const response = await fetch('/api/user/notifications');
+            const data = await response.json();
+            
+            if (data.success) {
+                mobileNotifications = data.notifications;
+                mobileUnreadCount = data.unread_count;
+                updateMobileNotificationBadge();
+            }
+        } catch (error) {
+            console.error('Error fetching mobile notifications:', error);
+        }
+    }
+    
+    // Update mobile notification badge
+    function updateMobileNotificationBadge() {
+        const badge = document.getElementById('mobile-notification-badge');
+        const count = document.getElementById('mobile-notification-count');
+        
+        if (badge && count) {
+            if (mobileUnreadCount > 0) {
+                badge.classList.remove('hidden');
+                count.textContent = mobileUnreadCount > 99 ? '99+' : mobileUnreadCount;
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+    }
+    
+    // Mobile Notification Toggle Functions
+    window.toggleMobileNotificationPanel = function() {
+        const panel = document.getElementById('mobile-notification-panel');
+        panel.classList.toggle('hidden');
+        
+        if (!panel.classList.contains('hidden')) {
+            renderMobileNotifications();
+            if (mobileUnreadCount > 0) {
+                setTimeout(() => {
+                    markAllMobileNotificationsAsRead();
+                }, 2000);
+            }
+        }
+    };
+    
+    // Render mobile notifications
+    function renderMobileNotifications() {
+        const container = document.getElementById('mobile-notifications-container');
+        if (!container) return;
+        
+        if (mobileNotifications.length === 0) {
+            container.innerHTML = `
+                <div class="p-6 text-center">
+                    <svg class="w-12 h-12 text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                    <p class="text-sm text-gray-400">No notifications yet</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = mobileNotifications.map(notif => {
+            const date = new Date(notif.created_at);
+            const timeStr = date.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            return `
+                <div class="p-3 border-b border-white/5 hover:bg-white/5 transition-colors ${
+                    notif.is_read ? 'opacity-60' : ''
+                }">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-2 h-2 rounded-full bg-violet-500 mt-2 ${
+                            notif.is_read ? 'opacity-30' : ''
+                        }"></div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-white mb-1">${notif.title}</p>
+                            <p class="text-xs text-gray-400 mb-2">${notif.message}</p>
+                            <p class="text-xs text-gray-500">${timeStr}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    // Mark all mobile notifications as read
+    window.markAllMobileNotificationsAsRead = async function() {
+        if (mobileUnreadCount === 0) return;
+        
+        try {
+            const response = await fetch('/api/user/notifications/read-all', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                mobileNotifications.forEach(notif => notif.is_read = true);
+                mobileUnreadCount = 0;
+                updateMobileNotificationBadge();
+                renderMobileNotifications();
+            }
+        } catch (error) {
+            console.error('Error marking mobile notifications as read:', error);
+        }
+    };
+    
+    // Close mobile notification panel when clicking outside
+    document.addEventListener('click', function(e) {
+        const panel = document.getElementById('mobile-notification-panel');
+        const button = document.getElementById('mobile-notification-button');
+        
+        if (panel && !panel.classList.contains('hidden') && 
+            !panel.contains(e.target) && !button?.contains(e.target)) {
+            panel.classList.add('hidden');
+        }
+    });
+    
+    // Initialize and refresh
+    fetchMobileNotifications();
+    setInterval(fetchMobileNotifications, 60000); // Refresh every 60s
+})();
+</script>
+<% } %>
+

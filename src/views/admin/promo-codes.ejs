@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <%- include('../partials/admin-styles') %>
+  <style>
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+    }
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .modal-content {
+      background: linear-gradient(135deg, rgb(17, 24, 39) 0%, rgb(31, 41, 55) 50%, rgb(55, 48, 107) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 16px;
+      max-width: 700px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 2rem;
+      box-shadow: 0 20px 60px rgba(139, 92, 246, 0.3), 0 0 100px rgba(139, 92, 246, 0.1);
+      animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    .modal-content::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .modal-content::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    }
+    
+    .modal-content::-webkit-scrollbar-thumb {
+      background: rgba(139, 92, 246, 0.5);
+      border-radius: 4px;
+    }
+    
+    .modal-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(139, 92, 246, 0.7);
+    }
+  </style>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+
+    <div class="flex-1 ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: title }) %>
+
+      <main class="p-8 flex-1">
+        <div class="flex justify-between items-center mb-6">
+          <p class="text-gray-400">Manage promotional codes and claim codes</p>
+          <div class="flex gap-3">
+            <button onclick="openCreateModal('promo')" class="px-6 py-2 bg-violet-600 hover:bg-violet-700 rounded-lg transition">
+              <i class="fas fa-tag mr-2"></i> Create Promo Code
+            </button>
+            <button onclick="openCreateModal('claim')" class="px-6 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition">
+              <i class="fas fa-gift mr-2"></i> Create Claim Code
+            </button>
+          </div>
+        </div>
+
+        <!-- Promo Codes Table -->
+        <div class="glass-strong rounded-xl overflow-hidden">
+          <table class="min-w-full">
+            <thead>
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Code</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Code Type</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Type</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Value</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Usage</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (promoCodes.length === 0) { %>
+                <tr><td colspan="7" class="px-6 py-12 text-center text-gray-500">No promo codes or claim codes</td></tr>
+              <% } else { %>
+                <% promoCodes.forEach(promo => { %>
+                  <tr>
+                    <td class="px-6 py-4">
+                      <div class="font-bold text-white"><%= promo.code %></div>
+                      <div class="text-xs text-gray-400"><%= promo.description || '' %></div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <span class="px-2 py-1 text-xs rounded-full <%= promo.code_type === 'claim' ? 'badge-success' : 'badge-warning' %>">
+                        <%= promo.code_type === 'claim' ? '🎁 Claim' : '🏷️ Promo' %>
+                      </span>
+                    </td>
+                    <td class="px-6 py-4">
+                      <% if (promo.code_type === 'claim') { %>
+                        <span class="px-2 py-1 text-xs rounded-full bg-green-500/20 text-green-300">Direct Credits</span>
+                      <% } else { %>
+                        <span class="px-2 py-1 text-xs rounded-full badge-info"><%= promo.discount_type %></span>
+                      <% } %>
+                    </td>
+                    <td class="px-6 py-4 text-white">
+                      <% if (promo.code_type === 'claim') { %>
+                        <div class="flex items-center gap-1 text-green-400 font-bold">
+                          <i class="fas fa-coins"></i>
+                          <%= promo.credit_amount %> Credits
+                        </div>
+                      <% } else { %>
+                        <%= promo.discount_type === 'percentage' ? promo.discount_value + '%' : 'Rp ' + promo.discount_value.toLocaleString('id-ID') %>
+                        <% if (promo.min_purchase > 0) { %>
+                          <div class="text-xs text-gray-400">Min. Rp <%= promo.min_purchase.toLocaleString('id-ID') %></div>
+                        <% } %>
+                      <% } %>
+                    </td>
+                    <td class="px-6 py-4 text-gray-400">
+                      <%= promo.uses_count %><%= promo.usage_limit ? ' / ' + promo.usage_limit : ' / ∞' %>
+                      <% if (promo.single_use) { %>
+                        <div class="text-xs text-yellow-400">Single Use</div>
+                      <% } %>
+                    </td>
+                    <td class="px-6 py-4">
+                      <span class="px-2 py-1 text-xs rounded-full <%= promo.is_active ? 'badge-success' : 'badge-error' %>">
+                        <%= promo.is_active ? 'Active' : 'Inactive' %>
+                      </span>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="flex gap-2">
+                        <button onclick="viewUsers(<%= promo.id %>, '<%= promo.code %>')"
+                                class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-lg transition-colors flex items-center gap-1"
+                                title="View Users">
+                          <i class="fas fa-users"></i>
+                          <span><%= promo.uses_count %></span>
+                        </button>
+                        <button class="edit-promo-btn px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors flex items-center gap-1"
+                                data-promo-id="<%= promo.id %>"
+                                data-promo-code="<%= promo.code %>"
+                                data-promo-description="<%= promo.description %>"
+                                data-promo-code-type="<%= promo.code_type || 'promo' %>"
+                                data-promo-discount-type="<%= promo.discount_type %>"
+                                data-promo-discount-value="<%= promo.discount_value %>"
+                                data-promo-credit-amount="<%= promo.credit_amount || 0 %>"
+                                data-promo-min-purchase="<%= promo.min_purchase || 0 %>"
+                                data-promo-usage-limit="<%= promo.usage_limit || '' %>"
+                                data-promo-single-use="<%= promo.single_use %>"
+                                data-promo-is-active="<%= promo.is_active %>"
+                                data-promo-valid-from="<%= promo.valid_from || '' %>"
+                                data-promo-valid-until="<%= promo.valid_until || '' %>"
+                                title="Edit">
+                          <i class="fas fa-edit"></i>
+                          <span>Edit</span>
+                        </button>
+                        <button onclick="confirmDelete(<%= promo.id %>, '<%= promo.code %>')" 
+                                class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs rounded-lg transition-colors flex items-center gap-1"
+                                title="Delete">
+                          <i class="fas fa-trash"></i>
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </main>
+
+      <%- include('../partials/admin-footer') %>
+    </div>
+  </div>
+
+  <!-- Create Promo Code Modal -->
+  <div id="createModal" class="modal">
+    <div class="modal-content">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold text-white">
+          <i class="fas fa-ticket-alt text-violet-400 mr-2"></i>
+          Create Promo Code
+        </h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-white transition">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <form onsubmit="createPromoCode(event)" id="createPromoForm">
+        <input type="hidden" id="codeType" value="promo">
+        
+        <!-- Code -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-2">
+            <i class="fas fa-tag mr-1"></i>
+            <span id="codeLabelText">Promo Code</span> *
+          </label>
+          <input type="text" id="code" required
+                 placeholder="WELCOME100"
+                 maxlength="50"
+                 class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white uppercase focus:border-violet-500 focus:outline-none" 
+                 style="text-transform: uppercase;" />
+          <p class="text-xs text-gray-400 mt-1">Letters, numbers, and underscores only</p>
+        </div>
+        
+        <!-- Description -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-2">
+            Description *
+          </label>
+          <textarea id="description" required rows="2"
+                    placeholder="Welcome bonus for new users"
+                    class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none"></textarea>
+        </div>
+        
+        <!-- Promo Code Fields (only for promo type) -->
+        <div id="promoFields">
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <!-- Discount Type -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Discount Type *</label>
+              <select id="discountType"
+                      class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none">
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed">Fixed Amount (Rp)</option>
+              </select>
+            </div>
+            
+            <!-- Discount Value -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Discount Value *</label>
+              <input type="number" id="discountValue" min="0" step="0.01"
+                     placeholder="10"
+                     class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none" />
+            </div>
+          </div>
+        </div>
+        
+        <!-- Claim Code Fields (only for claim type) -->
+        <div id="claimFields" style="display: none;">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              <i class="fas fa-coins mr-1"></i>
+              Credit Amount *
+            </label>
+            <input type="number" id="creditAmount" min="1" step="1"
+                   placeholder="100"
+                   class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-green-500 focus:outline-none" />
+            <p class="text-xs text-gray-400 mt-1">Amount of credits to give when claimed</p>
+          </div>
+        </div>
+        
+        <!-- Minimum Purchase -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-2">
+            <i class="fas fa-wallet mr-1"></i>
+            Minimum Purchase (Rp)
+          </label>
+          <input type="number" id="minPurchase" min="0" step="1000"
+                 placeholder="0"
+                 class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none" />
+          <p class="text-xs text-gray-400 mt-1">Minimum purchase amount to use this promo (0 = no minimum)</p>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <!-- Usage Limit -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Usage Limit</label>
+            <input type="number" id="usageLimit" min="1" step="1"
+                   placeholder="100"
+                   class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none" />
+            <p class="text-xs text-gray-400 mt-1">Total times this promo can be used (empty = unlimited)</p>
+          </div>
+          
+          <!-- Single Use -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Single Use Per User</label>
+            <select id="singleUse"
+                    class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none">
+              <option value="false">Multiple Use</option>
+              <option value="true">Single Use Only</option>
+            </select>
+            <p class="text-xs text-gray-400 mt-1">Can user use this promo multiple times?</p>
+          </div>
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
+          <select id="isActive"
+                  class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <!-- Valid From -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Valid From (Optional)</label>
+            <input type="datetime-local" id="validFrom"
+                   class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none" />
+          </div>
+          
+          <!-- Valid Until -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Valid Until (Optional)</label>
+            <input type="datetime-local" id="validUntil"
+                   class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none" />
+          </div>
+        </div>
+        
+        <!-- Preview Card -->
+        <div class="mb-6 p-4 bg-violet-500/10 border border-violet-500/20 rounded-lg">
+          <h4 class="text-sm font-bold text-violet-400 mb-2">
+            <i class="fas fa-eye mr-1"></i>
+            Preview
+          </h4>
+          <div class="text-sm text-gray-300">
+            <p><strong id="previewCode">CODE</strong> - <span id="previewDesc">Description</span></p>
+            <div class="flex gap-2 mt-2 flex-wrap">
+              <span class="px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs" id="previewDiscount">
+                <i class="fas fa-tag mr-1"></i> 10% OFF
+              </span>
+              <span class="px-2 py-1 bg-blue-500/20 text-blue-300 rounded-full text-xs" id="previewMinPurchase" style="display: none;">
+                <i class="fas fa-wallet mr-1"></i> Min. Rp 0
+              </span>
+              <span class="px-2 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs" id="previewSingleUse" style="display: none;">
+                <i class="fas fa-user-check mr-1"></i> Single Use
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex gap-3">
+          <button type="submit" class="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition font-medium">
+            <i class="fas fa-save mr-2"></i> Create Promo Code
+          </button>
+          <button type="button" onclick="closeModal()" 
+                  class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Promo Code Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold text-white">
+          <i class="fas fa-edit text-blue-400 mr-2"></i>
+          Edit Promo Code
+        </h3>
+        <button onclick="closeEditModal()" class="text-gray-400 hover:text-white transition">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <form onsubmit="updatePromoCode(event)" id="editPromoForm">
+        <input type="hidden" id="editId">
+        <input type="hidden" id="editCodeType" value="promo">
+        
+        <!-- Code -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-2">
+            <i class="fas fa-tag mr-1"></i>
+            <span id="editCodeLabelText">Promo Code</span> *
+          </label>
+          <input type="text" id="editCode" required
+                 maxlength="50"
+                 class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white uppercase focus:border-blue-500 focus:outline-none" 
+                 style="text-transform: uppercase;" />
+        </div>
+        
+        <!-- Description -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-2">
+            Description *
+          </label>
+          <textarea id="editDescription" required rows="2"
+                    class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-blue-500 focus:outline-none"></textarea>
+        </div>
+        
+        <!-- Promo Code Fields -->
+        <div id="editPromoFields">
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <!-- Discount Type -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Discount Type *</label>
+              <select id="editDiscountType"
+                      class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-blue-500 focus:outline-none">
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed">Fixed Amount (Rp)</option>
+              </select>
+            </div>
+            
+            <!-- Discount Value -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Discount Value *</label>
+              <input type="number" id="editDiscountValue" min="0" step="0.01"
+                     class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-blue-500 focus:outline-none" />
+            </div>
+          </div>
+        </div>
+        
+        <!-- Claim Code Fields -->
+        <div id="editClaimFields" style="display: none;">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              <i class="fas fa-coins mr-1"></i>
+              Credit Amount *
+            </label>
+            <input type="number" id="editCreditAmount" min="1" step="1"
+                   class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-green-500 focus:outline-none" />
+          </div>
+        </div>
+        
+        <!-- Minimum Purchase -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-2">
+            <i class="fas fa-wallet mr-1"></i>
+            Minimum Purchase (Rp)
+          </label>
+          <input type="number" id="editMinPurchase" min="0" step="1000"
+                 class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-blue-500 focus:outline-none" />
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <!-- Usage Limit -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Usage Limit</label>
+            <input type="number" id="editUsageLimit" min="1" step="1"
+                   class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-blue-500 focus:outline-none" />
+          </div>
+          
+          <!-- Single Use -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Single Use Per User</label>
+            <select id="editSingleUse"
+                    class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-blue-500 focus:outline-none">
+              <option value="false">Multiple Use</option>
+              <option value="true">Single Use Only</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
+          <select id="editIsActive"
+                  class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-blue-500 focus:outline-none">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <!-- Valid From -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Valid From (Optional)</label>
+            <input type="datetime-local" id="editValidFrom"
+                   class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-blue-500 focus:outline-none" />
+          </div>
+          
+          <!-- Valid Until -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Valid Until (Optional)</label>
+            <input type="datetime-local" id="editValidUntil"
+                   class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-blue-500 focus:outline-none" />
+          </div>
+        </div>
+        
+        <div class="flex gap-3">
+          <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium">
+            <i class="fas fa-save mr-2"></i> Update Promo Code
+          </button>
+          <button type="button" onclick="closeEditModal()" 
+                  class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content max-w-md">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-exclamation-triangle text-red-500 text-3xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Delete Promo Code?</h3>
+        <p class="text-gray-400">Are you sure you want to delete promo code:</p>
+        <p class="text-yellow-400 font-bold text-lg mt-2" id="deletePromoCode"></p>
+        <p class="text-sm text-red-400 mt-2">This action cannot be undone!</p>
+      </div>
+      
+      <div class="flex gap-3">
+        <button onclick="closeDeleteModal()" 
+                class="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition">
+          Cancel
+        </button>
+        <button onclick="deletePromoCode()" 
+                class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition font-medium">
+          <i class="fas fa-trash mr-2"></i> Yes, Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Users Modal -->
+  <div id="viewUsersModal" class="modal">
+    <div class="modal-content max-w-4xl">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h3 class="text-xl font-bold text-white flex items-center gap-2">
+            <i class="fas fa-users text-purple-400"></i>
+            Code Usage Details
+          </h3>
+          <p class="text-gray-400 mt-1">Code: <span class="text-yellow-400 font-mono" id="usageCodeName"></span></p>
+        </div>
+        <button onclick="closeViewUsersModal()" class="text-gray-400 hover:text-white transition">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div id="usersLoading" class="text-center py-8">
+        <i class="fas fa-spinner fa-spin text-4xl text-purple-400 mb-4"></i>
+        <p class="text-gray-400">Loading users...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div id="usersEmpty" class="text-center py-8" style="display: none;">
+        <i class="fas fa-users-slash text-4xl text-gray-600 mb-4"></i>
+        <p class="text-gray-400">No users have used this code yet.</p>
+      </div>
+
+      <!-- Users List -->
+      <div id="usersList" style="display: none;">
+        <div class="mb-4 flex items-center justify-between">
+          <p class="text-gray-400">
+            Total Users: <span class="text-white font-bold" id="totalUsers">0</span>
+          </p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-gray-700">
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">User</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Email</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Type</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Amount</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Date</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <!-- Will be populated by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button onclick="closeViewUsersModal()" 
+                class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <%- include('../partials/admin-scripts') %>
+  
+  <script>
+    // Open modal
+    function openCreateModal(type = 'promo') {
+      document.getElementById('codeType').value = type;
+      
+      // Update modal title and icon
+      const modalTitle = document.querySelector('#createModal h3');
+      const codeLabelText = document.getElementById('codeLabelText');
+      const submitBtn = document.querySelector('#createPromoForm button[type="submit"]');
+      
+      if (type === 'claim') {
+        modalTitle.innerHTML = '<i class="fas fa-gift text-green-400 mr-2"></i>Create Claim Code';
+        codeLabelText.textContent = 'Claim Code';
+        submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Create Claim Code';
+        submitBtn.className = 'flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition font-medium';
+        document.getElementById('promoFields').style.display = 'none';
+        document.getElementById('claimFields').style.display = 'block';
+        document.getElementById('discountType').removeAttribute('required');
+        document.getElementById('discountValue').removeAttribute('required');
+        document.getElementById('creditAmount').setAttribute('required', 'required');
+      } else {
+        modalTitle.innerHTML = '<i class="fas fa-ticket-alt text-violet-400 mr-2"></i>Create Promo Code';
+        codeLabelText.textContent = 'Promo Code';
+        submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Create Promo Code';
+        submitBtn.className = 'flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition font-medium';
+        document.getElementById('promoFields').style.display = 'block';
+        document.getElementById('claimFields').style.display = 'none';
+        document.getElementById('discountType').setAttribute('required', 'required');
+        document.getElementById('discountValue').setAttribute('required', 'required');
+        document.getElementById('creditAmount').removeAttribute('required');
+      }
+      
+      document.getElementById('createModal').classList.add('active');
+      updatePreview();
+    }
+    
+    // Close modal
+    function closeModal() {
+      document.getElementById('createModal').classList.remove('active');
+      document.getElementById('createPromoForm').reset();
+    }
+    
+    // Update preview
+    function updatePreview() {
+      const code = document.getElementById('code').value || 'CODE';
+      const desc = document.getElementById('description').value || 'Description';
+      const type = document.getElementById('discountType').value;
+      const value = document.getElementById('discountValue').value || '0';
+      const minPurchase = document.getElementById('minPurchase').value;
+      const singleUse = document.getElementById('singleUse').value === 'true';
+      
+      document.getElementById('previewCode').textContent = code;
+      document.getElementById('previewDesc').textContent = desc;
+      
+      const discountText = type === 'percentage' 
+        ? `${value}% OFF` 
+        : `Rp ${parseFloat(value).toLocaleString('id-ID')} OFF`;
+      document.getElementById('previewDiscount').innerHTML = `<i class="fas fa-tag mr-1"></i> ${discountText}`;
+      
+      const minPurchaseEl = document.getElementById('previewMinPurchase');
+      if (minPurchase && parseInt(minPurchase) > 0) {
+        minPurchaseEl.style.display = 'inline-block';
+        minPurchaseEl.innerHTML = `<i class="fas fa-wallet mr-1"></i> Min. Rp ${parseInt(minPurchase).toLocaleString('id-ID')}`;
+      } else {
+        minPurchaseEl.style.display = 'none';
+      }
+      
+      const singleUseEl = document.getElementById('previewSingleUse');
+      if (singleUse) {
+        singleUseEl.style.display = 'inline-block';
+      } else {
+        singleUseEl.style.display = 'none';
+      }
+    }
+    
+    // Add event listeners for preview
+    document.addEventListener('DOMContentLoaded', () => {
+      ['code', 'description', 'discountType', 'discountValue', 'minPurchase', 'singleUse'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', updatePreview);
+        if (el && el.tagName === 'SELECT') el.addEventListener('change', updatePreview);
+      });
+    });
+    
+    // Create promo code
+    async function createPromoCode(e) {
+      e.preventDefault();
+      
+      const codeType = document.getElementById('codeType').value;
+      
+      const data = {
+        code: document.getElementById('code').value.trim().toUpperCase(),
+        description: document.getElementById('description').value,
+        code_type: codeType,
+        min_purchase: parseInt(document.getElementById('minPurchase').value) || 0,
+        single_use: document.getElementById('singleUse').value === 'true',
+        usage_limit: parseInt(document.getElementById('usageLimit').value) || null,
+        is_active: document.getElementById('isActive').value === 'true',
+        valid_from: document.getElementById('validFrom').value || null,
+        valid_until: document.getElementById('validUntil').value || null
+      };
+      
+      // Add fields based on code type
+      if (codeType === 'claim') {
+        data.credit_amount = parseInt(document.getElementById('creditAmount').value) || 0;
+      } else {
+        data.discount_type = document.getElementById('discountType').value;
+        data.discount_value = parseFloat(document.getElementById('discountValue').value);
+      }
+      
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Creating...';
+      submitBtn.disabled = true;
+      
+      try {
+        const response = await fetch('/admin/promo-codes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          const successMsg = codeType === 'claim' ? '✓ Claim code created successfully!' : '✓ Promo code created successfully!';
+          showNotification(successMsg, 'success');
+          closeModal();
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showNotification('✗ Error: ' + result.message, 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('✗ Failed to create promo code', 'error');
+      } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
+    }
+    
+    // Show notification
+    function showNotification(message, type) {
+      const notification = document.createElement('div');
+      notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-[10000] ${
+        type === 'success' ? 'bg-green-600' : 'bg-red-600'
+      }`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.3s';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+    
+    // ============ EDIT PROMO CODE ============
+    
+    // Add event listeners to all edit buttons
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.edit-promo-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const promo = {
+            id: this.dataset.promoId,
+            code: this.dataset.promoCode,
+            description: this.dataset.promoDescription,
+            code_type: this.dataset.promoCodeType || 'promo',
+            discount_type: this.dataset.promoDiscountType,
+            discount_value: this.dataset.promoDiscountValue,
+            credit_amount: this.dataset.promoCreditAmount || 0,
+            min_purchase: this.dataset.promoMinPurchase,
+            usage_limit: this.dataset.promoUsageLimit,
+            single_use: this.dataset.promoSingleUse === 'true',
+            is_active: this.dataset.promoIsActive === 'true',
+            valid_from: this.dataset.promoValidFrom,
+            valid_until: this.dataset.promoValidUntil
+          };
+          openEditModal(promo);
+        });
+      });
+    });
+    
+    // Open edit modal
+    function openEditModal(promo) {
+      console.log('Edit promo:', promo);
+      
+      document.getElementById('editId').value = promo.id;
+      document.getElementById('editCodeType').value = promo.code_type || 'promo';
+      document.getElementById('editCode').value = promo.code;
+      document.getElementById('editDescription').value = promo.description || '';
+      
+      // Update modal based on code type
+      const modalTitle = document.querySelector('#editModal h3');
+      const editCodeLabelText = document.getElementById('editCodeLabelText');
+      const submitBtn = document.querySelector('#editPromoForm button[type="submit"]');
+      
+      if (promo.code_type === 'claim') {
+        modalTitle.innerHTML = '<i class="fas fa-gift text-green-400 mr-2"></i>Edit Claim Code';
+        editCodeLabelText.textContent = 'Claim Code';
+        submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Update Claim Code';
+        submitBtn.className = 'flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition font-medium';
+        document.getElementById('editPromoFields').style.display = 'none';
+        document.getElementById('editClaimFields').style.display = 'block';
+        document.getElementById('editCreditAmount').value = promo.credit_amount || 0;
+        document.getElementById('editDiscountType').removeAttribute('required');
+        document.getElementById('editDiscountValue').removeAttribute('required');
+        document.getElementById('editCreditAmount').setAttribute('required', 'required');
+      } else {
+        modalTitle.innerHTML = '<i class="fas fa-edit text-blue-400 mr-2"></i>Edit Promo Code';
+        editCodeLabelText.textContent = 'Promo Code';
+        submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Update Promo Code';
+        submitBtn.className = 'flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium';
+        document.getElementById('editPromoFields').style.display = 'block';
+        document.getElementById('editClaimFields').style.display = 'none';
+        document.getElementById('editDiscountType').value = promo.discount_type;
+        document.getElementById('editDiscountValue').value = promo.discount_value;
+        document.getElementById('editDiscountType').setAttribute('required', 'required');
+        document.getElementById('editDiscountValue').setAttribute('required', 'required');
+        document.getElementById('editCreditAmount').removeAttribute('required');
+      }
+      
+      document.getElementById('editMinPurchase').value = promo.min_purchase || 0;
+      document.getElementById('editUsageLimit').value = promo.usage_limit || '';
+      document.getElementById('editSingleUse').value = promo.single_use ? 'true' : 'false';
+      document.getElementById('editIsActive').value = promo.is_active ? 'true' : 'false';
+      
+      // Format dates for datetime-local input
+      if (promo.valid_from && promo.valid_from !== '') {
+        const validFrom = new Date(promo.valid_from);
+        document.getElementById('editValidFrom').value = validFrom.toISOString().slice(0, 16);
+      } else {
+        document.getElementById('editValidFrom').value = '';
+      }
+      
+      if (promo.valid_until && promo.valid_until !== '') {
+        const validUntil = new Date(promo.valid_until);
+        document.getElementById('editValidUntil').value = validUntil.toISOString().slice(0, 16);
+      } else {
+        document.getElementById('editValidUntil').value = '';
+      }
+      
+      document.getElementById('editModal').classList.add('active');
+    }
+    
+    // Close edit modal
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('active');
+      document.getElementById('editPromoForm').reset();
+    }
+    
+    // Update promo code
+    async function updatePromoCode(e) {
+      e.preventDefault();
+      
+      const id = document.getElementById('editId').value;
+      const codeType = document.getElementById('editCodeType').value;
+      
+      const data = {
+        code: document.getElementById('editCode').value.trim().toUpperCase(),
+        description: document.getElementById('editDescription').value,
+        code_type: codeType,
+        min_purchase: parseInt(document.getElementById('editMinPurchase').value) || 0,
+        single_use: document.getElementById('editSingleUse').value === 'true',
+        usage_limit: parseInt(document.getElementById('editUsageLimit').value) || null,
+        is_active: document.getElementById('editIsActive').value === 'true',
+        valid_from: document.getElementById('editValidFrom').value || null,
+        valid_until: document.getElementById('editValidUntil').value || null
+      };
+      
+      // Add fields based on code type
+      if (codeType === 'claim') {
+        data.credit_amount = parseInt(document.getElementById('editCreditAmount').value) || 0;
+      } else {
+        data.discount_type = document.getElementById('editDiscountType').value;
+        data.discount_value = parseFloat(document.getElementById('editDiscountValue').value);
+      }
+      
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Updating...';
+      submitBtn.disabled = true;
+      
+      try {
+        const response = await fetch(`/admin/promo-codes/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          const successMsg = codeType === 'claim' ? '✓ Claim code updated successfully!' : '✓ Promo code updated successfully!';
+          showNotification(successMsg, 'success');
+          closeEditModal();
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showNotification('✗ Error: ' + result.message, 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        const errorMsg = codeType === 'claim' ? '✗ Failed to update claim code' : '✗ Failed to update promo code';
+        showNotification(errorMsg, 'error');
+      } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
+    }
+    
+    // ============ DELETE PROMO CODE ============
+    
+    let deletePromoId = null;
+    
+    // Confirm delete
+    function confirmDelete(id, code) {
+      deletePromoId = id;
+      document.getElementById('deletePromoCode').textContent = code;
+      document.getElementById('deleteModal').classList.add('active');
+    }
+    
+    // Close delete modal
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').classList.remove('active');
+      deletePromoId = null;
+    }
+    
+    // Delete promo code
+    async function deletePromoCode() {
+      if (!deletePromoId) return;
+      
+      try {
+        const response = await fetch(`/admin/promo-codes/${deletePromoId}`, {
+          method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showNotification('✓ Promo code deleted successfully!', 'success');
+          closeDeleteModal();
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showNotification('✗ Error: ' + result.message, 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('✗ Failed to delete promo code', 'error');
+      }
+    }
+    
+    // ============ VIEW USERS ============
+    
+    // View users who used this code
+    async function viewUsers(promoId, code) {
+      // Show modal
+      document.getElementById('viewUsersModal').classList.add('active');
+      document.getElementById('usageCodeName').textContent = code;
+      
+      // Reset states
+      document.getElementById('usersLoading').style.display = 'block';
+      document.getElementById('usersEmpty').style.display = 'none';
+      document.getElementById('usersList').style.display = 'none';
+      
+      try {
+        const response = await fetch(`/admin/promo-codes/${promoId}/usage`);
+        const result = await response.json();
+        
+        if (result.success) {
+          document.getElementById('usersLoading').style.display = 'none';
+          
+          if (result.users.length === 0) {
+            document.getElementById('usersEmpty').style.display = 'block';
+          } else {
+            document.getElementById('usersList').style.display = 'block';
+            document.getElementById('totalUsers').textContent = result.total_users;
+            
+            // Populate table
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+            
+            result.users.forEach(user => {
+              const row = document.createElement('tr');
+              row.className = 'border-b border-gray-800 hover:bg-gray-800/50 transition';
+              
+              const usedDate = new Date(user.used_at);
+              const formattedDate = usedDate.toLocaleDateString('id-ID', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+              
+              // Badge color based on type
+              const badgeClass = user.usage_type_badge === 'success' 
+                ? 'bg-green-500/20 text-green-400' 
+                : 'bg-yellow-500/20 text-yellow-400';
+              
+              row.innerHTML = `
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-3">
+                    ${user.avatar_url 
+                      ? `<img src="${user.avatar_url}" class="w-8 h-8 rounded-full" alt="${user.user_name}">` 
+                      : `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm">${user.user_name.charAt(0).toUpperCase()}</div>`
+                    }
+                    <span class="text-white font-medium">${user.user_name}</span>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-gray-400">${user.user_email}</td>
+                <td class="px-4 py-3">
+                  <span class="px-2 py-1 text-xs rounded-full ${badgeClass}">
+                    ${user.usage_type}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-green-400 font-bold">+${user.amount} credits</td>
+                <td class="px-4 py-3 text-gray-400 text-sm">${formattedDate}</td>
+              `;
+              
+              tbody.appendChild(row);
+            });
+          }
+        } else {
+          showNotification('✗ Error: ' + result.message, 'error');
+          closeViewUsersModal();
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('✗ Failed to load usage details', 'error');
+        closeViewUsersModal();
+      }
+    }
+    
+    // Close view users modal
+    function closeViewUsersModal() {
+      document.getElementById('viewUsersModal').classList.remove('active');
+    }
+    
+    // Close modal on ESC
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+        closeEditModal();
+        closeDeleteModal();
+        closeViewUsersModal();
+      }
+    });
+    
+    // Close modal on outside click
+    document.getElementById('createModal').addEventListener('click', (e) => {
+      if (e.target.id === 'createModal') {
+        closeModal();
+      }
+    });
+    
+    document.getElementById('editModal').addEventListener('click', (e) => {
+      if (e.target.id === 'editModal') {
+        closeEditModal();
+      }
+    });
+    
+    document.getElementById('deleteModal').addEventListener('click', (e) => {
+      if (e.target.id === 'deleteModal') {
+        closeDeleteModal();
+      }
+    });
+    
+    document.getElementById('viewUsersModal').addEventListener('click', (e) => {
+      if (e.target.id === 'viewUsersModal') {
+        closeViewUsersModal();
+      }
+    });
+  </script>
+</body>
+</html>

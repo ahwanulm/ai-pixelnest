@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <%- include('../partials/admin-styles') %>
+  <style>
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+    }
+    
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+      color: #9ca3af;
+      font-size: 0.875rem;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(12px);
+      animation: fadeIn 0.2s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .modal-content {
+      background: linear-gradient(135deg, rgba(24, 24, 27, 0.98) 0%, rgba(39, 39, 42, 0.98) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 20px;
+      max-width: 700px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 2rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 
+                  0 0 0 1px rgba(139, 92, 246, 0.1),
+                  0 0 40px rgba(139, 92, 246, 0.15);
+      animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+    }
+    
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a78bfa, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .close-modal {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      color: #9ca3af;
+      font-size: 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .close-modal:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #f87171;
+      transform: scale(1.1);
+    }
+    
+    .detail-section {
+      margin-bottom: 1.5rem;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .detail-label {
+      color: #a78bfa;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .detail-value {
+      color: white;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      padding: 0.625rem 1.25rem;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    
+    .btn:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      color: white;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(139, 92, 246, 0.5);
+    }
+    
+    .btn-success {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.3));
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+    }
+    
+    .btn-success:hover {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.4));
+      border-color: rgba(34, 197, 94, 0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
+    }
+    
+    .btn-danger {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.3));
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    }
+    
+    .btn-danger:hover {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.4));
+      border-color: rgba(239, 68, 68, 0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn-warning {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(251, 191, 36, 0.3));
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
+    }
+    
+    .btn-warning:hover {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(251, 191, 36, 0.4));
+      border-color: rgba(251, 191, 36, 0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(251, 191, 36, 0.3);
+    }
+    
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    
+    .form-label {
+      display: block;
+      color: #d1d5db;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+    }
+    
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 0.875rem 1rem;
+      color: white;
+      font-size: 0.875rem;
+      font-family: 'Space Grotesk', sans-serif;
+      transition: all 0.3s ease;
+    }
+    
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: #8b5cf6;
+      background: rgba(139, 92, 246, 0.08);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1),
+                  0 0 20px rgba(139, 92, 246, 0.15);
+    }
+    
+    .form-input::placeholder {
+      color: #6b7280;
+    }
+    
+    .form-textarea {
+      min-height: 120px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+    
+    /* Reward Section Styling */
+    .reward-section {
+      margin-top: 1.5rem;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(245, 158, 11, 0.08));
+      border: 2px solid rgba(251, 191, 36, 0.3);
+      border-radius: 16px;
+      animation: slideDown 0.3s ease-out;
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        max-height: 0;
+        padding: 0 1.5rem;
+      }
+      to {
+        opacity: 1;
+        max-height: 300px;
+        padding: 1.5rem;
+      }
+    }
+    
+    .reward-section .detail-label {
+      color: #fbbf24;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .reward-input-wrapper {
+      position: relative;
+    }
+    
+    .reward-input-wrapper::before {
+      content: '💰';
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.25rem;
+      pointer-events: none;
+    }
+    
+    .reward-input-wrapper input {
+      padding-left: 3rem;
+      font-size: 1.125rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    
+    .quick-amounts {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+    
+    .quick-amount {
+      padding: 0.5rem 1rem;
+      background: rgba(251, 191, 36, 0.15);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      border-radius: 8px;
+      color: #fbbf24;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .quick-amount:hover {
+      background: rgba(251, 191, 36, 0.25);
+      border-color: rgba(251, 191, 36, 0.5);
+      transform: translateY(-2px);
+    }
+    
+    .expandable-text {
+      max-height: 60px;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      transition: max-height 0.3s ease;
+    }
+    
+    .expandable-text.expanded {
+      max-height: none;
+    }
+    
+    .expand-indicator {
+      color: #8b5cf6;
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+
+    <div class="flex-1 ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: title }) %>
+
+      <main class="p-8 flex-1">
+        <!-- Statistics -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value"><%= stats.total_requests || 0 %></div>
+            <div class="stat-label">Total Requests</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value"><%= stats.pending_count || 0 %></div>
+            <div class="stat-label">Pending</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value"><%= stats.bug_count || 0 %></div>
+            <div class="stat-label">Bug Reports</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value"><%= stats.approved_count || 0 %></div>
+            <div class="stat-label">Approved</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value"><%= stats.rewarded_count || 0 %></div>
+            <div class="stat-label">Rewarded</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value"><%= (parseFloat(stats.total_rewards_given) || 0).toFixed(0) %></div>
+            <div class="stat-label">Total Credits Given</div>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="glass-strong rounded-xl p-6 mb-6">
+          <form method="GET" action="/feature-request/admin" class="flex flex-wrap gap-4">
+            <select name="status" class="px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white">
+              <option value="">All Status</option>
+              <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>Pending</option>
+              <option value="under_review" <%= filters.status === 'under_review' ? 'selected' : '' %>>Under Review</option>
+              <option value="approved" <%= filters.status === 'approved' ? 'selected' : '' %>>Approved</option>
+              <option value="rejected" <%= filters.status === 'rejected' ? 'selected' : '' %>>Rejected</option>
+              <option value="implemented" <%= filters.status === 'implemented' ? 'selected' : '' %>>Implemented</option>
+            </select>
+            <select name="type" class="px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white">
+              <option value="">All Types</option>
+              <option value="ai_model" <%= filters.type === 'ai_model' ? 'selected' : '' %>>AI Model</option>
+              <option value="feature" <%= filters.type === 'feature' ? 'selected' : '' %>>Feature</option>
+              <option value="bug" <%= filters.type === 'bug' ? 'selected' : '' %>>Bug Report</option>
+              <option value="other" <%= filters.type === 'other' ? 'selected' : '' %>>Other</option>
+            </select>
+            <button type="submit" class="px-6 py-2 bg-violet-600 hover:bg-violet-700 rounded-lg transition">
+              <i class="fas fa-filter mr-2"></i> Filter
+            </button>
+            <% if (filters.status || filters.type) { %>
+              <a href="/feature-request/admin" class="px-6 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition">
+                <i class="fas fa-times mr-2"></i> Clear
+              </a>
+            <% } %>
+          </form>
+        </div>
+
+        <!-- Requests Table -->
+        <div class="glass-strong rounded-xl overflow-hidden">
+          <table class="min-w-full">
+            <thead>
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">User</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Type</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Title</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Priority</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Created</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (requests.length === 0) { %>
+                <tr><td colspan="8" class="px-6 py-12 text-center text-gray-500">No feature requests found</td></tr>
+              <% } else { %>
+                <% requests.forEach(request => { %>
+                  <tr class="hover:bg-white/5 transition">
+                    <td class="px-6 py-4 text-white font-mono text-sm">#<%= request.id %></td>
+                    <td class="px-6 py-4">
+                      <div class="text-white font-medium"><%= request.user_name %></div>
+                      <div class="text-sm text-gray-400"><%= request.user_email %></div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <span class="px-2 py-1 text-xs rounded-full <%= 
+                        request.request_type === 'ai_model' ? 'badge-info' : 
+                        request.request_type === 'feature' ? 'badge-success' : 
+                        request.request_type === 'bug' ? 'badge-error' : 
+                        'badge-secondary' %>">
+                        <%= request.request_type === 'ai_model' ? '🤖 AI Model' : 
+                            request.request_type === 'feature' ? '⚡ Feature' : 
+                            request.request_type === 'bug' ? '🐛 Bug' :
+                            '📝 Other' %>
+                      </span>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="text-white max-w-xs truncate"><%= request.title %></div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <span class="px-2 py-1 text-xs rounded-full <%= 
+                        request.status === 'pending' ? 'badge-warning' : 
+                        request.status === 'under_review' ? 'badge-info' : 
+                        request.status === 'approved' ? 'badge-success' : 
+                        request.status === 'rejected' ? 'badge-error' : 
+                        'badge-secondary' %>">
+                        <%= request.status === 'pending' ? '⏳ Pending' :
+                            request.status === 'under_review' ? '🔍 Review' :
+                            request.status === 'approved' ? '✅ Approved' :
+                            request.status === 'rejected' ? '❌ Rejected' :
+                            '🎉 Done' %>
+                      </span>
+                    </td>
+                    <td class="px-6 py-4">
+                      <span class="px-2 py-1 text-xs rounded-full <%= 
+                        request.priority === 'urgent' ? 'badge-error' : 
+                        request.priority === 'high' ? 'badge-warning' : 
+                        request.priority === 'normal' ? 'badge-info' : 
+                        'badge-secondary' %>">
+                        <%= request.priority.toUpperCase() %>
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 text-gray-400 text-sm">
+                      <%= new Date(request.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                      <button onclick='openRequestModal(<%= JSON.stringify(request) %>)' 
+                              class="px-3 py-1 bg-violet-600 hover:bg-violet-700 rounded-lg text-white text-sm transition">
+                        <i class="fas fa-eye mr-1"></i> View
+                      </button>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
+          
+          <!-- Pagination -->
+          <% if (pagination.totalPages > 1) { %>
+            <div class="px-6 py-4 border-t border-white/10 flex justify-between items-center">
+              <div class="text-gray-400 text-sm">
+                Showing <%= ((pagination.currentPage - 1) * pagination.limit) + 1 %> to 
+                <%= Math.min(pagination.currentPage * pagination.limit, pagination.total) %> of 
+                <%= pagination.total %> results
+              </div>
+              <div class="flex gap-2">
+                <% if (pagination.currentPage > 1) { %>
+                  <a href="?page=<%= pagination.currentPage - 1 %><%= filters.status ? '&status=' + filters.status : '' %><%= filters.type ? '&type=' + filters.type : '' %>" 
+                     class="px-3 py-1 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-white text-sm transition">
+                    <i class="fas fa-chevron-left"></i> Prev
+                  </a>
+                <% } %>
+                <% if (pagination.currentPage < pagination.totalPages) { %>
+                  <a href="?page=<%= pagination.currentPage + 1 %><%= filters.status ? '&status=' + filters.status : '' %><%= filters.type ? '&type=' + filters.type : '' %>" 
+                     class="px-3 py-1 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-white text-sm transition">
+                    Next <i class="fas fa-chevron-right"></i>
+                  </a>
+                <% } %>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Request Detail Modal -->
+  <div id="requestModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Request Details</h2>
+        <button class="close-modal" onclick="closeModal()">&times;</button>
+      </div>
+      
+      <div id="modalBody">
+        <!-- Content will be injected here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentRequest = null;
+
+    function openRequestModal(request) {
+      currentRequest = request;
+      
+      const modalBody = document.getElementById('modalBody');
+      const modalTitle = document.getElementById('modalTitle');
+      
+      modalTitle.textContent = `Request #${request.id}`;
+      
+      const typeBadge = request.request_type === 'ai_model' ? '🤖 AI Model' : 
+                        request.request_type === 'feature' ? '⚡ Feature' : 
+                        request.request_type === 'bug' ? '🐛 Bug' : '📝 Other';
+      
+      const statusBadge = request.status === 'pending' ? '⏳ Pending' :
+                          request.status === 'under_review' ? '🔍 Under Review' :
+                          request.status === 'approved' ? '✅ Approved' :
+                          request.status === 'rejected' ? '❌ Rejected' : '🎉 Implemented';
+      
+      modalBody.innerHTML = `
+        <div class="detail-section">
+          <div class="detail-label">User</div>
+          <div class="detail-value">${request.user_name} (${request.user_email})</div>
+        </div>
+        
+        <div class="detail-section">
+          <div class="detail-label">Type</div>
+          <div class="detail-value">${typeBadge}</div>
+        </div>
+        
+        <div class="detail-section">
+          <div class="detail-label">Title</div>
+          <div class="detail-value font-semibold">${request.title}</div>
+        </div>
+        
+        <div class="detail-section">
+          <div class="detail-label">Description</div>
+          <div class="detail-value" style="white-space: pre-wrap;">${request.description}</div>
+        </div>
+        
+        ${request.use_case ? `
+        <div class="detail-section">
+          <div class="detail-label">Use Case</div>
+          <div class="detail-value" style="white-space: pre-wrap;">${request.use_case}</div>
+        </div>
+        ` : ''}
+        
+        <div class="detail-section">
+          <div class="detail-label">Current Status</div>
+          <div class="detail-value">${statusBadge}</div>
+        </div>
+        
+        <div class="detail-section">
+          <div class="detail-label">Priority</div>
+          <div class="detail-value">${request.priority.toUpperCase()}</div>
+        </div>
+        
+        ${request.admin_response ? `
+        <div class="detail-section">
+          <div class="detail-label">Admin Response</div>
+          <div class="detail-value" style="white-space: pre-wrap;">${request.admin_response}</div>
+          <div class="text-gray-400 text-sm mt-2">By: ${request.admin_name || 'Admin'}</div>
+        </div>
+        ` : ''}
+        
+        <div class="detail-section">
+          <div class="detail-label">Created At</div>
+          <div class="detail-value">${new Date(request.created_at).toLocaleString('id-ID')}</div>
+        </div>
+        
+        ${request.reward_given ? `
+        <div class="detail-section">
+          <div class="detail-label">🎁 Reward Given</div>
+          <div class="detail-value" style="color: #fbbf24; font-weight: 600;">
+            +${parseFloat(request.reward_amount).toFixed(1)} Credits
+            <div class="text-gray-400 text-sm mt-1">Given at: ${new Date(request.reward_given_at).toLocaleString('id-ID')}</div>
+          </div>
+        </div>
+        ` : ''}
+        
+        <hr style="border-color: rgba(255,255,255,0.1); margin: 1.5rem 0;">
+        
+        <div class="detail-section">
+          <div class="detail-label">Update Status</div>
+          <div class="form-group">
+            <select id="statusSelect" class="form-select">
+              <option value="pending" ${request.status === 'pending' ? 'selected' : ''}>⏳ Pending</option>
+              <option value="under_review" ${request.status === 'under_review' ? 'selected' : ''}>🔍 Under Review</option>
+              <option value="approved" ${request.status === 'approved' ? 'selected' : ''}>✅ Approved</option>
+              <option value="rejected" ${request.status === 'rejected' ? 'selected' : ''}>❌ Rejected</option>
+              <option value="implemented" ${request.status === 'implemented' ? 'selected' : ''}>🎉 Implemented</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="detail-section">
+          <div class="detail-label">Update Priority</div>
+          <div class="form-group">
+            <select id="prioritySelect" class="form-select">
+              <option value="low" ${request.priority === 'low' ? 'selected' : ''}>Low</option>
+              <option value="normal" ${request.priority === 'normal' ? 'selected' : ''}>Normal</option>
+              <option value="high" ${request.priority === 'high' ? 'selected' : ''}>High</option>
+              <option value="urgent" ${request.priority === 'urgent' ? 'selected' : ''}>Urgent</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="detail-section">
+          <div class="detail-label">Admin Response</div>
+          <div class="form-group">
+            <textarea id="adminResponse" class="form-textarea" placeholder="Write your response to the user...">${request.admin_response || ''}</textarea>
+          </div>
+        </div>
+        
+        <div class="action-buttons">
+          <button onclick="updateRequest()" class="btn btn-primary">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+          ${!request.reward_given ? `
+          <button onclick="showRewardModal()" class="btn btn-warning">
+            <i class="fas fa-gift"></i> Give Reward
+          </button>
+          ` : ''}
+          <button onclick="deleteRequest()" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Delete
+          </button>
+        </div>
+        
+        ${!request.reward_given ? `
+        <div id="rewardSection" class="reward-section" style="display: none;">
+          <div class="detail-label">
+            <span>🎁</span>
+            <span>Give Reward to User</span>
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <div class="reward-input-wrapper">
+              <input 
+                type="number" 
+                id="rewardAmount" 
+                class="form-input" 
+                placeholder="0.0" 
+                min="0.5" 
+                step="0.5"
+                style="margin-top: 0;">
+            </div>
+            <p style="color: #9ca3af; font-size: 0.75rem; margin-top: 0.5rem; text-align: center;">
+              Credits yang akan diterima ${request.user_name}
+            </p>
+          </div>
+          
+          <!-- Quick Amount Buttons -->
+          <div class="quick-amounts">
+            <button type="button" class="quick-amount" onclick="document.getElementById('rewardAmount').value = 5">
+              +5 Credits
+            </button>
+            <button type="button" class="quick-amount" onclick="document.getElementById('rewardAmount').value = 10">
+              +10 Credits
+            </button>
+            <button type="button" class="quick-amount" onclick="document.getElementById('rewardAmount').value = 25">
+              +25 Credits
+            </button>
+            <button type="button" class="quick-amount" onclick="document.getElementById('rewardAmount').value = 50">
+              +50 Credits
+            </button>
+            <button type="button" class="quick-amount" onclick="document.getElementById('rewardAmount').value = 100">
+              +100 Credits
+            </button>
+          </div>
+          
+          <div class="action-buttons" style="margin-top: 1.5rem;">
+            <button onclick="giveReward()" class="btn btn-success" style="flex: 1;">
+              <i class="fas fa-gift"></i> Berikan Reward
+            </button>
+            <button onclick="hideRewardModal()" class="btn btn-danger">
+              <i class="fas fa-times"></i> Batal
+            </button>
+          </div>
+        </div>
+        ` : ''}
+      `;
+      
+      document.getElementById('requestModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('requestModal').classList.remove('active');
+      currentRequest = null;
+    }
+
+    async function updateRequest() {
+      if (!currentRequest) return;
+      
+      const status = document.getElementById('statusSelect').value;
+      const priority = document.getElementById('prioritySelect').value;
+      const admin_response = document.getElementById('adminResponse').value;
+      
+      try {
+        const response = await fetch(`/feature-request/admin/api/${currentRequest.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ status, priority, admin_response })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          alert('✅ Request updated successfully!');
+          closeModal();
+          window.location.reload();
+        } else {
+          alert('❌ ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Failed to update request');
+      }
+    }
+
+    async function deleteRequest() {
+      if (!currentRequest) return;
+      
+      if (!confirm('Are you sure you want to delete this request? This action cannot be undone.')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/feature-request/admin/api/${currentRequest.id}`, {
+          method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          alert('✅ Request deleted successfully!');
+          closeModal();
+          window.location.reload();
+        } else {
+          alert('❌ ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Failed to delete request');
+      }
+    }
+
+    // Close modal on outside click
+    document.getElementById('requestModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+
+    // Close modal on ESC key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+
+    function showRewardModal() {
+      document.getElementById('rewardSection').style.display = 'block';
+    }
+
+    function hideRewardModal() {
+      document.getElementById('rewardSection').style.display = 'none';
+      document.getElementById('rewardAmount').value = '';
+    }
+
+    async function giveReward() {
+      if (!currentRequest) return;
+      
+      const rewardAmount = parseFloat(document.getElementById('rewardAmount').value);
+      
+      // Validation
+      if (!rewardAmount || rewardAmount < 0.5) {
+        alert('⚠️ Jumlah reward minimal 0.5 credits');
+        return;
+      }
+      
+      if (rewardAmount > 1000) {
+        alert('⚠️ Jumlah reward maksimal 1000 credits');
+        return;
+      }
+      
+      // Confirmation with better formatting
+      const confirmMessage = `
+🎁 KONFIRMASI REWARD
+
+User: ${currentRequest.user_name}
+Request: ${currentRequest.title}
+Reward: ${rewardAmount} Credits
+
+Apakah Anda yakin?
+      `.trim();
+      
+      if (!confirm(confirmMessage)) {
+        return;
+      }
+      
+      // Disable button and show loading
+      const confirmBtn = event.target;
+      const originalText = confirmBtn.innerHTML;
+      confirmBtn.disabled = true;
+      confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+      
+      try {
+        const response = await fetch(`/feature-request/admin/api/${currentRequest.id}/reward`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ reward_amount: rewardAmount })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          alert('✅ ' + data.message + '\n\nUser akan menerima ' + rewardAmount + ' credits.');
+          closeModal();
+          window.location.reload();
+        } else {
+          alert('❌ ' + data.message);
+          confirmBtn.disabled = false;
+          confirmBtn.innerHTML = originalText;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Terjadi kesalahan saat memberikan reward');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalText;
+      }
+    }
+  </script>
+</body>
+</html>
+

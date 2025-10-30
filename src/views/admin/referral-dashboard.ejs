@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <%- include('../partials/admin-styles') %>
+  
+  <style>
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      border-radius: 15px;
+      padding: 25px;
+      transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-3px);
+    }
+    
+    .stat-icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      opacity: 0.8;
+    }
+    
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 5px;
+    }
+    
+    .stat-label {
+      color: #9ca3af;
+      font-size: 0.9rem;
+    }
+    
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    
+    .action-btn {
+      background: rgba(24, 24, 27, 0.6);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      text-decoration: none;
+      color: white;
+      transition: all 0.3s ease;
+      display: block;
+      position: relative;
+    }
+    
+    .action-btn:hover {
+      border-color: #8b5cf6;
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3);
+    }
+    
+    .action-btn i {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      display: block;
+    }
+    
+    .action-btn .badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+
+    <div class="flex-1 ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: title }) %>
+
+      <main class="p-8 flex-1">
+        <div class="mb-6">
+          <h1 class="text-3xl font-bold text-white mb-2">🎁 Referral Management</h1>
+          <p class="text-gray-400">Manage referral system, payout requests, and commission settings</p>
+        </div>
+        
+        <!-- Statistics -->
+        <div class="stats-grid">
+          <div class="stat-card glass-strong">
+            <div class="stat-icon" style="color: #fbbf24;"><i class="fas fa-clock"></i></div>
+            <div class="stat-value">Rp <%= stats.pendingPayouts.toLocaleString('id-ID') %></div>
+            <div class="stat-label">Pending Payouts</div>
+          </div>
+          
+          <div class="stat-card glass-strong">
+            <div class="stat-icon" style="color: #10b981;"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-value">Rp <%= stats.totalPaidOut.toLocaleString('id-ID') %></div>
+            <div class="stat-label">Total Dibayarkan</div>
+          </div>
+          
+          <div class="stat-card glass-strong">
+            <div class="stat-icon" style="color: #8b5cf6;"><i class="fas fa-users"></i></div>
+            <div class="stat-value"><%= stats.activeReferrers %></div>
+            <div class="stat-label">Active Referrers</div>
+          </div>
+          
+          <div class="stat-card glass-strong">
+            <div class="stat-icon" style="color: #06b6d4;"><i class="fas fa-user-plus"></i></div>
+            <div class="stat-value"><%= stats.totalReferred %></div>
+            <div class="stat-label">Total Referred Users</div>
+          </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <a href="/referral/admin/payout-requests?status=pending" class="action-btn">
+            <i class="fas fa-clock" style="color: #fbbf24;"></i>
+            <strong>Pending Requests</strong>
+            <% if (pendingCount > 0) { %>
+              <span class="badge bg-warning"><%= pendingCount %></span>
+            <% } %>
+          </a>
+          
+          <a href="/referral/admin/payout-requests?status=processing" class="action-btn">
+            <i class="fas fa-spinner" style="color: #06b6d4;"></i>
+            <strong>Processing</strong>
+            <% if (processingCount > 0) { %>
+              <span class="badge bg-info"><%= processingCount %></span>
+            <% } %>
+          </a>
+          
+          <a href="/referral/admin/payout-requests?status=completed" class="action-btn">
+            <i class="fas fa-check-circle" style="color: #10b981;"></i>
+            <strong>Completed</strong>
+          </a>
+          
+          <a href="/referral/admin/payout-requests" class="action-btn">
+            <i class="fas fa-list" style="color: white;"></i>
+            <strong>All Requests</strong>
+          </a>
+        </div>
+        
+        <!-- Referral System Info -->
+        <div class="glass-strong rounded-xl p-6 mb-6" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+          <h4 class="text-xl font-bold text-white mb-4"><i class="fas fa-info-circle"></i> Cara Kerja Referral System</h4>
+          <ul class="text-white space-y-2">
+            <li><strong>Purchase Commission:</strong> Referrer mendapat <%= settings.commission_per_purchase %>% komisi dari setiap pembelian/top-up yang dilakukan oleh user yang direferensikan</li>
+            <li><strong>⚠️ Purchase Limit:</strong> Maksimal <strong>2x pembelian pertama</strong> per user yang eligible untuk komisi</li>
+            <li><strong>Minimum Payout:</strong> Rp <%= settings.minimum_payout.toLocaleString('id-ID') %></li>
+            <li><strong>Cooldown Period:</strong> <%= settings.payout_cooldown_days %> hari antara setiap request payout</li>
+            <li><strong>💡 Note:</strong> User hanya mendapat komisi dari <strong>pembelian</strong>, BUKAN dari pendaftaran saja</li>
+            <li><strong>Status:</strong> <%= settings.is_active ? '✅ Aktif' : '❌ Nonaktif' %></li>
+          </ul>
+        </div>
+        
+        <!-- Settings -->
+        <div class="glass-strong rounded-xl p-6 mb-6">
+          <h3 class="text-xl font-bold text-white mb-4"><i class="fas fa-cog"></i> Referral Settings</h3>
+          
+          <form id="settingsForm" onsubmit="handleSaveSettings(event)">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Minimum Payout (Rp)</label>
+                <input type="number" class="w-full px-4 py-2 bg-black/30 border border-white/10 rounded-lg text-white" 
+                       name="minimum_payout" value="<%= settings.minimum_payout %>" required>
+                <small class="text-gray-500">Minimum saldo yang bisa di-request untuk payout</small>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Cooldown Period (Hari)</label>
+                <input type="number" class="w-full px-4 py-2 bg-black/30 border border-white/10 rounded-lg text-white" 
+                       name="payout_cooldown_days" value="<%= settings.payout_cooldown_days %>" required>
+                <small class="text-gray-500">Jarak waktu minimum antara request payout</small>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Purchase Commission (%)</label>
+                <input type="number" class="w-full px-4 py-2 bg-black/30 border border-white/10 rounded-lg text-white" 
+                       name="commission_per_purchase" value="<%= settings.commission_per_purchase %>" step="0.01" required>
+                <small class="text-gray-500">Persentase komisi dari pembelian user yang direferensikan</small>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">General Commission Rate (%)</label>
+                <input type="number" class="w-full px-4 py-2 bg-black/30 border border-white/10 rounded-lg text-white" 
+                       name="commission_rate" value="<%= settings.commission_rate %>" step="0.01" required>
+                <small class="text-gray-500">Rate komisi umum (untuk perhitungan tambahan)</small>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Status Referral System</label>
+                <select class="w-full px-4 py-2 bg-black/30 border border-white/10 rounded-lg text-white" 
+                        name="is_active" required>
+                  <option value="true" <%= settings.is_active ? 'selected' : '' %>>Aktif</option>
+                  <option value="false" <%= !settings.is_active ? 'selected' : '' %>>Nonaktif</option>
+                </select>
+                <small class="text-gray-500">Aktifkan atau nonaktifkan sistem referral</small>
+              </div>
+            </div>
+            
+            <button type="submit" class="px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-lg transition">
+              <i class="fas fa-save"></i> Simpan Pengaturan
+            </button>
+          </form>
+        </div>
+        
+        <!-- Instructions -->
+        <div class="glass-strong rounded-xl p-6">
+          <h3 class="text-xl font-bold text-white mb-4"><i class="fas fa-question-circle"></i> Panduan Admin</h3>
+          
+          <div class="space-y-4">
+            <details class="group">
+              <summary class="flex items-center justify-between cursor-pointer p-4 bg-black/20 rounded-lg hover:bg-black/30 transition">
+                <span class="font-semibold text-white"><i class="fas fa-1"></i> Approve Payout Request</span>
+                <i class="fas fa-chevron-down group-open:rotate-180 transition"></i>
+              </summary>
+              <div class="p-4 text-gray-300">
+                <ol class="list-decimal list-inside space-y-2">
+                  <li>Buka halaman <strong>Pending Requests</strong></li>
+                  <li>Review informasi user dan detail pembayaran</li>
+                  <li>Klik tombol <strong>Approve</strong></li>
+                  <li>Masukkan catatan admin jika diperlukan</li>
+                  <li>Status akan berubah menjadi <strong>Processing</strong></li>
+                </ol>
+              </div>
+            </details>
+            
+            <details class="group">
+              <summary class="flex items-center justify-between cursor-pointer p-4 bg-black/20 rounded-lg hover:bg-black/30 transition">
+                <span class="font-semibold text-white"><i class="fas fa-2"></i> Complete Payout</span>
+                <i class="fas fa-chevron-down group-open:rotate-180 transition"></i>
+              </summary>
+              <div class="p-4 text-gray-300">
+                <ol class="list-decimal list-inside space-y-2">
+                  <li>Setelah approve, lakukan transfer ke rekening user</li>
+                  <li>Setelah transfer berhasil, buka halaman <strong>Processing</strong></li>
+                  <li>Klik tombol <strong>Mark as Completed</strong></li>
+                  <li>User akan menerima notifikasi bahwa payout telah selesai</li>
+                </ol>
+              </div>
+            </details>
+            
+            <details class="group">
+              <summary class="flex items-center justify-between cursor-pointer p-4 bg-black/20 rounded-lg hover:bg-black/30 transition">
+                <span class="font-semibold text-white"><i class="fas fa-3"></i> Reject Payout Request</span>
+                <i class="fas fa-chevron-down group-open:rotate-180 transition"></i>
+              </summary>
+              <div class="p-4 text-gray-300">
+                <ol class="list-decimal list-inside space-y-2">
+                  <li>Jika ada masalah dengan request, klik tombol <strong>Reject</strong></li>
+                  <li>Masukkan alasan penolakan di catatan admin</li>
+                  <li>Saldo akan dikembalikan ke akun user</li>
+                  <li>User akan menerima notifikasi penolakan dengan alasan</li>
+                </ol>
+              </div>
+            </details>
+          </div>
+        </div>
+      </main>
+
+      <%- include('../partials/admin-footer') %>
+    </div>
+  </div>
+  
+  <%- include('../partials/admin-scripts') %>
+  
+  <script>
+    async function handleSaveSettings(e) {
+      e.preventDefault();
+      
+      const form = e.target;
+      const formData = new FormData(form);
+      
+      const settings = {
+        minimum_payout: parseFloat(formData.get('minimum_payout')),
+        payout_cooldown_days: parseInt(formData.get('payout_cooldown_days')),
+        commission_rate: parseFloat(formData.get('commission_rate')),
+        commission_per_signup: 0, // Signup bonus removed - earnings only from purchases
+        commission_per_purchase: parseFloat(formData.get('commission_per_purchase')),
+        is_active: formData.get('is_active')
+      };
+      
+      try {
+        const response = await fetch('/referral/admin/settings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(settings)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          alert('✅ Settings berhasil disimpan!');
+          window.location.reload();
+        } else {
+          alert('❌ ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Terjadi kesalahan. Silakan coba lagi.');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!-- Backdrop for mobile -->
+<div id="backdrop" class="backdrop"></div>
+
+<!-- Mobile Menu Button (Floating) -->
+<button id="mobileMenuBtn" class="mobile-menu-btn">
+  <i class="fas fa-bars"></i>
+</button>
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed top-4 right-4 px-6 py-3 rounded-xl shadow-2xl hidden transform transition-all duration-300 z-50 flex items-center space-x-2 glass-strong">
+  <i id="toast-icon" class="fas fa-check-circle"></i>
+  <span id="toast-message" class="font-medium"></span>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-50 backdrop-blur-sm">
+  <div class="glass-strong rounded-2xl p-8 flex flex-col items-center">
+    <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-violet-500 mb-4"></div>
+    <p class="text-white font-semibold">Loading...</p>
+  </div>
+</div>
+
+<script>
+  // Mobile Menu Toggle
+  const sidebar = document.querySelector('.sidebar');
+  const backdrop = document.getElementById('backdrop');
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+  
+  function toggleSidebar() {
+    sidebar.classList.toggle('open');
+    backdrop.classList.toggle('show');
+  }
+  
+  if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', toggleSidebar);
+  }
+  
+  if (mobileMenuToggle) {
+    mobileMenuToggle.addEventListener('click', toggleSidebar);
+  }
+  
+  backdrop.addEventListener('click', toggleSidebar);
+  
+  // Toast notification
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+    const toastIcon = document.getElementById('toast-icon');
+    
+    const types = {
+      success: { icon: 'fa-check-circle', class: 'text-green-400' },
+      error: { icon: 'fa-times-circle', class: 'text-red-400' },
+      warning: { icon: 'fa-exclamation-triangle', class: 'text-yellow-400' },
+      info: { icon: 'fa-info-circle', class: 'text-blue-400' }
+    };
+    
+    const config = types[type] || types.info;
+    
+    toastIcon.className = `fas ${config.icon} ${config.class} text-xl`;
+    toastMessage.textContent = message;
+    toastMessage.className = `font-medium text-white`;
+    
+    toast.classList.remove('hidden');
+    toast.style.transform = 'translateX(0)';
+    toast.style.opacity = '1';
+    
+    setTimeout(() => {
+      toast.style.transform = 'translateX(400px)';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.classList.add('hidden'), 300);
+    }, 3000);
+  }
+  
+  // Loading overlay
+  function showLoading() {
+    document.getElementById('loadingOverlay').classList.remove('hidden');
+    document.getElementById('loadingOverlay').classList.add('flex');
+  }
+  
+  function hideLoading() {
+    document.getElementById('loadingOverlay').classList.add('hidden');
+    document.getElementById('loadingOverlay').classList.remove('flex');
+  }
+
+  // Global fetch helper
+  async function apiRequest(url, options = {}) {
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Request failed');
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('API request error:', error);
+      throw error;
+    }
+  }
+  
+  // Close mobile menu on resize
+  window.addEventListener('resize', () => {
+    if (window.innerWidth >= 1024) {
+      sidebar.classList.remove('open');
+      backdrop.classList.remove('show');
+    }
+  });
+</script>

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest AI</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/output.css">
+  <link rel="stylesheet" href="/css/mobile-navbar.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body {
+      background: #0a0a0a;
+      min-height: 100vh;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    
+    .container-main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+      padding-bottom: 100px;
+    }
+    
+    /* Header Section */
+    .page-header {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 20px;
+      padding: 40px;
+      margin-bottom: 30px;
+      backdrop-filter: blur(12px);
+    }
+    
+    .page-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    
+    .page-header p {
+      color: #9ca3af;
+      font-size: 1rem;
+    }
+    
+    /* Rate Limit Badge */
+    .rate-limit-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      padding: 8px 16px;
+      border-radius: 12px;
+      margin-top: 15px;
+      font-size: 0.875rem;
+    }
+    
+    .rate-limit-badge.warning {
+      background: rgba(251, 191, 36, 0.1);
+      border-color: rgba(251, 191, 36, 0.3);
+      color: #fbbf24;
+    }
+    
+    .rate-limit-badge.danger {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+    }
+    
+    .rate-limit-badge.success {
+      color: #22c55e;
+    }
+    
+    /* Grid Layout */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+    
+    @media (max-width: 1024px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    /* Form Card */
+    .form-card {
+      background: rgba(24, 24, 27, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 30px;
+    }
+    
+    .form-card h2 {
+      color: white;
+      font-weight: 700;
+      margin-bottom: 20px;
+      font-size: 1.3rem;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      color: #d1d5db;
+      font-weight: 500;
+      margin-bottom: 8px;
+      font-size: 0.875rem;
+    }
+    
+    .form-group label span {
+      color: #ef4444;
+    }
+    
+    .form-select,
+    .form-input,
+    .form-textarea {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: white;
+      font-size: 0.875rem;
+      font-family: 'Space Grotesk', sans-serif;
+      transition: all 0.3s ease;
+    }
+    
+    .form-select:focus,
+    .form-input:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: #8b5cf6;
+      background: rgba(139, 92, 246, 0.05);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+    
+    .form-textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    
+    .form-hint {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      color: white;
+      font-weight: 600;
+      padding: 14px 24px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1rem;
+    }
+    
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+    }
+    
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    /* Request List */
+    .request-list {
+      background: rgba(24, 24, 27, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 30px;
+      max-height: 800px;
+      overflow-y: auto;
+    }
+    
+    .request-list h2 {
+      color: white;
+      font-weight: 700;
+      margin-bottom: 20px;
+      font-size: 1.3rem;
+    }
+    
+    .request-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      transition: all 0.3s ease;
+    }
+    
+    .request-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      transform: translateY(-2px);
+    }
+    
+    .request-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+    
+    .request-title {
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      flex: 1;
+    }
+    
+    .request-type-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    
+    .request-type-badge.ai_model {
+      background: rgba(139, 92, 246, 0.2);
+      color: #a78bfa;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+    
+    .request-type-badge.feature {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    
+    .request-type-badge.bug {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .request-type-badge.other {
+      background: rgba(107, 114, 128, 0.2);
+      color: #9ca3af;
+      border: 1px solid rgba(107, 114, 128, 0.3);
+    }
+    
+    .request-description {
+      color: #9ca3af;
+      font-size: 0.875rem;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    
+    .request-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .status-badge.pending {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+    }
+    
+    .status-badge.under_review {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+    }
+    
+    .status-badge.approved {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+    }
+    
+    .status-badge.rejected {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+    
+    .status-badge.implemented {
+      background: rgba(168, 85, 247, 0.2);
+      color: #c084fc;
+    }
+    
+    .request-date {
+      color: #6b7280;
+      font-size: 0.75rem;
+    }
+    
+    .admin-response {
+      background: rgba(139, 92, 246, 0.1);
+      border-left: 3px solid #8b5cf6;
+      padding: 12px;
+      margin-top: 12px;
+      border-radius: 8px;
+    }
+    
+    .admin-response-label {
+      color: #a78bfa;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .admin-response-text {
+      color: #d1d5db;
+      font-size: 0.875rem;
+    }
+    
+    .reward-badge {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.2));
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      padding: 8px 12px;
+      margin-top: 12px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .reward-badge-icon {
+      color: #fbbf24;
+      font-size: 1.2rem;
+    }
+    
+    .reward-badge-text {
+      color: #fbbf24;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #6b7280;
+    }
+    
+    .empty-state i {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+    
+    .empty-state p {
+      font-size: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+      .container-main {
+        padding: 15px;
+        padding-bottom: 100px;
+      }
+      
+      .page-header {
+        padding: 25px;
+      }
+      
+      .page-header h1 {
+        font-size: 1.5rem;
+      }
+      
+      .form-card,
+      .request-list {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <%- include('../partials/mobile-header') %>
+  
+  <div class="container-main">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>🚀 Request AI Model atau Fitur</h1>
+      <p>Punya ide untuk AI model atau fitur baru? Kirim request Anda di sini! Tim kami akan meninjau dan mempertimbangkan setiap request.</p>
+      
+      <!-- Rate Limit Badge -->
+      <% 
+        let rateLimitClass = 'success';
+        let rateLimitText = `Anda bisa membuat ${rateLimit.remaining} request lagi`;
+        
+        if (rateLimit.remaining === 0) {
+          rateLimitClass = 'danger';
+          const resetDate = new Date(rateLimit.resetTime);
+          const hours = Math.ceil((resetDate - new Date()) / (1000 * 60 * 60));
+          rateLimitText = `Batas tercapai. Reset dalam ${hours} jam`;
+        } else if (rateLimit.remaining <= 2) {
+          rateLimitClass = 'warning';
+          rateLimitText = `Sisa ${rateLimit.remaining} request (reset dalam 24 jam)`;
+        }
+      %>
+      <div class="rate-limit-badge <%= rateLimitClass %>">
+        <i class="fas fa-info-circle"></i>
+        <span><%= rateLimitText %> (Limit: 5 per 24 jam)</span>
+      </div>
+    </div>
+    
+    <!-- Content Grid -->
+    <div class="content-grid">
+      <!-- Form Section -->
+      <div class="form-card">
+        <h2>✨ Buat Request Baru</h2>
+        
+        <form id="requestForm">
+          <!-- Request Type -->
+          <div class="form-group">
+            <label for="request_type">Tipe Request <span>*</span></label>
+            <select id="request_type" name="request_type" class="form-select" required>
+              <option value="">-- Pilih Tipe --</option>
+              <option value="ai_model">🤖 AI Model (Image, Video, Audio, dll)</option>
+              <option value="feature">⚡ Fitur Baru (UI/UX, Tools, dll)</option>
+              <option value="bug">🐛 Laporkan Bug (Error, Masalah, dll)</option>
+              <option value="other">📝 Lainnya</option>
+            </select>
+          </div>
+          
+          <!-- Title -->
+          <div class="form-group">
+            <label for="title">Judul Request <span>*</span></label>
+            <input type="text" id="title" name="title" class="form-input" placeholder="Contoh: Model AI untuk Generate Logo" minlength="5" maxlength="255" required>
+            <p class="form-hint">Minimal 5 karakter, maksimal 255 karakter</p>
+          </div>
+          
+          <!-- Description -->
+          <div class="form-group">
+            <label for="description">Deskripsi Detail <span>*</span></label>
+            <textarea id="description" name="description" class="form-textarea" placeholder="Jelaskan secara detail apa yang Anda inginkan, fitur apa yang dibutuhkan, dan mengapa ini penting..." minlength="20" required></textarea>
+            <p class="form-hint">Minimal 20 karakter. Semakin detail, semakin baik!</p>
+          </div>
+          
+          <!-- Use Case -->
+          <div class="form-group">
+            <label for="use_case">Use Case (Opsional)</label>
+            <textarea id="use_case" name="use_case" class="form-textarea" placeholder="Untuk apa Anda akan menggunakan ini? Contoh konkret penggunaan..."></textarea>
+            <p class="form-hint">Bantu kami memahami kebutuhan Anda dengan memberikan contoh penggunaan</p>
+          </div>
+          
+          <button type="submit" class="submit-btn" id="submitBtn" <%= rateLimit.remaining === 0 ? 'disabled' : '' %>>
+            <i class="fas fa-paper-plane"></i> Kirim Request
+          </button>
+        </form>
+      </div>
+      
+      <!-- Request List Section -->
+      <div class="request-list">
+        <h2>📋 Request Saya (<%= requests.length %>)</h2>
+        
+        <div id="requestListContainer">
+          <% if (requests.length === 0) { %>
+            <div class="empty-state">
+              <i class="fas fa-inbox"></i>
+              <p>Belum ada request. Buat request pertama Anda!</p>
+            </div>
+          <% } else { %>
+            <% requests.forEach(request => { %>
+              <div class="request-item">
+                <div class="request-header">
+                  <h3 class="request-title"><%= request.title %></h3>
+                  <span class="request-type-badge <%= request.request_type %>">
+                    <% if (request.request_type === 'ai_model') { %>🤖 AI Model
+                    <% } else if (request.request_type === 'feature') { %>⚡ Fitur
+                    <% } else if (request.request_type === 'bug') { %>🐛 Bug
+                    <% } else { %>📝 Other
+                    <% } %>
+                  </span>
+                </div>
+                
+                <p class="request-description"><%= request.description.substring(0, 150) %><%= request.description.length > 150 ? '...' : '' %></p>
+                
+                <div class="request-footer">
+                  <span class="status-badge <%= request.status %>">
+                    <% if (request.status === 'pending') { %>⏳ Pending
+                    <% } else if (request.status === 'under_review') { %>🔍 Under Review
+                    <% } else if (request.status === 'approved') { %>✅ Approved
+                    <% } else if (request.status === 'rejected') { %>❌ Rejected
+                    <% } else if (request.status === 'implemented') { %>🎉 Implemented
+                    <% } %>
+                  </span>
+                  <span class="request-date">
+                    <%= new Date(request.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+                  </span>
+                </div>
+                
+                <% if (request.admin_response) { %>
+                  <div class="admin-response">
+                    <div class="admin-response-label">📝 Response dari Admin:</div>
+                    <div class="admin-response-text"><%= request.admin_response %></div>
+                  </div>
+                <% } %>
+                
+                <% if (request.reward_given && request.reward_amount > 0) { %>
+                  <div class="reward-badge">
+                    <span class="reward-badge-icon">🎁</span>
+                    <span class="reward-badge-text">Reward: +<%= parseFloat(request.reward_amount).toFixed(1) %> Credits</span>
+                  </div>
+                <% } %>
+              </div>
+            <% }); %>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <%- include('../partials/mobile-navbar') %>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('requestForm');
+      const submitBtn = document.getElementById('submitBtn');
+      
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Disable button
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
+        
+        const formData = {
+          request_type: document.getElementById('request_type').value,
+          title: document.getElementById('title').value,
+          description: document.getElementById('description').value,
+          use_case: document.getElementById('use_case').value
+        };
+        
+        try {
+          const response = await fetch('/feature-request/api/create', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            // Show success message
+            alert('✅ ' + data.message);
+            
+            // Reset form
+            form.reset();
+            
+            // Reload page to show new request
+            window.location.reload();
+          } else {
+            alert('❌ ' + data.message);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Request';
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('❌ Terjadi kesalahan. Silakan coba lagi.');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Request';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
+

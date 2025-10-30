@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <%- include('../partials/admin-styles') %>
+  
+  <style>
+    .payout-card {
+      background: rgba(24, 24, 27, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-left: 4px solid;
+      transition: all 0.3s ease;
+    }
+    
+    .payout-card:hover {
+      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+      transform: translateY(-2px);
+    }
+    
+    .payout-card.pending { border-left-color: #fbbf24; }
+    .payout-card.processing { border-left-color: #06b6d4; }
+    .payout-card.completed { border-left-color: #10b981; }
+    .payout-card.rejected { border-left-color: #ef4444; }
+    
+    .payout-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .payout-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .user-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+    
+    .user-info h5 {
+      margin: 0;
+      font-weight: 600;
+      color: white;
+    }
+    
+    .user-info p {
+      margin: 0;
+      color: #9ca3af;
+      font-size: 0.85rem;
+    }
+    
+    .payout-amount {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #10b981;
+    }
+    
+    .payout-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .detail-item {
+      background: rgba(0,0,0,0.3);
+      padding: 12px;
+      border-radius: 10px;
+    }
+    
+    .detail-label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-bottom: 5px;
+    }
+    
+    .detail-value {
+      font-weight: 600;
+      color: white;
+    }
+    
+    .payment-info {
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .payment-info h6 {
+      color: #a78bfa;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    
+    .payment-info p {
+      margin: 5px 0;
+      color: #d1d5db;
+      font-size: 0.9rem;
+    }
+    
+    .payout-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .btn-action {
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-approve {
+      background: #10b981;
+      color: white;
+    }
+    
+    .btn-approve:hover {
+      background: #059669;
+      transform: translateY(-2px);
+    }
+    
+    .btn-reject {
+      background: #ef4444;
+      color: white;
+    }
+    
+    .btn-reject:hover {
+      background: #dc2626;
+      transform: translateY(-2px);
+    }
+    
+    .btn-complete {
+      background: #06b6d4;
+      color: white;
+    }
+    
+    .btn-complete:hover {
+      background: #0891b2;
+      transform: translateY(-2px);
+    }
+    
+    .filter-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .filter-tab {
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(24, 24, 27, 0.6);
+      color: #d1d5db;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+    
+    .filter-tab:hover {
+      border-color: #8b5cf6;
+      color: white;
+    }
+    
+    .filter-tab.active {
+      background: #8b5cf6;
+      color: white;
+      border-color: transparent;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      background: rgba(24, 24, 27, 0.6);
+      border-radius: 15px;
+    }
+    
+    .empty-state i {
+      font-size: 4rem;
+      color: rgba(255,255,255,0.2);
+      margin-bottom: 20px;
+    }
+    
+    .empty-state h4 {
+      color: #9ca3af;
+      margin-bottom: 10px;
+    }
+    
+    .empty-state p {
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+
+    <div class="flex-1 ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: title }) %>
+
+      <main class="p-8 flex-1">
+        <div class="mb-6">
+          <h1 class="text-3xl font-bold text-white mb-2">💳 Payout Requests</h1>
+          <p class="text-gray-400">Review and process payout requests from referrers</p>
+        </div>
+        
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+          <a href="/referral/admin/payout-requests" class="filter-tab <%= !currentStatus ? 'active' : '' %>">
+            <i class="fas fa-list"></i> Semua
+          </a>
+          <a href="/referral/admin/payout-requests?status=pending" class="filter-tab <%= currentStatus === 'pending' ? 'active' : '' %>">
+            <i class="fas fa-clock"></i> Pending
+          </a>
+          <a href="/referral/admin/payout-requests?status=processing" class="filter-tab <%= currentStatus === 'processing' ? 'active' : '' %>">
+            <i class="fas fa-spinner"></i> Processing
+          </a>
+          <a href="/referral/admin/payout-requests?status=completed" class="filter-tab <%= currentStatus === 'completed' ? 'active' : '' %>">
+            <i class="fas fa-check"></i> Completed
+          </a>
+          <a href="/referral/admin/payout-requests?status=rejected" class="filter-tab <%= currentStatus === 'rejected' ? 'active' : '' %>">
+            <i class="fas fa-times"></i> Rejected
+          </a>
+        </div>
+        
+        <!-- Payout List -->
+        <% if (payouts && payouts.length > 0) { %>
+          <% payouts.forEach(payout => { %>
+            <div class="payout-card <%= payout.status %>">
+              <div class="payout-header">
+                <div class="payout-user">
+                  <div class="user-avatar">
+                    <%= payout.user_name.charAt(0).toUpperCase() %>
+                  </div>
+                  <div class="user-info">
+                    <h5><%= payout.user_name %></h5>
+                    <p><%= payout.user_email %></p>
+                    <% if (payout.user_phone) { %>
+                      <p><i class="fas fa-phone"></i> <%= payout.user_phone %></p>
+                    <% } %>
+                  </div>
+                </div>
+                <div class="payout-amount">
+                  Rp <%= payout.amount.toLocaleString('id-ID') %>
+                </div>
+              </div>
+              
+              <div class="payout-details">
+                <div class="detail-item">
+                  <div class="detail-label">Request ID</div>
+                  <div class="detail-value">#<%= payout.id %></div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Tanggal Request</div>
+                  <div class="detail-value"><%= new Date(payout.created_at).toLocaleString('id-ID') %></div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Status</div>
+                  <div class="detail-value">
+                    <% if (payout.status === 'pending') { %>
+                      <span style="color: #fbbf24;">⏳ Pending</span>
+                    <% } else if (payout.status === 'processing') { %>
+                      <span style="color: #06b6d4;">⚡ Processing</span>
+                    <% } else if (payout.status === 'completed') { %>
+                      <span style="color: #10b981;">✅ Completed</span>
+                    <% } else if (payout.status === 'rejected') { %>
+                      <span style="color: #ef4444;">❌ Rejected</span>
+                    <% } %>
+                  </div>
+                </div>
+                <% if (payout.processed_at) { %>
+                  <div class="detail-item">
+                    <div class="detail-label">Diproses Oleh</div>
+                    <div class="detail-value"><%= payout.processed_by_name || 'Admin' %></div>
+                  </div>
+                <% } %>
+              </div>
+              
+              <div class="payment-info">
+                <h6><i class="fas fa-university"></i> Informasi Pembayaran</h6>
+                <p><strong>Metode:</strong> <%= payout.payment_method %></p>
+                <% 
+                  let details;
+                  try {
+                    details = typeof payout.payment_details === 'string' ? JSON.parse(payout.payment_details) : payout.payment_details;
+                  } catch (e) {
+                    details = payout.payment_details;
+                  }
+                %>
+                <% if (details) { %>
+                  <% if (details.bank_name) { %>
+                    <p><strong>Bank:</strong> <%= details.bank_name %></p>
+                  <% } %>
+                  <% if (details.account_number) { %>
+                    <p><strong>Nomor Rekening:</strong> <%= details.account_number %></p>
+                  <% } %>
+                  <% if (details.account_name) { %>
+                    <p><strong>Atas Nama:</strong> <%= details.account_name %></p>
+                  <% } %>
+                <% } %>
+              </div>
+              
+              <% if (payout.admin_notes) { %>
+                <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); padding: 12px; border-radius: 10px; margin-bottom: 15px;">
+                  <strong style="color: #60a5fa;">Catatan Admin:</strong> 
+                  <span style="color: #d1d5db;"><%= payout.admin_notes %></span>
+                </div>
+              <% } %>
+              
+              <div class="payout-actions">
+                <% if (payout.status === 'pending') { %>
+                  <button class="btn-action btn-approve" onclick="processRequest(<%= payout.id %>, 'approve')">
+                    <i class="fas fa-check"></i> Approve
+                  </button>
+                  <button class="btn-action btn-reject" onclick="processRequest(<%= payout.id %>, 'reject')">
+                    <i class="fas fa-times"></i> Reject
+                  </button>
+                <% } else if (payout.status === 'processing') { %>
+                  <button class="btn-action btn-complete" onclick="completeRequest(<%= payout.id %>)">
+                    <i class="fas fa-check-circle"></i> Mark as Completed
+                  </button>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h4>Tidak ada payout request</h4>
+            <p>Belum ada request payout untuk status ini</p>
+          </div>
+        <% } %>
+      </main>
+
+      <%- include('../partials/admin-footer') %>
+    </div>
+  </div>
+  
+  <%- include('../partials/admin-scripts') %>
+  
+  <script>
+    async function processRequest(requestId, action) {
+      const actionText = action === 'approve' ? 'approve' : 'reject';
+      const adminNotes = prompt(`Masukkan catatan admin untuk ${actionText} request ini (opsional):`);
+      
+      if (adminNotes === null) return; // User cancelled
+      
+      if (!confirm(`Apakah Anda yakin ingin ${actionText} request ini?`)) return;
+      
+      try {
+        const response = await fetch(`/referral/admin/payout-requests/${requestId}/process`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            action: action,
+            admin_notes: adminNotes
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          alert(`✅ Request berhasil di-${actionText}!`);
+          window.location.reload();
+        } else {
+          alert('❌ ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Terjadi kesalahan. Silakan coba lagi.');
+      }
+    }
+    
+    async function completeRequest(requestId) {
+      const adminNotes = prompt('Masukkan catatan admin (opsional):');
+      
+      if (adminNotes === null) return; // User cancelled
+      
+      if (!confirm('Apakah Anda yakin payout ini sudah berhasil dikirim?')) return;
+      
+      try {
+        const response = await fetch(`/referral/admin/payout-requests/${requestId}/complete`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            admin_notes: adminNotes
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          alert('✅ Payout berhasil diselesaikan!');
+          window.location.reload();
+        } else {
+          alert('❌ ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Terjadi kesalahan. Silakan coba lagi.');
+      }
+    }
+  </script>
+</body>
+</html>

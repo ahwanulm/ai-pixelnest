@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+    <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/output.css">
+    <link rel="stylesheet" href="/css/generation-styles.css">
+    <link rel="stylesheet" href="/css/mobile-navbar.css">
+    
+    <style>
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .usage-chart {
+            min-height: 300px;
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white">
+    <!-- Mobile Header -->
+    <%- include('../partials/mobile-header') %>
+    
+    <div class="min-h-screen flex flex-col pt-14 lg:pt-0">
+        <!-- Top Bar (Same as Dashboard) - Hidden on Mobile -->
+        <div class="hidden lg:block border-b border-white/10 bg-zinc-950/50 backdrop-blur-xl sticky top-0 z-50">
+            <div class="px-8 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <a href="/dashboard" class="flex items-center gap-3">
+                        <img src="/assets/img/logo/logo.png" alt="PixelNest Logo" class="h-10 w-auto">
+                        <span class="font-black text-lg">PIXELNEST</span>
+                    </a>
+                    <span class="text-gray-600">/</span>
+                    <h2 class="text-sm font-semibold text-gray-400">Usage Statistics</h2>
+                </div>
+                
+                <div class="flex items-center gap-6">
+                    <a href="/dashboard" class="relative text-sm text-gray-400 hover:text-white transition-all duration-300 hover:scale-110 group">
+                        <span class="relative z-10">Dashboard</span>
+                        <span class="absolute inset-0 -z-10 bg-gradient-to-r from-white/0 via-white/10 to-white/0 rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                    </a>
+                    <a href="/tutorial" class="relative text-sm text-gray-400 hover:text-white transition-all duration-300 hover:scale-110 group">
+                        <span class="relative z-10">Tutorial</span>
+                        <span class="absolute inset-0 -z-10 bg-gradient-to-r from-white/0 via-white/10 to-white/0 rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                    </a>
+                    <a href="/billing" class="relative text-sm text-gray-400 hover:text-white transition-all duration-300 hover:scale-110 group">
+                        <span class="relative z-10">Billing</span>
+                        <span class="absolute inset-0 -z-10 bg-gradient-to-r from-white/0 via-white/10 to-white/0 rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                    </a>
+                    
+                    <!-- Credits Display with Top-up Button -->
+                    <div class="flex items-center gap-2">
+                        <div class="relative px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded-lg group hover:border-yellow-500/40 transition-all duration-300 hover:scale-105 cursor-default">
+                            <span class="absolute inset-0 bg-yellow-500/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                            <div class="flex items-center gap-2 relative z-10">
+                                <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+                                </svg>
+                                <span class="text-sm font-bold text-yellow-400 font-mono"><%= (user.credits || 0).toFixed(1) %></span>
+                            </div>
+                        </div>
+                        
+                        <a href="/billing" class="relative group flex items-center justify-center w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg hover:from-yellow-400 hover:to-yellow-500 transition-all duration-300 hover:scale-110 hover:rotate-90 shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/40" title="Top Up Credits">
+                            <span class="absolute inset-0 bg-white/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                            <svg class="w-5 h-5 text-white relative z-10 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                            </svg>
+                        </a>
+                    </div>
+                    
+                    <!-- Profile Dropdown -->
+                    <div class="relative">
+                        <button id="profile-btn" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                            <% if (user && user.avatar_url) { %>
+                                <img src="<%= user.avatar_url %>" alt="<%= user.name %>" class="w-8 h-8 rounded-full border-2 border-blue-500">
+                            <% } else if (user) { %>
+                                <div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full flex items-center justify-center text-xs font-bold">
+                                    <%= user.name.charAt(0).toUpperCase() %>
+                                </div>
+                            <% } %>
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        
+                        <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-zinc-900 border border-white/10 rounded-lg shadow-xl overflow-hidden z-[10000]">
+                            <div class="px-4 py-3 border-b border-white/10">
+                                <p class="text-sm font-semibold text-white"><%= user.name %></p>
+                                <p class="text-xs text-gray-400 truncate"><%= user.email %></p>
+                            </div>
+                            <div class="py-2">
+                                <a href="/profile" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    </svg>
+                                    Profile
+                                </a>
+                                <a href="/feature-request" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                    Request Model AI
+                                </a>
+                                <a href="/usage" class="flex items-center gap-3 px-4 py-2 text-sm text-white bg-white/5 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                    </svg>
+                                    Usage
+                                </a>
+                            </div>
+                            <div class="border-t border-white/10">
+                                <a href="/logout" class="flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                    </svg>
+                                    Logout
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-4 lg:p-8 pb-24">
+            <div class="max-w-7xl mx-auto space-y-8">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <!-- Total Generations -->
+                    <div class="stat-card bg-white/5 border border-white/10 rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-wand-magic-sparkles text-white text-xl"></i>
+                            </div>
+                            <span class="text-xs text-gray-500 uppercase tracking-wider">Total</span>
+                        </div>
+                        <p class="text-3xl font-bold text-white mb-1"><%= stats.totalGenerations %></p>
+                        <p class="text-sm text-gray-400">Generations</p>
+                    </div>
+                    
+                    <!-- Credits Used -->
+                    <div class="stat-card bg-white/5 border border-white/10 rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-yellow-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-coins text-white text-xl"></i>
+                            </div>
+                            <span class="text-xs text-gray-500 uppercase tracking-wider">Used</span>
+                        </div>
+                        <p class="text-3xl font-bold text-white mb-1"><%= (parseFloat(stats.creditsUsed) || 0).toFixed(1) %></p>
+                        <p class="text-sm text-gray-400">Credits</p>
+                    </div>
+                    
+                    <!-- Images Created -->
+                    <div class="stat-card bg-white/5 border border-white/10 rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-image text-white text-xl"></i>
+                            </div>
+                            <span class="text-xs text-gray-500 uppercase tracking-wider">Images</span>
+                        </div>
+                        <p class="text-3xl font-bold text-white mb-1"><%= stats.imagesCreated %></p>
+                        <p class="text-sm text-gray-400">Generated</p>
+                    </div>
+                    
+                    <!-- Videos Created -->
+                    <div class="stat-card bg-white/5 border border-white/10 rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-fuchsia-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-video text-white text-xl"></i>
+                            </div>
+                            <span class="text-xs text-gray-500 uppercase tracking-wider">Videos</span>
+                        </div>
+                        <p class="text-3xl font-bold text-white mb-1"><%= stats.videosCreated %></p>
+                        <p class="text-sm text-gray-400">Generated</p>
+                    </div>
+                </div>
+
+                <!-- Usage by Model -->
+                <div class="bg-white/5 border border-white/10 rounded-xl p-6">
+                    <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                        <i class="fas fa-chart-bar text-blue-400"></i>
+                        Usage by Model
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <% if (modelUsage && modelUsage.length > 0) { %>
+                            <% modelUsage.forEach(model => { %>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-sm font-semibold text-white"><%= model.model_name %></span>
+                                            <span class="text-sm text-gray-400"><%= model.count %> generations</span>
+                                        </div>
+                                        <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                                            <% const percentage = stats.totalGenerations > 0 ? (model.count / stats.totalGenerations * 100).toFixed(1) : 0; %>
+                                            <div class="h-full bg-blue-600 rounded-full transition-all duration-500 usage-progress-bar" data-width="<%= percentage %>"></div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-bold text-yellow-400"><%= (parseFloat(model.total_cost) || 0).toFixed(1) %> cr</p>
+                                        <p class="text-xs text-gray-500"><%= stats.creditsUsed > 0 ? ((model.total_cost / stats.creditsUsed) * 100).toFixed(0) : 0 %>%</p>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="text-center py-12">
+                                <i class="fas fa-chart-bar text-gray-600 text-5xl mb-4"></i>
+                                <p class="text-gray-400">No usage data yet</p>
+                                <p class="text-sm text-gray-500 mt-2">Start generating to see your statistics</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="bg-white/5 border border-white/10 rounded-xl p-6">
+                    <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                        <i class="fas fa-history text-blue-400"></i>
+                        Recent Activity
+                    </h2>
+                    
+                    <div class="space-y-3">
+                        <% if (recentActivity && recentActivity.length > 0) { %>
+                            <% recentActivity.forEach(activity => { %>
+                                <div class="flex items-center gap-4 p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+                                    <div class="w-10 h-10 <%= activity.type === 'image' ? 'bg-blue-600' : 'bg-fuchsia-600' %> rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <i class="fas <%= activity.type === 'image' ? 'fa-image' : 'fa-video' %> text-white"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-semibold text-white truncate"><%= activity.model_name %></p>
+                                        <p class="text-xs text-gray-400"><%= activity.generation_type %></p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-bold text-yellow-400"><%= (parseFloat(activity.cost_credits) || 0).toFixed(1) %> cr</p>
+                                        <p class="text-xs text-gray-500"><%= new Date(activity.created_at).toLocaleDateString() %></p>
+                                    </div>
+                                    <span class="text-xs px-2 py-1 rounded <%= activity.status === 'completed' ? 'bg-green-500/20 text-green-300' : activity.status === 'failed' ? 'bg-red-500/20 text-red-300' : 'bg-yellow-500/20 text-yellow-300' %>">
+                                        <%= activity.status %>
+                                    </span>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="text-center py-12">
+                                <i class="fas fa-history text-gray-600 text-5xl mb-4"></i>
+                                <p class="text-gray-400">No recent activity</p>
+                                <p class="text-sm text-gray-500 mt-2">Your generation history will appear here</p>
+                            </div>
+                        <% } %>
+                    </div>
+                    
+                    <% if (recentActivity && recentActivity.length > 0) { %>
+                        <div class="mt-6 text-center">
+                            <a href="/dashboard" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors">
+                                <span>View All Generations</span>
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Profile Dropdown Toggle
+        document.getElementById('profile-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('profile-dropdown');
+            dropdown.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('profile-dropdown');
+            const profileBtn = document.getElementById('profile-btn');
+            if (!dropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+    </script>
+    
+    <script>
+        // ✨ Helper function to clean model names (remove fal.ai and fal.id references)
+        function cleanModelName(modelName) {
+            if (!modelName) return 'Unknown Model';
+            
+            // Remove common fal.ai and fal.id prefixes and patterns
+            let cleaned = modelName
+                .replace(/^fal-ai\//gi, '')      // Remove fal-ai/ prefix
+                .replace(/^fal\.ai\//gi, '')     // Remove fal.ai/ prefix
+                .replace(/^fal\.id\//gi, '')     // Remove fal.id/ prefix
+                .replace(/^fal-id\//gi, '')      // Remove fal-id/ prefix
+                .replace(/\(fal\.ai\)/gi, '')    // Remove (fal.ai) suffix
+                .replace(/\(fal\.id\)/gi, '')    // Remove (fal.id) suffix
+                .replace(/\[fal\.ai\]/gi, '')    // Remove [fal.ai] suffix
+                .replace(/\[fal\.id\]/gi, '')    // Remove [fal.id] suffix
+                .replace(/- fal\.ai$/gi, '')     // Remove - fal.ai suffix
+                .replace(/- fal\.id$/gi, '')     // Remove - fal.id suffix
+                .replace(/by fal\.ai/gi, '')     // Remove by fal.ai
+                .replace(/by fal\.id/gi, '')     // Remove by fal.id
+                .trim();
+            
+            // Make model name more user-friendly (optional beautification)
+            // Replace dashes and underscores with spaces for better readability
+            cleaned = cleaned
+                .replace(/[-_]/g, ' ')           // Replace - and _ with spaces
+                .replace(/\s+/g, ' ')            // Remove multiple spaces
+                .trim();
+            
+            // Capitalize first letter of each word for better presentation
+            cleaned = cleaned.split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(' ');
+            
+            return cleaned || modelName; // Return original if cleaning results in empty string
+        }
+        
+        // Set width for usage progress bars and clean model names
+        document.addEventListener('DOMContentLoaded', function() {
+            // Progress bars
+            const progressBars = document.querySelectorAll('.usage-progress-bar');
+            progressBars.forEach(bar => {
+                const width = bar.getAttribute('data-width');
+                if (width) {
+                    bar.style.width = width + '%';
+                }
+            });
+            
+            // Clean model names in usage by model section
+            document.querySelectorAll('.text-sm.font-semibold.text-white').forEach(element => {
+                const modelName = element.textContent.trim();
+                if (modelName && !modelName.includes('generations') && !modelName.includes('cr')) {
+                    element.textContent = cleanModelName(modelName);
+                }
+            });
+        });
+    </script>
+
+    <!-- Mobile Navigation Bar -->
+    <%- include('../partials/mobile-navbar') %>
+</body>
+</html>
+

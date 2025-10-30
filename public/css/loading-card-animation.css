@@ -1,0 +1,246 @@
+/**
+ * Loading Card Animations
+ * Pixel art style animations for generation loading cards
+ */
+
+/* Pixel Grid Background */
+.pixel-grid-bg {
+    background-image: 
+        linear-gradient(0deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    animation: pixelScroll 3s linear infinite;
+}
+
+@keyframes pixelScroll {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 20px 20px;
+    }
+}
+
+/* Pixel Spinner */
+.pixel-spinner {
+    position: relative;
+    width: 60px;
+    height: 60px;
+}
+
+.pixel-box {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 4px solid #8b5cf6;
+    border-radius: 8px;
+    animation: pixelSpin 2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+    box-shadow: 
+        0 0 20px rgba(139, 92, 246, 0.5),
+        inset 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.pixel-box::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(45deg, #8b5cf6, #a78bfa);
+    border-radius: 4px;
+    animation: pixelPulse 1s ease-in-out infinite;
+}
+
+.pixel-box::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    border: 2px solid #a78bfa;
+    border-radius: 6px;
+    opacity: 0.5;
+    animation: pixelExpand 2s ease-out infinite;
+}
+
+@keyframes pixelSpin {
+    0%, 100% {
+        transform: rotate(0deg) scale(1);
+    }
+    25% {
+        transform: rotate(90deg) scale(1.1);
+    }
+    50% {
+        transform: rotate(180deg) scale(1);
+    }
+    75% {
+        transform: rotate(270deg) scale(1.1);
+    }
+}
+
+@keyframes pixelPulse {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 0.7;
+    }
+}
+
+@keyframes pixelExpand {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 0.2;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* Floating Particles */
+.particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: linear-gradient(45deg, #8b5cf6, #a78bfa);
+    border-radius: 2px;
+    opacity: 0;
+    animation: particleFloat 3s ease-in-out infinite;
+}
+
+.particle-1 {
+    top: 20%;
+    left: 10%;
+    animation-delay: 0s;
+}
+
+.particle-2 {
+    top: 60%;
+    left: 80%;
+    animation-delay: 1s;
+}
+
+.particle-3 {
+    top: 40%;
+    left: 50%;
+    animation-delay: 2s;
+}
+
+@keyframes particleFloat {
+    0% {
+        transform: translateY(0) scale(0);
+        opacity: 0;
+    }
+    20% {
+        opacity: 0.8;
+    }
+    50% {
+        transform: translateY(-30px) scale(1);
+        opacity: 1;
+    }
+    80% {
+        opacity: 0.5;
+    }
+    100% {
+        transform: translateY(-60px) scale(0);
+        opacity: 0;
+    }
+}
+
+/* Progress Bar Glow */
+.loading-progress-bar {
+    box-shadow: 
+        0 0 10px rgba(139, 92, 246, 0.5),
+        0 0 20px rgba(139, 92, 246, 0.3),
+        0 0 30px rgba(139, 92, 246, 0.2);
+    animation: progressGlow 2s ease-in-out infinite;
+}
+
+@keyframes progressGlow {
+    0%, 100% {
+        box-shadow: 
+            0 0 10px rgba(139, 92, 246, 0.5),
+            0 0 20px rgba(139, 92, 246, 0.3);
+    }
+    50% {
+        box-shadow: 
+            0 0 15px rgba(139, 92, 246, 0.7),
+            0 0 30px rgba(139, 92, 246, 0.5),
+            0 0 45px rgba(139, 92, 246, 0.3);
+    }
+}
+
+/* Loading Card Border Animation */
+.loading-card {
+    animation: borderPulse 2s ease-in-out infinite;
+}
+
+@keyframes borderPulse {
+    0%, 100% {
+        border-color: rgba(139, 92, 246, 0.5);
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+    }
+    50% {
+        border-color: rgba(139, 92, 246, 0.8);
+        box-shadow: 0 0 30px rgba(139, 92, 246, 0.4);
+    }
+}
+
+/* Pixel Dots Animation (alternative) */
+@keyframes pixelDots {
+    0%, 20% {
+        content: '.';
+    }
+    40% {
+        content: '..';
+    }
+    60%, 100% {
+        content: '...';
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .pixel-spinner {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .pixel-box::before {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .pixel-box::after {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+/* Success State Transition */
+.loading-card.success {
+    animation: successPulse 0.5s ease-out;
+}
+
+@keyframes successPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+

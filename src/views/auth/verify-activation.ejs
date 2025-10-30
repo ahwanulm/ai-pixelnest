@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Verify Email - PixelNest">
+    <title><%= title %></title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+    <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/output.css">
+    <style>
+        .input-glow:focus {
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1), 0 0 15px rgba(139, 92, 246, 0.15);
+        }
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .code-input {
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.4em;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center px-4 py-6">
+    <!-- Background Effects -->
+    <div class="fixed inset-0 -z-10">
+        <div class="absolute top-20 left-10 w-72 h-72 bg-violet-600/20 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-20 right-10 w-96 h-96 bg-fuchsia-600/20 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="w-full max-w-md">
+        <!-- Logo -->
+        <div class="text-center mb-4 slide-in">
+            <a href="/" class="inline-flex items-center justify-center gap-2">
+                <!-- Logo Icon -->
+                <div class="w-9 h-9 bg-white rounded-full flex items-center justify-center flex-shrink-0">
+                    <img src="/assets/img/logo/logo.png" alt="PixelNest Logo" class="h-6 w-auto">
+                </div>
+                
+                <!-- Text -->
+                <div class="flex flex-col items-start">
+                    <span class="text-base font-black text-white uppercase tracking-tight leading-none">PIXELNEST</span>
+                    <span class="text-[9px] text-gray-400 uppercase tracking-[0.15em] font-medium">AI VIDEO STUDIO</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- Verification Card -->
+        <div class="glass-panel p-5 rounded-xl slide-in" style="animation-delay: 0.1s;">
+            <!-- Email Icon -->
+            <div class="text-center mb-4">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 mb-3">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-white mb-1">Verifikasi Email</h1>
+                <p class="text-gray-400 text-xs">Kode dikirim ke</p>
+                <p class="text-violet-400 font-semibold text-sm"><%= email %></p>
+            </div>
+
+            <!-- Success/Info Message -->
+            <% if (message) { %>
+            <div class="mb-3 p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <div class="flex items-start">
+                    <svg class="w-4 h-4 text-blue-400 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                    </svg>
+                    <p class="text-blue-300 text-xs"><%= message %></p>
+                </div>
+            </div>
+            <% } %>
+
+            <!-- Error Message -->
+            <% if (error) { %>
+            <div class="mb-3 p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <div class="flex items-start">
+                    <svg class="w-4 h-4 text-red-400 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                    </svg>
+                    <p class="text-red-300 text-xs"><%= error %></p>
+                </div>
+            </div>
+            <% } %>
+
+            <!-- Verification Form -->
+            <form action="/auth/verify-activation" method="POST" id="verifyForm">
+                <input type="hidden" name="email" value="<%= email %>">
+                
+                <!-- Code Input -->
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-gray-300 mb-2 text-center">
+                        Kode Aktivasi (6 digit)
+                    </label>
+                    <input 
+                        type="text" 
+                        name="code" 
+                        id="code"
+                        maxlength="6"
+                        pattern="[0-9]{6}"
+                        class="code-input w-full px-3 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white focus:outline-none input-glow transition-all"
+                        placeholder="000000"
+                        required
+                        autocomplete="off"
+                        autofocus
+                    >
+                    <p class="text-[10px] text-gray-500 mt-1.5 text-center">Kode berlaku selama 15 menit</p>
+                </div>
+
+                <!-- Verify Button -->
+                <button 
+                    type="submit"
+                    class="w-full py-2.5 px-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white text-sm rounded-lg font-semibold hover:from-violet-700 hover:to-fuchsia-700 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                    <span class="flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Aktivasi Akun
+                    </span>
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="relative my-3">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-800"></div>
+                </div>
+                <div class="relative flex justify-center text-xs">
+                    <span class="px-3 bg-gray-900/80 text-gray-500">Tidak menerima kode?</span>
+                </div>
+            </div>
+
+            <!-- Resend Button -->
+            <button 
+                type="button"
+                id="resendBtn"
+                onclick="resendCode()"
+                class="w-full py-2 px-4 bg-gray-800 text-white text-sm rounded-lg font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600 transition-all"
+            >
+                <span class="flex items-center justify-center">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Kirim Ulang Kode
+                </span>
+            </button>
+
+            <!-- Timer Display -->
+            <div id="timer" class="text-center mt-2.5 text-xs text-gray-500 hidden">
+                Kirim ulang kode dalam <span id="countdown" class="text-violet-400 font-semibold">60</span> detik
+            </div>
+
+            <!-- Help Text -->
+            <div class="mt-3 p-2.5 bg-gray-900/50 rounded-lg border border-gray-800">
+                <p class="text-[10px] text-gray-400 text-center">
+                    💡 <strong>Tips:</strong> Periksa folder spam jika tidak menemukan email
+                </p>
+            </div>
+
+            <!-- Back to Login -->
+            <div class="mt-3 text-center">
+                <a href="/login" class="text-xs text-gray-400 hover:text-white transition-colors">
+                    ← Kembali ke Login
+                </a>
+            </div>
+        </div>
+
+        <!-- Info Footer -->
+        <div class="mt-4 text-center text-[10px] text-gray-500">
+            <p>Dengan aktivasi akun, Anda menyetujui <a href="/terms-of-service" class="text-violet-400 hover:text-violet-300">Terms</a> dan <a href="/privacy-policy" class="text-violet-400 hover:text-violet-300">Privacy Policy</a></p>
+        </div>
+    </div>
+
+    <script>
+        let cooldownTime = 0;
+        let countdownInterval = null;
+
+        // Auto-format code input (numbers only)
+        document.getElementById('code').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        // Resend code function
+        async function resendCode() {
+            const email = document.querySelector('input[name="email"]').value;
+            const resendBtn = document.getElementById('resendBtn');
+            const timer = document.getElementById('timer');
+            const countdown = document.getElementById('countdown');
+
+            if (cooldownTime > 0) {
+                return; // Still in cooldown
+            }
+
+            resendBtn.disabled = true;
+            resendBtn.innerHTML = '<span class="flex items-center justify-center"><svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Mengirim...</span>';
+
+            try {
+                const response = await fetch('/auth/resend-activation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show success message
+                    showMessage(data.message, 'success');
+
+                    // Start cooldown timer (60 seconds)
+                    cooldownTime = 60;
+                    timer.classList.remove('hidden');
+                    
+                    countdownInterval = setInterval(() => {
+                        cooldownTime--;
+                        countdown.textContent = cooldownTime;
+
+                        if (cooldownTime <= 0) {
+                            clearInterval(countdownInterval);
+                            timer.classList.add('hidden');
+                            resendBtn.disabled = false;
+                            resendBtn.innerHTML = '<span class="flex items-center justify-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Kirim Ulang Kode</span>';
+                        }
+                    }, 1000);
+                } else {
+                    showMessage(data.message, 'error');
+                    resendBtn.disabled = false;
+                    resendBtn.innerHTML = '<span class="flex items-center justify-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Kirim Ulang Kode</span>';
+                }
+            } catch (error) {
+                showMessage('Gagal mengirim kode. Silakan coba lagi.', 'error');
+                resendBtn.disabled = false;
+                resendBtn.innerHTML = '<span class="flex items-center justify-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Kirim Ulang Kode</span>';
+            }
+        }
+
+        // Show message helper
+        function showMessage(message, type) {
+            const existingMessages = document.querySelectorAll('.message-alert');
+            existingMessages.forEach(msg => msg.remove());
+
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `message-alert mb-6 p-4 rounded-lg border ${type === 'success' ? 'bg-green-500/10 border-green-500/20' : 'bg-red-500/10 border-red-500/20'}`;
+            alertDiv.innerHTML = `
+                <div class="flex items-start">
+                    <svg class="w-5 h-5 ${type === 'success' ? 'text-green-400' : 'text-red-400'} mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        ${type === 'success' ? 
+                            '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>' :
+                            '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>'
+                        }
+                    </svg>
+                    <p class="${type === 'success' ? 'text-green-300' : 'text-red-300'} text-sm">${message}</p>
+                </div>
+            `;
+            
+            const form = document.getElementById('verifyForm');
+            form.parentNode.insertBefore(alertDiv, form);
+
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // Form validation
+        document.getElementById('verifyForm').addEventListener('submit', function(e) {
+            const code = document.getElementById('code').value;
+            if (code.length !== 6) {
+                e.preventDefault();
+                showMessage('Kode aktivasi harus 6 digit', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
+

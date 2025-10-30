@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <%- include('../partials/admin-styles') %>
+  <style>
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+    }
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .modal-content {
+      background: linear-gradient(135deg, rgb(17, 24, 39) 0%, rgb(31, 41, 55) 50%, rgb(55, 48, 107) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 16px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 2rem;
+      box-shadow: 0 20px 60px rgba(139, 92, 246, 0.3), 0 0 100px rgba(139, 92, 246, 0.1);
+      animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    .modal-content::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .modal-content::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    }
+    
+    .modal-content::-webkit-scrollbar-thumb {
+      background: rgba(139, 92, 246, 0.5);
+      border-radius: 4px;
+    }
+    
+    .modal-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(139, 92, 246, 0.7);
+    }
+  </style>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+
+    <div class="flex-1 ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: title }) %>
+
+      <main class="p-8 flex-1">
+        <div class="flex justify-between items-center mb-6">
+          <p class="text-gray-400">Send notifications to users</p>
+          <div class="flex gap-3 items-center">
+            <!-- Batch Actions -->
+            <div id="batchActions" class="hidden flex gap-2 items-center mr-4">
+              <button id="deleteSelected" onclick="deleteSelectedNotifications()" 
+                      class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition text-sm">
+                <i class="fas fa-trash mr-2"></i> Delete Selected (<span id="selectedCount">0</span>)
+              </button>
+            </div>
+            <button onclick="openCreateModal()" class="px-6 py-2 bg-violet-600 hover:bg-violet-700 rounded-lg transition">
+              <i class="fas fa-plus mr-2"></i> Create Notification
+            </button>
+          </div>
+        </div>
+
+        <!-- Batch Selection Controls -->
+        <div id="selectionControls" class="glass-strong rounded-lg p-4 mb-4 hidden">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-4">
+              <label class="flex items-center cursor-pointer">
+                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" 
+                       class="mr-2 rounded border-gray-600 bg-gray-700 text-violet-600 focus:ring-violet-500">
+                <span class="text-gray-300">Select All</span>
+              </label>
+              <span id="selectionInfo" class="text-gray-400 text-sm">0 notifications selected</span>
+            </div>
+            <button onclick="clearSelection()" class="text-gray-400 hover:text-white text-sm">
+              <i class="fas fa-times mr-1"></i> Clear Selection
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <% if (notifications.length === 0) { %>
+            <div class="glass-strong rounded-xl p-12 text-center">
+              <i class="fas fa-bell-slash text-5xl text-gray-600 mb-4"></i>
+              <p class="text-gray-500">No notifications sent yet</p>
+            </div>
+          <% } else { %>
+            <% notifications.forEach(notif => { %>
+              <div class="glass-strong rounded-xl p-6 notification-item" data-id="<%= notif.id %>">
+                <div class="flex items-start justify-between">
+                  <div class="flex items-start space-x-4 flex-1">
+                    <!-- Checkbox for batch selection -->
+                    <div class="flex items-center pt-2">
+                      <input type="checkbox" class="notification-checkbox" 
+                             value="<%= notif.id %>" 
+                             onchange="updateSelection()" 
+                             class="rounded border-gray-600 bg-gray-700 text-violet-600 focus:ring-violet-500">
+                    </div>
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 <%= notif.type === 'success' ? 'bg-green-500/20' : notif.type === 'error' ? 'bg-red-500/20' : notif.type === 'warning' ? 'bg-yellow-500/20' : 'bg-blue-500/20' %>">
+                      <i class="fas fa-<%= notif.type === 'success' ? 'check-circle' : notif.type === 'error' ? 'times-circle' : notif.type === 'warning' ? 'exclamation-triangle' : 'info-circle' %> text-<%= notif.type === 'success' ? 'green' : notif.type === 'error' ? 'red' : notif.type === 'warning' ? 'yellow' : 'blue' %>-400"></i>
+                    </div>
+                    <div class="flex-1">
+                      <div class="flex items-center gap-2 mb-2">
+                        <h3 class="text-lg font-bold text-white"><%= notif.title %></h3>
+                        <span class="px-2 py-1 text-xs rounded-full <%= notif.priority === 'high' ? 'bg-red-500/20 text-red-300' : notif.priority === 'low' ? 'bg-gray-500/20 text-gray-300' : 'bg-blue-500/20 text-blue-300' %>">
+                          <%= notif.priority %>
+                        </span>
+                      </div>
+                      <p class="text-gray-400 mb-2"><%= notif.message %></p>
+                      <div class="flex items-center gap-4 text-xs text-gray-500">
+                        <span><i class="far fa-clock mr-1"></i> <%= new Date(notif.created_at).toLocaleString() %></span>
+                        <span><i class="fas fa-users mr-1"></i> <%= notif.target_users === 'all' ? `${notif.recipient_count || 'All'} users` : '1 user' %></span>
+                        <% if (notif.action_url) { %>
+                          <span><i class="fas fa-link mr-1"></i> Has link</span>
+                        <% } %>
+                      </div>
+                    </div>
+                  </div>
+                  <button onclick="deleteNotification(<%= notif.id %>)" class="text-red-400 hover:text-red-300 ml-4">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            <% }); %>
+          <% } %>
+        </div>
+      </main>
+
+      <%- include('../partials/admin-footer') %>
+    </div>
+  </div>
+
+  <!-- Create Notification Modal -->
+  <div id="createModal" class="modal">
+    <div class="modal-content">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold text-white">Create Notification</h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-white">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <form onsubmit="createNotification(event)">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-2">Title *</label>
+          <input type="text" id="title" required
+                 placeholder="Notification title"
+                 class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none" />
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-2">Message *</label>
+          <textarea id="message" required rows="4"
+                    placeholder="Notification message"
+                    class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none"></textarea>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Type</label>
+            <select id="type" class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none">
+              <option value="info">Info (ℹ️)</option>
+              <option value="success">Success (✓)</option>
+              <option value="warning">Warning (⚠️)</option>
+              <option value="error">Error (✕)</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Priority</label>
+            <select id="priority" class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none">
+              <option value="low">Low</option>
+              <option value="normal" selected>Normal</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-2">Target</label>
+          <select id="target" class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none">
+            <option value="all">All Users</option>
+            <option value="specific">Specific User (coming soon)</option>
+          </select>
+        </div>
+        
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-300 mb-2">Action URL (Optional)</label>
+          <input type="url" id="action_url"
+                 placeholder="https://example.com/page"
+                 class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none" />
+          <p class="text-xs text-gray-400 mt-1">Users will be redirected here when clicking the notification</p>
+        </div>
+        
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-300 mb-2">Expires At (Optional)</label>
+          <input type="datetime-local" id="expires_at"
+                 class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none" />
+        </div>
+        
+        <div class="flex gap-3">
+          <button type="submit" class="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition font-medium">
+            <i class="fas fa-paper-plane mr-2"></i> Send Notification
+          </button>
+          <button type="button" onclick="closeModal()" 
+                  class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <%- include('../partials/admin-scripts') %>
+  
+  <script>
+    function openCreateModal() {
+      document.getElementById('createModal').classList.add('active');
+    }
+    
+    function closeModal() {
+      document.getElementById('createModal').classList.remove('active');
+      document.querySelector('form').reset();
+    }
+    
+    async function createNotification(e) {
+      e.preventDefault();
+      
+      const data = {
+        title: document.getElementById('title').value,
+        message: document.getElementById('message').value,
+        type: document.getElementById('type').value,
+        priority: document.getElementById('priority').value,
+        target_users: document.getElementById('target').value,
+        action_url: document.getElementById('action_url').value || null,
+        expires_at: document.getElementById('expires_at').value || null
+      };
+      
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sending...';
+      submitBtn.disabled = true;
+      
+      try {
+        const response = await fetch('/admin/notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showNotification('✓ Notification sent successfully!', 'success');
+          closeModal();
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showNotification('✗ Error: ' + result.message, 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('✗ Failed to send notification', 'error');
+      } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
+    }
+    
+    async function deleteNotification(id) {
+      if (!confirm('Are you sure you want to delete this notification? This will remove it for ALL users who received it.')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/admin/notifications/${id}`, {
+          method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          const count = result.deletedCount || 1;
+          const message = count > 1 
+            ? `✓ ${count} notifications deleted successfully` 
+            : '✓ Notification deleted successfully';
+          showNotification(message, 'success');
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showNotification('✗ Error: ' + result.message, 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('✗ Failed to delete notification', 'error');
+      }
+    }
+    
+    function showNotification(message, type) {
+      const notification = document.createElement('div');
+      notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-[10000] ${
+        type === 'success' ? 'bg-green-600' : 'bg-red-600'
+      }`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.3s';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+    
+    // Close modal on ESC
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+    
+    // Close modal on outside click
+    document.getElementById('createModal').addEventListener('click', (e) => {
+      if (e.target.id === 'createModal') {
+        closeModal();
+      }
+    });
+    
+    // ============ BATCH DELETE FUNCTIONS ============
+    
+    function toggleSelectAll() {
+      const selectAll = document.getElementById('selectAll');
+      const checkboxes = document.querySelectorAll('.notification-checkbox');
+      
+      checkboxes.forEach(cb => {
+        cb.checked = selectAll.checked;
+      });
+      
+      updateSelection();
+    }
+    
+    function updateSelection() {
+      const checkboxes = document.querySelectorAll('.notification-checkbox');
+      const checked = document.querySelectorAll('.notification-checkbox:checked');
+      const selectAll = document.getElementById('selectAll');
+      const selectionControls = document.getElementById('selectionControls');
+      const batchActions = document.getElementById('batchActions');
+      const selectionInfo = document.getElementById('selectionInfo');
+      const selectedCount = document.getElementById('selectedCount');
+      
+      // Update select all checkbox
+      if (checked.length === 0) {
+        selectAll.indeterminate = false;
+        selectAll.checked = false;
+      } else if (checked.length === checkboxes.length) {
+        selectAll.indeterminate = false;
+        selectAll.checked = true;
+      } else {
+        selectAll.indeterminate = true;
+      }
+      
+      // Show/hide controls based on selection
+      if (checked.length > 0) {
+        selectionControls.classList.remove('hidden');
+        batchActions.classList.remove('hidden');
+        selectionInfo.textContent = `${checked.length} notification${checked.length > 1 ? 's' : ''} selected`;
+        selectedCount.textContent = checked.length;
+      } else {
+        selectionControls.classList.add('hidden');
+        batchActions.classList.add('hidden');
+      }
+    }
+    
+    function clearSelection() {
+      const checkboxes = document.querySelectorAll('.notification-checkbox');
+      checkboxes.forEach(cb => cb.checked = false);
+      updateSelection();
+    }
+    
+    async function deleteSelectedNotifications() {
+      const checked = document.querySelectorAll('.notification-checkbox:checked');
+      const ids = Array.from(checked).map(cb => cb.value);
+      
+      if (ids.length === 0) {
+        showNotification('✗ No notifications selected', 'error');
+        return;
+      }
+      
+      const confirmMessage = `Are you sure you want to delete ${ids.length} notification${ids.length > 1 ? 's' : ''}?`;
+      if (!confirm(confirmMessage)) {
+        return;
+      }
+      
+      const deleteBtn = document.getElementById('deleteSelected');
+      const originalText = deleteBtn.innerHTML;
+      deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Deleting...';
+      deleteBtn.disabled = true;
+      
+      try {
+        const response = await fetch('/admin/notifications/batch-delete', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showNotification(`✓ ${result.deletedCount} notification${result.deletedCount > 1 ? 's' : ''} deleted successfully`, 'success');
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showNotification('✗ Error: ' + result.message, 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('✗ Failed to delete notifications', 'error');
+      } finally {
+        deleteBtn.innerHTML = originalText;
+        deleteBtn.disabled = false;
+      }
+    }
+    
+    // Show selection controls when page loads if notifications exist
+    document.addEventListener('DOMContentLoaded', () => {
+      const hasNotifications = document.querySelectorAll('.notification-checkbox').length > 0;
+      if (hasNotifications) {
+        document.getElementById('selectionControls').classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+</html>

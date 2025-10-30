@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <%- include('../partials/admin-styles') %>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+
+    <div class="flex-1 ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: title }) %>
+
+      <main class="p-8 flex-1">
+        <div class="glass-strong rounded-xl overflow-hidden">
+          <table class="min-w-full">
+            <thead>
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">User</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Activity</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Description</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (activities.length === 0) { %>
+                <tr><td colspan="4" class="px-6 py-12 text-center text-gray-500">No activity logs</td></tr>
+              <% } else { %>
+                <% activities.forEach(activity => { %>
+                  <tr>
+                    <td class="px-6 py-4">
+                      <div class="font-medium text-white"><%= activity.user_name || 'Unknown' %></div>
+                      <div class="text-xs text-gray-400"><%= activity.user_email || '' %></div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <span class="px-2 py-1 text-xs rounded-full badge-info"><%= activity.activity_type %></span>
+                    </td>
+                    <td class="px-6 py-4 text-gray-400"><%= activity.description || '-' %></td>
+                    <td class="px-6 py-4 text-sm text-gray-400"><%= new Date(activity.created_at).toLocaleString() %></td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
+
+          <div class="px-6 py-4 flex justify-between items-center border-t" style="border-color: rgba(255, 255, 255, 0.1);">
+            <div class="text-sm text-gray-400">Page <%= page %></div>
+            <div class="flex space-x-2">
+              <% if (page > 1) { %>
+                <a href="?page=<%= page - 1 %>" class="px-4 py-2 glass rounded-lg hover:bg-white/10">Previous</a>
+              <% } %>
+              <a href="?page=<%= page + 1 %>" class="px-4 py-2 glass rounded-lg hover:bg-white/10">Next</a>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <%- include('../partials/admin-footer') %>
+    </div>
+  </div>
+
+  <%- include('../partials/admin-scripts') %>
+</body>
+</html>

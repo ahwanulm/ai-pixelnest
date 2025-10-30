@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build files
+dist/
+build/
+
+# User generated content
+public/videos/*
+public/images/*
+public/audio/*
+!public/videos/.gitkeep
+!public/images/.gitkeep
+!public/audio/.gitkeep
+
+# Deployment
+.deployment-temp/
+pixelnest-deployment-*.zip
+pixelnest-deployment-*.tar.gz
+pixelnest.zip
+
+# Documentation (for reference, will be in git but not in deployment packages)
+# *.md files are excluded from deployment packages
+

@@ -1,0 +1,318 @@
+/* ========================================
+   Responsive Styles
+   ======================================== */
+
+/* Tablet and below (1024px) */
+@media (max-width: 1024px) {
+    .hero-title {
+        font-size: 3.5rem;
+    }
+    
+    .section-title {
+        font-size: 2.5rem;
+    }
+    
+    .footer-links {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Mobile and below (768px) */
+@media (max-width: 768px) {
+    :root {
+        --section-padding: 60px 0;
+    }
+    
+    /* Navigation */
+    .navbar-toggle {
+        display: flex;
+    }
+    
+    .navbar-menu {
+        position: fixed;
+        top: 70px;
+        left: 0;
+        right: 0;
+        background: rgba(15, 23, 42, 0.98);
+        backdrop-filter: blur(10px);
+        flex-direction: column;
+        padding: 2rem;
+        gap: 0;
+        transform: translateY(-100%);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .navbar-menu.active {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .navbar-nav {
+        flex-direction: column;
+        gap: 0;
+        width: 100%;
+    }
+    
+    .navbar-nav li {
+        width: 100%;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .navbar-nav a {
+        display: block;
+        padding: 1rem 0;
+    }
+    
+    .navbar-cta {
+        width: 100%;
+        margin-top: 1rem;
+    }
+    
+    .navbar-cta .btn {
+        width: 100%;
+    }
+    
+    /* Hero */
+    .hero {
+        padding: 80px 0 60px;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    /* Sections */
+    .section-title {
+        font-size: 2rem;
+    }
+    
+    .section-subtitle {
+        font-size: 1rem;
+    }
+    
+    /* Analysis Section */
+    .analysis-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .analysis-text h3 {
+        font-size: 1.3rem;
+    }
+    
+    .analysis-text p {
+        font-size: 1rem;
+    }
+    
+    /* Grids */
+    .benefits-grid,
+    .services-grid,
+    .process-steps,
+    .testimonials-grid,
+    .pricing-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .pricing-card.popular {
+        transform: scale(1);
+    }
+    
+    .pricing-card.popular:hover {
+        transform: translateY(-5px);
+    }
+    
+    /* Process Steps */
+    .process-step h3 {
+        font-size: 1.5rem;
+    }
+    
+    .process-step p {
+        font-size: 1rem;
+    }
+    
+    /* CTA */
+    .cta-content h2 {
+        font-size: 2rem;
+    }
+    
+    .cta-content p {
+        font-size: 1rem;
+    }
+    
+    /* Page Header */
+    .page-header {
+        padding: 80px 0 40px;
+    }
+    
+    .page-header h1 {
+        font-size: 2.5rem;
+    }
+    
+    .page-header p {
+        font-size: 1.1rem;
+    }
+    
+    /* Contact */
+    .contact-form-wrapper h2 {
+        font-size: 1.8rem;
+    }
+    
+    /* FAQ */
+    .faq-question {
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+    }
+    
+    .faq-answer p {
+        padding: 0 1.5rem 1rem;
+    }
+    
+    /* Blog */
+    .blog-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Footer */
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+    
+    .footer-links {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Error Pages */
+    .error-code {
+        font-size: 5rem;
+    }
+    
+    .success-content h1,
+    .error-content h2 {
+        font-size: 2rem;
+    }
+    
+    .success-actions {
+        flex-direction: column;
+    }
+    
+    .success-actions .btn {
+        width: 100%;
+    }
+    
+    /* Process Timeline */
+    .timeline-item {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .timeline-item::before {
+        display: none;
+    }
+    
+    .timeline-features {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Service Detail */
+    .service-detail-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .service-sidebar {
+        order: -1;
+    }
+    
+    /* Stats */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+    }
+}
+
+/* Small Mobile (480px) */
+@media (max-width: 480px) {
+    .container {
+        padding: 0 15px;
+    }
+    
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .section-title {
+        font-size: 1.8rem;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        font-size: 0.95rem;
+    }
+    
+    .btn-lg {
+        padding: 14px 28px;
+        font-size: 1rem;
+    }
+    
+    .service-card,
+    .benefit-card,
+    .pricing-card {
+        padding: 2rem 1.5rem;
+    }
+    
+    .pricing-toggle {
+        flex-direction: column;
+    }
+    
+    .toggle-btn {
+        width: 100%;
+    }
+}
+
+/* Landscape Mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+    .hero {
+        padding: 60px 0 40px;
+    }
+    
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .page-header {
+        padding: 60px 0 30px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .header,
+    .navbar,
+    .footer,
+    .btn,
+    .cta-section {
+        display: none;
+    }
+    
+    body {
+        background: white;
+        color: black;
+    }
+    
+    main {
+        margin-top: 0;
+    }
+}
+

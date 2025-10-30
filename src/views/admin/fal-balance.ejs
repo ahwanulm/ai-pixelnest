@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <%- include('../partials/admin-styles') %>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+
+    <div class="flex-1 ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: title }) %>
+
+      <main class="p-8 flex-1">
+        <div class="mb-6">
+          <p class="text-gray-400">Monitor fal.ai API balance and usage statistics</p>
+        </div>
+
+        <!-- Balance Card -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <!-- API Status -->
+          <div class="glass-strong rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-check-circle text-green-400 text-xl"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-semibold text-gray-400">API Status</h3>
+                  <p id="api-balance" class="text-lg font-bold text-white">Checking...</p>
+                  <p id="api-status-message" class="text-xs text-gray-400 mt-1">Verifying API key...</p>
+                </div>
+              </div>
+            </div>
+            <button onclick="checkBalance()" class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm">
+              <i class="fas fa-sync-alt mr-2"></i> Check API Status
+            </button>
+            <div class="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <p class="text-xs text-blue-300">
+                <i class="fas fa-info-circle mr-1"></i>
+                <strong>Note:</strong> fal.ai uses pay-per-use pricing. Check <a href="https://fal.ai/pricing" target="_blank" class="underline hover:text-blue-200">pricing page</a> for current rates.
+              </p>
+            </div>
+          </div>
+
+          <!-- API Key Display -->
+          <div class="glass-strong rounded-xl p-6">
+            <div class="flex items-center space-x-3 mb-4">
+              <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-key text-blue-400 text-xl"></i>
+              </div>
+              <div class="flex-1">
+                <h3 class="text-sm font-semibold text-gray-400">API Key In Use</h3>
+                <div class="flex items-center gap-2 mt-1">
+                  <p id="active-api-key" class="text-xs font-mono text-white truncate" style="max-width: 150px;">
+                    <% if (apiConfig && apiConfig.api_key) { %>
+                      <%= apiConfig.api_key.substring(0, 8) %>...
+                    <% } else { %>
+                      Not configured
+                    <% } %>
+                  </p>
+                  <% if (apiConfig && apiConfig.api_key) { %>
+                    <button onclick="toggleActiveKey(this)" 
+                            data-key="<%= apiConfig.api_key %>"
+                            data-short="<%= apiConfig.api_key.substring(0, 8) %>..."
+                            class="text-gray-400 hover:text-white text-xs transition"
+                            title="Show/Hide">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button onclick="copyActiveKey('<%= apiConfig.api_key %>')" 
+                            class="text-gray-400 hover:text-white text-xs transition"
+                            title="Copy">
+                      <i class="fas fa-copy"></i>
+                    </button>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+            <div class="text-xs text-gray-500 mt-2">
+              <i class="fas fa-info-circle mr-1"></i>
+              Currently active API key
+            </div>
+          </div>
+
+          <!-- Total Generations -->
+          <div class="glass-strong rounded-xl p-6">
+            <div class="flex items-center space-x-3 mb-4">
+              <div class="w-12 h-12 bg-violet-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-image text-violet-400 text-xl"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-semibold text-gray-400">Total Generations</h3>
+                <p class="text-2xl font-bold text-white"><%= stats.totalGenerations || 0 %></p>
+              </div>
+            </div>
+            <p class="text-xs text-gray-500">This Month: <%= stats.generationsThisMonth || 0 %></p>
+          </div>
+
+          <!-- Credits Used -->
+          <div class="glass-strong rounded-xl p-6">
+            <div class="flex items-center space-x-3 mb-4">
+              <div class="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-coins text-yellow-400 text-xl"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-semibold text-gray-400">Credits Distributed</h3>
+                <p class="text-2xl font-bold text-white"><%= stats.totalCredits || 0 %></p>
+              </div>
+            </div>
+            <p class="text-xs text-gray-500">Across <%= stats.totalUsers || 0 %> users</p>
+          </div>
+        </div>
+
+        <!-- API Configuration Status -->
+        <div class="glass-strong rounded-xl p-6 mb-8">
+          <h3 class="text-lg font-bold text-white mb-4">
+            <i class="fas fa-cog mr-2 text-violet-400"></i>
+            API Configuration
+          </h3>
+          
+          <div class="space-y-4">
+            <% if (apiConfig) { %>
+              <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                <div>
+                  <p class="text-sm font-semibold text-white">Service Name</p>
+                  <p class="text-xs text-gray-400"><%= apiConfig.service_name %></p>
+                </div>
+                <span class="px-3 py-1 text-xs rounded-full <%= apiConfig.is_active ? 'badge-success' : 'badge-error' %>">
+                  <%= apiConfig.is_active ? 'Active' : 'Inactive' %>
+                </span>
+              </div>
+
+              <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                <div>
+                  <p class="text-sm font-semibold text-white">Endpoint URL</p>
+                  <p class="text-xs text-gray-400 font-mono"><%= apiConfig.endpoint_url %></p>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                <div class="flex-1">
+                  <p class="text-sm font-semibold text-white mb-2">API Key</p>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-400 font-mono api-key-display" 
+                          data-key="<%= apiConfig.api_key || '' %>" 
+                          data-masked="••••••••">
+                      <%= apiConfig.api_key ? '••••••••' : 'Not configured' %>
+                    </span>
+                    <% if (apiConfig.api_key) { %>
+                      <button onclick="toggleApiKey(this)" 
+                              class="text-gray-400 hover:text-white text-xs transition"
+                              title="Show/Hide">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                    <% } %>
+                  </div>
+                </div>
+                <a href="/admin/api-configs" class="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition text-sm">
+                  <i class="fas fa-edit mr-2"></i> Configure
+                </a>
+              </div>
+
+              <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                <div>
+                  <p class="text-sm font-semibold text-white">Last Updated</p>
+                  <p class="text-xs text-gray-400">
+                    <%= new Date(apiConfig.updated_at).toLocaleString('id-ID', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) %>
+                  </p>
+                </div>
+              </div>
+            <% } else { %>
+              <div class="text-center py-8">
+                <i class="fas fa-exclamation-triangle text-yellow-400 text-4xl mb-4"></i>
+                <p class="text-white font-semibold mb-2">FAL.AI API Not Configured</p>
+                <p class="text-gray-400 text-sm mb-4">Please configure the API key to enable AI generation features.</p>
+                <a href="/admin/api-configs" class="inline-block px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition">
+                  <i class="fas fa-plus mr-2"></i> Configure Now
+                </a>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Recent Generations -->
+        <div class="glass-strong rounded-xl p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-white">
+              <i class="fas fa-history mr-2 text-violet-400"></i>
+              Recent Generations
+            </h3>
+            <a href="/admin/users" class="text-sm text-violet-400 hover:text-violet-300 transition">
+              View All →
+            </a>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-white/10">
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">User</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Type</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Prompt</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Credits</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Status</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (recentGenerations && recentGenerations.length > 0) { %>
+                  <% recentGenerations.forEach(gen => { %>
+                    <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                      <td class="px-4 py-3 text-sm text-white"><%= gen.user_name || 'Unknown' %></td>
+                      <td class="px-4 py-3">
+                        <span class="px-2 py-1 text-xs rounded <%= gen.generation_type === 'image' ? 'bg-blue-500/20 text-blue-300' : 'bg-purple-500/20 text-purple-300' %>">
+                          <%= gen.sub_type %>
+                        </span>
+                      </td>
+                      <td class="px-4 py-3 text-sm text-gray-400 truncate" style="max-width: 200px;">
+                        <%= gen.prompt %>
+                      </td>
+                      <td class="px-4 py-3 text-sm text-yellow-400 font-semibold"><%= gen.credits_cost %></td>
+                      <td class="px-4 py-3">
+                        <span class="px-2 py-1 text-xs rounded <%= gen.status === 'completed' ? 'badge-success' : gen.status === 'failed' ? 'badge-error' : 'badge-warning' %>">
+                          <%= gen.status %>
+                        </span>
+                      </td>
+                      <td class="px-4 py-3 text-xs text-gray-500">
+                        <%= new Date(gen.created_at).toLocaleDateString('id-ID') %>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                      No generations yet
+                    </td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+
+      <%- include('../partials/admin-footer') %>
+    </div>
+  </div>
+
+  <%- include('../partials/admin-scripts') %>
+
+  <script>
+    async function checkBalance() {
+      const balanceEl = document.getElementById('api-balance');
+      const messageEl = document.getElementById('api-status-message');
+      const originalText = balanceEl.textContent;
+      const originalMessage = messageEl.textContent;
+      
+      try {
+        balanceEl.textContent = 'Checking...';
+        messageEl.textContent = 'Verifying API key...';
+        
+        const response = await fetch('/api/generate/balance');
+        const data = await response.json();
+        
+        if (data.success) {
+          if (data.apiKeyValid) {
+            balanceEl.textContent = data.formatted || 'Pay as you go';
+            balanceEl.className = 'text-lg font-bold text-green-400';
+            messageEl.textContent = data.message || 'API key is active';
+            messageEl.className = 'text-xs text-green-400 mt-1';
+            showToast('✓ API key is valid and active', 'success');
+          } else {
+            balanceEl.textContent = 'Unknown';
+            balanceEl.className = 'text-lg font-bold text-yellow-400';
+            messageEl.textContent = data.message || 'Unable to verify';
+            messageEl.className = 'text-xs text-yellow-400 mt-1';
+            showToast('API key configured', 'info');
+          }
+        } else {
+          balanceEl.textContent = 'Invalid';
+          balanceEl.className = 'text-lg font-bold text-red-400';
+          messageEl.textContent = data.message || 'Failed to check';
+          messageEl.className = 'text-xs text-red-400 mt-1';
+          showToast(data.message || 'API key validation failed', 'error');
+        }
+      } catch (error) {
+        console.error('Error checking balance:', error);
+        balanceEl.textContent = 'Error';
+        balanceEl.className = 'text-lg font-bold text-red-400';
+        messageEl.textContent = 'Network error';
+        messageEl.className = 'text-xs text-red-400 mt-1';
+        showToast('Failed to connect', 'error');
+      }
+    }
+
+    // Toggle API Key visibility
+    function toggleApiKey(button) {
+      const container = button.parentElement;
+      const display = container.querySelector('.api-key-display');
+      const icon = button.querySelector('i');
+      
+      const fullKey = display.getAttribute('data-key');
+      const maskedKey = display.getAttribute('data-masked');
+      const isHidden = icon.classList.contains('fa-eye');
+      
+      if (isHidden) {
+        display.textContent = fullKey;
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+        button.title = 'Hide';
+      } else {
+        display.textContent = maskedKey;
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+        button.title = 'Show';
+      }
+    }
+
+    // Toggle Active API Key visibility in the card
+    function toggleActiveKey(button) {
+      const display = document.getElementById('active-api-key');
+      const icon = button.querySelector('i');
+      
+      const fullKey = button.getAttribute('data-key');
+      const shortKey = button.getAttribute('data-short');
+      const isHidden = icon.classList.contains('fa-eye');
+      
+      if (isHidden) {
+        display.textContent = fullKey;
+        display.style.maxWidth = 'none';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+        button.title = 'Hide';
+      } else {
+        display.textContent = shortKey;
+        display.style.maxWidth = '150px';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+        button.title = 'Show';
+      }
+    }
+
+    // Copy Active API Key to clipboard
+    function copyActiveKey(key) {
+      if (!key) {
+        showToast('No API key to copy', 'error');
+        return;
+      }
+      
+      // Create temporary input to copy
+      const tempInput = document.createElement('input');
+      tempInput.value = key;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      
+      try {
+        document.execCommand('copy');
+        showToast('✓ API key copied to clipboard', 'success');
+      } catch (err) {
+        // Fallback to clipboard API
+        navigator.clipboard.writeText(key).then(() => {
+          showToast('✓ API key copied to clipboard', 'success');
+        }).catch(() => {
+          showToast('Failed to copy API key', 'error');
+        });
+      }
+      
+      document.body.removeChild(tempInput);
+    }
+
+    // Check balance on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      checkBalance();
+    });
+  </script>
+</body>
+</html>
+

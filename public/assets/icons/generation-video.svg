@@ -1,0 +1,33 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle with Gradient -->
+  <defs>
+    <linearGradient id="bgGradientVideo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.2" />
+      <stop offset="100%" style="stop-color:#2563eb;stop-opacity:0.3" />
+    </linearGradient>
+    <linearGradient id="iconGradientVideo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#60a5fa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="48" height="48" rx="12" fill="url(#bgGradientVideo)"/>
+  <rect width="48" height="48" rx="12" fill="#18181b" fill-opacity="0.6"/>
+  
+  <!-- Video Frame -->
+  <rect x="8" y="14" width="32" height="20" rx="3" stroke="url(#iconGradientVideo)" stroke-width="2" fill="none"/>
+  
+  <!-- Play Button -->
+  <path d="M20 20 L20 28 L28 24 Z" fill="url(#iconGradientVideo)"/>
+  
+  <!-- Film Strip Holes -->
+  <rect x="8" y="12" width="2" height="2" rx="0.5" fill="#60a5fa"/>
+  <rect x="8" y="34" width="2" height="2" rx="0.5" fill="#60a5fa"/>
+  <rect x="38" y="12" width="2" height="2" rx="0.5" fill="#60a5fa"/>
+  <rect x="38" y="34" width="2" height="2" rx="0.5" fill="#60a5fa"/>
+  
+  <!-- Sparkle Effect -->
+  <path d="M38 8 L39 10 L41 11 L39 12 L38 14 L37 12 L35 11 L37 10 Z" fill="#93c5fd" opacity="0.8"/>
+</svg>
+

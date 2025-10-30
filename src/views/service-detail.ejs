@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+    <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+    
+    <main>
+        <!-- Service Header -->
+        <section class="page-header">
+            <div class="container">
+                <div class="service-header-icon"><%= service.icon || '🤖' %></div>
+                <h1><%= service.title %></h1>
+                <p><%= service.description %></p>
+            </div>
+        </section>
+
+        <!-- Service Details -->
+        <section class="section">
+            <div class="container">
+                <div class="service-detail-content">
+                    <div class="service-main">
+                        <h2>What We Offer</h2>
+                        <p><%= service.description %></p>
+                        
+                        <% if (service.features && Array.isArray(service.features)) { %>
+                            <h3>Key Features</h3>
+                            <ul class="feature-list">
+                                <% service.features.forEach(function(feature) { %>
+                                    <li>✓ <%= feature %></li>
+                                <% }); %>
+                            </ul>
+                        <% } %>
+
+                        <h3>How It Works</h3>
+                        <p>Our team works closely with you to understand your specific needs and design a solution that fits perfectly into your existing workflow. We handle everything from initial setup to ongoing optimization.</p>
+
+                        <h3>Benefits</h3>
+                        <ul class="feature-list">
+                            <li>✓ Increased efficiency and productivity</li>
+                            <li>✓ Reduced operational costs</li>
+                            <li>✓ Improved accuracy and consistency</li>
+                            <li>✓ Scalable solutions that grow with you</li>
+                            <li>✓ 24/7 automated operations</li>
+                        </ul>
+                    </div>
+
+                    <div class="service-sidebar">
+                        <div class="sidebar-card">
+                            <h3>Get Started</h3>
+                            <p>Ready to implement this solution?</p>
+                            <a href="/contact?service=<%= service.slug %>" class="btn btn-primary btn-block">Book A Call</a>
+                        </div>
+
+                        <div class="sidebar-card">
+                            <h3>Pricing</h3>
+                            <p>Starting from</p>
+                            <div class="sidebar-price">$50/month</div>
+                            <a href="/pricing" class="btn btn-outline btn-block">View All Plans</a>
+                        </div>
+
+                        <div class="sidebar-card">
+                            <h3>Related Services</h3>
+                            <ul class="related-links">
+                                <li><a href="/services">All Services</a></li>
+                                <li><a href="/process">Our Process</a></li>
+                                <li><a href="/pricing">Pricing</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="section cta-section">
+            <div class="container">
+                <div class="cta-content">
+                    <h2>Have Questions?</h2>
+                    <p>Let's discuss how this service can benefit your business</p>
+                    <a href="/contact" class="btn btn-primary btn-lg">Contact Us</a>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <%- include('partials/footer') %>
+    
+    <script src="/js/main.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+    <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+    
+    <main>
+        <!-- Page Header -->
+        <section class="page-header">
+            <div class="container">
+                <h1>About PixelNest</h1>
+                <p>Empowering businesses with intelligent automation solutions</p>
+            </div>
+        </section>
+
+        <!-- About Content -->
+        <section class="section">
+            <div class="container">
+                <div class="about-content">
+                    <h2>Our Mission</h2>
+                    <p>At PixelNest, we believe that every business deserves access to cutting-edge AI automation technology. Our mission is to make AI automation simple, accessible, and impactful for businesses of all sizes.</p>
+                    
+                    <h2>What We Do</h2>
+                    <p>We specialize in creating custom AI-powered automation solutions that streamline workflows, boost productivity, and drive growth. From intelligent assistants to complex workflow automation, we build solutions that actually work for your business.</p>
+                    
+                    <h2>Our Values</h2>
+                    <div class="values-grid">
+                        <div class="value-card">
+                            <h3>🎯 Results-Driven</h3>
+                            <p>We focus on delivering measurable outcomes that impact your bottom line.</p>
+                        </div>
+                        <div class="value-card">
+                            <h3>🤝 Partnership</h3>
+                            <p>We work closely with you to understand your unique challenges and goals.</p>
+                        </div>
+                        <div class="value-card">
+                            <h3>🚀 Innovation</h3>
+                            <p>We stay at the forefront of AI technology to bring you the best solutions.</p>
+                        </div>
+                        <div class="value-card">
+                            <h3>💚 Social Impact</h3>
+                            <p>We donate 2% of revenue to support pediatric wellbeing initiatives.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Team Section -->
+        <section class="section team-section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-label">OUR AMAZING TEAM</span>
+                    <h2 class="section-title">Get to Know Us</h2>
+                    <p class="section-subtitle">Meet the experts behind PixelNest</p>
+                </div>
+                
+                <div class="team-grid">
+                    <div class="team-member">
+                        <div class="member-icon">👨‍💼</div>
+                        <h3>Alex Johnson</h3>
+                        <p class="member-role">Founder / Data Analyst</p>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-icon">👩‍💻</div>
+                        <h3>Sarah Chen</h3>
+                        <p class="member-role">AI Strategist</p>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-icon">👨‍🔧</div>
+                        <h3>Michael Brown</h3>
+                        <p class="member-role">Automation Engineer</p>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-icon">👩‍🎨</div>
+                        <h3>Emma Davis</h3>
+                        <p class="member-role">Integration Specialist</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="section cta-section">
+            <div class="container">
+                <div class="cta-content">
+                    <h2>Ready to Work Together?</h2>
+                    <p>Let's discuss how we can help automate and grow your business</p>
+                    <a href="/contact" class="btn btn-primary btn-lg">Get In Touch</a>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <%- include('partials/footer') %>
+    
+    <script src="/js/main.js"></script>
+</body>
+</html>
+

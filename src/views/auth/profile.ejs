@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+    <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/output.css">
+    <link rel="stylesheet" href="/css/generation-styles.css">
+    <link rel="stylesheet" href="/css/mobile-navbar.css">
+</head>
+<body class="text-white">
+    <!-- Mobile Header -->
+    <%- include('../partials/mobile-header') %>
+    
+    <!-- fal.ai Style Layout (Same as Dashboard) -->
+    <div class="flex h-screen pt-14 lg:pt-0">
+        <!-- Left Sidebar - Navigation (Hidden on Mobile) -->
+        <aside class="hidden lg:flex w-96 bg-zinc-950 border-r border-white/10 flex-col h-screen overflow-hidden">
+            <!-- Header -->
+            <div class="p-6 border-b border-white/10">
+                <!-- Logo -->
+                <div class="flex items-center mb-6">
+                    <a href="/" class="flex items-center gap-3">
+                        <img src="/assets/img/logo/logo.png" alt="PixelNest Logo" class="h-10 w-auto">
+                        <span class="font-black text-lg">PIXELNEST</span>
+                    </a>
+                </div>
+                
+                <!-- Navigation Title -->
+                <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Profile Settings</h2>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- User Info Card -->
+                <div class="glass-strong rounded-xl p-4 text-center">
+                    <div class="flex justify-center mb-4">
+                        <% if (user.avatar_url) { %>
+                            <img src="<%= user.avatar_url %>" alt="<%= user.name %>" class="w-24 h-24 rounded-full border-4 border-blue-500">
+                        <% } else { %>
+                            <div class="w-24 h-24 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full flex items-center justify-center text-3xl font-bold border-4 border-blue-500">
+                                <%= user.name.charAt(0).toUpperCase() %>
+                            </div>
+                        <% } %>
+                    </div>
+                    <h3 class="text-lg font-bold mb-1"><%= user.name %></h3>
+                    <p class="text-sm text-gray-400 mb-3"><%= user.email %></p>
+                    
+                    <div class="flex items-center justify-center gap-2 text-yellow-400 font-semibold">
+                        <i class="fas fa-coins"></i>
+                        <span><%= user.credits %> Credits</span>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="space-y-3">
+                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Account Info</h3>
+                    
+                    <div class="glass rounded-xl p-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-400">Member Since</span>
+                            <span class="text-sm font-semibold"><%= new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+                        </div>
+                    </div>
+                    
+                    <div class="glass rounded-xl p-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-400">Account Type</span>
+                            <span class="text-sm font-semibold">
+                                <% if (user.role === 'admin') { %>
+                                    <span class="px-2 py-1 bg-red-500/20 text-red-400 rounded-full text-xs">Admin</span>
+                                <% } else { %>
+                                    <span class="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs">User</span>
+                                <% } %>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+               
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 bg-zinc-900 flex flex-col overflow-hidden w-full">
+            <!-- Top Bar (Same as Dashboard) - Hidden on Mobile -->
+            <div class="hidden lg:block border-b border-white/10 bg-zinc-950/50 backdrop-blur-xl">
+                <div class="px-8 py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <h2 class="text-sm font-semibold text-gray-400">My Profile</h2>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <a href="/dashboard" class="relative text-sm text-gray-400 hover:text-white transition-all duration-300 hover:scale-110 group">
+                            <span class="relative z-10">Dashboard</span>
+                            <span class="absolute inset-0 -z-10 bg-gradient-to-r from-white/0 via-white/10 to-white/0 rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                        </a>
+                        <a href="/tutorial" class="relative text-sm text-gray-400 hover:text-white transition-all duration-300 hover:scale-110 group">
+                            <span class="relative z-10">Tutorial</span>
+                            <span class="absolute inset-0 -z-10 bg-gradient-to-r from-white/0 via-white/10 to-white/0 rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                        </a>
+                        <a href="/billing" class="relative text-sm text-gray-400 hover:text-white transition-all duration-300 hover:scale-110 group">
+                            <span class="relative z-10">Billing</span>
+                            <span class="absolute inset-0 -z-10 bg-gradient-to-r from-white/0 via-white/10 to-white/0 rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                        </a>
+                        
+                        <!-- Credits Display with Top-up Button -->
+                        <div class="flex items-center gap-2">
+                            <div class="relative px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded-lg group hover:border-yellow-500/40 transition-all duration-300 hover:scale-105 cursor-default">
+                                <span class="absolute inset-0 bg-yellow-500/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                                <div class="flex items-center gap-2 relative z-10">
+                                    <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span class="text-sm font-bold text-yellow-400 font-mono"><%= (user.credits || 0).toFixed(1) %></span>
+                                </div>
+                            </div>
+                            
+                            <!-- Top-up Button -->
+                            <a href="/billing" class="relative group flex items-center justify-center w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg hover:from-yellow-400 hover:to-yellow-500 transition-all duration-300 hover:scale-110 hover:rotate-90 shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/40" title="Top Up Credits">
+                                <span class="absolute inset-0 bg-white/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                                <svg class="w-5 h-5 text-white relative z-10 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                                </svg>
+                            </a>
+                        </div>
+                        
+                        <!-- Profile Dropdown -->
+                        <div class="relative">
+                            <button id="profile-btn" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                                <% if (user && user.avatar_url) { %>
+                                    <img src="<%= user.avatar_url %>" alt="<%= user.name %>" class="w-8 h-8 rounded-full border-2 border-blue-500">
+                                <% } else if (user) { %>
+                                    <div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full flex items-center justify-center text-xs font-bold">
+                                        <%= user.name.charAt(0).toUpperCase() %>
+                                    </div>
+                                <% } %>
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            
+                            <!-- Dropdown Menu -->
+                            <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-zinc-900 border border-white/10 rounded-lg shadow-xl overflow-hidden z-[10000]">
+                                <div class="px-4 py-3 border-b border-white/10">
+                                    <p class="text-sm font-semibold text-white"><%= user.name %></p>
+                                    <p class="text-xs text-gray-400 truncate"><%= user.email %></p>
+                                </div>
+                                <div class="py-2">
+                                    <a href="/profile" class="flex items-center gap-3 px-4 py-2 text-sm text-blue-400 bg-blue-500/10 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                        </svg>
+                                        Profile
+                                    </a>
+                                    <a href="/feature-request" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                        Request Model AI
+                                    </a>
+                                    <a href="/usage" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                        </svg>
+                                        Usage
+                                    </a>
+                                </div>
+                                <div class="border-t border-white/10">
+                                    <a href="/logout" class="flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                        </svg>
+                                        Logout
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Profile Content Wrapper -->
+            <div class="flex-1 overflow-y-auto p-4 lg:p-8 pb-24">
+                <div class="max-w-4xl mx-auto space-y-6">
+                    <!-- Success/Error Messages -->
+                    <div id="message-container" class="hidden"></div>
+
+                    <!-- Profile Photo Upload Card -->
+                    <div class="glass-strong rounded-2xl overflow-hidden">
+                        <div class="px-6 py-4 border-b border-white/10 bg-gradient-to-r from-blue-500/10 to-cyan-500/10">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-camera text-white"></i>
+                                </div>
+                                <div>
+                                    <h2 class="text-lg font-bold">Profile Photo</h2>
+                                    <p class="text-xs text-gray-400">Upload your profile picture</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-6">
+                            <div class="flex flex-col lg:flex-row items-center gap-6">
+                                <!-- Current Avatar Preview -->
+                                <div class="flex-shrink-0">
+                                    <div class="relative group">
+                                        <div id="avatar-preview" class="w-32 h-32 rounded-full overflow-hidden border-4 border-blue-500/50 group-hover:border-blue-500 transition-all">
+                                            <% if (user.avatar_url) { %>
+                                                <img src="<%= user.avatar_url %>" alt="<%= user.name %>" class="w-full h-full object-cover">
+                                            <% } else { %>
+                                                <div class="w-full h-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center text-4xl font-bold text-white">
+                                                    <%= user.name.charAt(0).toUpperCase() %>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                        <div class="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                                            <i class="fas fa-camera text-white text-2xl"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Upload Form -->
+                                <div class="flex-1 w-full">
+                                    <form id="avatar-form" class="space-y-4">
+                                        <div>
+                                            <label for="avatar-input" class="block text-sm font-medium text-gray-300 mb-2">
+                                                <i class="fas fa-image mr-2 text-blue-400"></i>
+                                                Choose Photo
+                                            </label>
+                                            <div class="flex flex-col sm:flex-row gap-3">
+                                                <input 
+                                                    type="file" 
+                                                    id="avatar-input" 
+                                                    name="avatar" 
+                                                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                                                    class="hidden"
+                                                >
+                                                <button 
+                                                    type="button"
+                                                    onclick="document.getElementById('avatar-input').click()"
+                                                    class="flex-1 px-4 py-3 bg-white/5 border border-white/10 hover:border-blue-500/50 rounded-lg text-gray-300 hover:text-white transition-all text-center"
+                                                >
+                                                    <i class="fas fa-upload mr-2"></i>
+                                                    Select Image
+                                                </button>
+                                                <button 
+                                                    type="submit" 
+                                                    id="upload-avatar-btn"
+                                                    class="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-400 hover:to-cyan-500 text-white rounded-lg transition-all duration-300 font-semibold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    disabled
+                                                >
+                                                    <i class="fas fa-check mr-2"></i>
+                                                    Upload
+                                                </button>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mt-2">
+                                                <i class="fas fa-info-circle mr-1"></i>
+                                                JPG, PNG, or WEBP. Max 5MB. Recommended: 500x500px
+                                            </p>
+                                            <p id="file-name" class="text-sm text-blue-400 mt-2 hidden"></p>
+                                        </div>
+                                        
+                                        <% if (user.avatar_url) { %>
+                                        <button 
+                                            type="button"
+                                            onclick="deleteAvatar()"
+                                            class="text-sm text-red-400 hover:text-red-300 transition-colors"
+                                        >
+                                            <i class="fas fa-trash-alt mr-1"></i>
+                                            Remove Photo
+                                        </button>
+                                        <% } %>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Personal Information Card -->
+                    <div class="glass-strong rounded-2xl overflow-hidden">
+                        <div class="px-6 py-4 border-b border-white/10 bg-gradient-to-r from-blue-500/10 to-cyan-500/10">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-user text-white"></i>
+                                </div>
+                                <div>
+                                    <h2 class="text-lg font-bold">Personal Information</h2>
+                                    <p class="text-xs text-gray-400">Update your profile details</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-6">
+                            <form id="profile-form" class="space-y-4">
+                                <!-- Name -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                                        <i class="fas fa-user-circle mr-2 text-blue-400"></i>
+                                        Full Name
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="name" 
+                                        name="name" 
+                                        value="<%= user.name %>"
+                                        class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                        required
+                                    >
+                                </div>
+
+                                <!-- Email -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                                        <i class="fas fa-envelope mr-2 text-blue-400"></i>
+                                        Email Address
+                                    </label>
+                                    <input 
+                                        type="email" 
+                                        id="email" 
+                                        name="email" 
+                                        value="<%= user.email %>"
+                                        class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                        required
+                                    >
+                                </div>
+
+                                <!-- Save Button -->
+                                <div class="flex justify-end pt-4">
+                                    <button 
+                                        type="submit" 
+                                        id="save-profile-btn"
+                                        class="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-400 hover:to-cyan-500 text-white rounded-lg transition-all duration-300 font-semibold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <i class="fas fa-save mr-2"></i>
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Change Password Card -->
+                    <div class="glass-strong rounded-2xl overflow-hidden">
+                        <div class="px-6 py-4 border-b border-white/10 bg-gradient-to-r from-blue-500/10 to-cyan-500/10">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-lock text-white"></i>
+                                </div>
+                                <div>
+                                    <h2 class="text-lg font-bold">Change Password</h2>
+                                    <p class="text-xs text-gray-400">Update your account password</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-6">
+                            <form id="password-form" class="space-y-4">
+                                <!-- Current Password -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                                        <i class="fas fa-key mr-2 text-blue-400"></i>
+                                        Current Password
+                                    </label>
+                                    <input 
+                                        type="password" 
+                                        id="current-password" 
+                                        name="currentPassword"
+                                        class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                        placeholder="Enter current password"
+                                        required
+                                    >
+                                </div>
+
+                                <!-- New Password -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                                        <i class="fas fa-lock mr-2 text-blue-400"></i>
+                                        New Password
+                                    </label>
+                                    <input 
+                                        type="password" 
+                                        id="new-password" 
+                                        name="newPassword"
+                                        class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                        placeholder="Enter new password (min. 6 characters)"
+                                        required
+                                        minlength="6"
+                                    >
+                                </div>
+
+                                <!-- Confirm New Password -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                                        <i class="fas fa-check-circle mr-2 text-blue-400"></i>
+                                        Confirm New Password
+                                    </label>
+                                    <input 
+                                        type="password" 
+                                        id="confirm-password" 
+                                        name="confirmPassword"
+                                        class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                        placeholder="Confirm new password"
+                                        required
+                                    >
+                                </div>
+
+                                <!-- Change Password Button -->
+                                <div class="flex justify-end pt-4">
+                                    <button 
+                                        type="submit" 
+                                        id="change-password-btn"
+                                        class="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-400 hover:to-cyan-500 text-white rounded-lg transition-all duration-300 font-semibold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <i class="fas fa-shield-alt mr-2"></i>
+                                        Change Password
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Danger Zone Card -->
+                    <div class="glass-strong rounded-2xl overflow-hidden border border-red-500/20">
+                        <div class="px-6 py-4 border-b border-red-500/20 bg-gradient-to-r from-red-500/10 to-orange-500/10">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-600 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-exclamation-triangle text-white"></i>
+                                </div>
+                                <div>
+                                    <h2 class="text-lg font-bold text-red-400">Danger Zone</h2>
+                                    <p class="text-xs text-gray-400">Irreversible actions</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-6">
+                            <div class="bg-red-500/5 border border-red-500/20 rounded-xl p-4 mb-4">
+                                <h3 class="text-sm font-bold text-red-400 mb-2">Delete Account</h3>
+                                <p class="text-xs text-gray-400 mb-4">
+                                    Once you delete your account, there is no going back. This will permanently delete your account, all your generations, and transaction history.
+                                </p>
+                                <button 
+                                    onclick="confirmDeleteAccount()"
+                                    class="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 hover:border-red-500 text-red-400 hover:text-red-300 rounded-lg transition-all duration-300 font-semibold text-sm"
+                                >
+                                    <i class="fas fa-trash-alt mr-2"></i>
+                                    Delete My Account
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gradient-to-br from-zinc-900 to-zinc-950 rounded-2xl shadow-2xl w-full max-w-md border border-red-500/30" onclick="event.stopPropagation()">
+            <div class="p-6">
+                <!-- Warning Icon -->
+                <div class="flex justify-center mb-4">
+                    <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
+                </div>
+                
+                <!-- Title -->
+                <h3 class="text-xl font-bold text-white text-center mb-2">
+                    Delete Account?
+                </h3>
+                
+                <!-- Message -->
+                <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-4">
+                    <p class="text-sm text-gray-300 text-center leading-relaxed">
+                        This action <span class="font-bold text-red-400">cannot be undone</span>. This will permanently delete your account and all associated data.
+                    </p>
+                </div>
+                
+                <!-- Password Confirmation -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        Enter your password to confirm:
+                    </label>
+                    <input 
+                        type="password" 
+                        id="delete-password"
+                        class="w-full px-4 py-3 bg-white/5 border border-red-500/20 rounded-lg text-white placeholder-gray-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-all"
+                        placeholder="Enter your password"
+                    >
+                </div>
+                
+                <!-- Actions -->
+                <div class="flex gap-3">
+                    <button onclick="closeDeleteModal()" class="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl transition-all font-medium">
+                        Cancel
+                    </button>
+                    <button onclick="deleteAccount()" id="confirm-delete-btn" class="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white rounded-xl transition-all font-bold shadow-lg shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Delete Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Profile Dropdown Toggle
+        document.getElementById('profile-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('profile-dropdown');
+            dropdown.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('profile-dropdown');
+            const profileBtn = document.getElementById('profile-btn');
+            if (!dropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Show Message
+        function showMessage(message, type = 'success') {
+            const container = document.getElementById('message-container');
+            const colors = {
+                success: 'from-green-500/10 to-emerald-500/10 border-green-500/20 text-green-400',
+                error: 'from-red-500/10 to-orange-500/10 border-red-500/20 text-red-400',
+                info: 'from-blue-500/10 to-cyan-500/10 border-blue-500/20 text-blue-400'
+            };
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle'
+            };
+            
+            container.innerHTML = `
+                <div class="bg-gradient-to-r ${colors[type]} border rounded-xl p-4 flex items-center gap-3 animate-slide-in-down">
+                    <i class="fas ${icons[type]} text-xl"></i>
+                    <p class="font-semibold flex-1">${message}</p>
+                    <button onclick="this.parentElement.remove()" class="hover:opacity-70 transition-opacity">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            container.classList.remove('hidden');
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                container.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Update Profile Form
+        document.getElementById('profile-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('save-profile-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+            
+            const formData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value
+            };
+            
+            try {
+                const response = await fetch('/api/user/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('Profile updated successfully!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showMessage(data.message || 'Failed to update profile', 'error');
+                }
+            } catch (error) {
+                showMessage('An error occurred. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Changes';
+            }
+        });
+
+        // Change Password Form
+        document.getElementById('password-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            if (newPassword !== confirmPassword) {
+                showMessage('New passwords do not match!', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('change-password-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Changing...';
+            
+            const formData = {
+                currentPassword: document.getElementById('current-password').value,
+                newPassword: newPassword
+            };
+            
+            try {
+                const response = await fetch('/api/user/change-password', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('Password changed successfully!', 'success');
+                    document.getElementById('password-form').reset();
+                } else {
+                    showMessage(data.message || 'Failed to change password', 'error');
+                }
+            } catch (error) {
+                showMessage('An error occurred. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-shield-alt mr-2"></i>Change Password';
+            }
+        });
+
+        // Delete Account Functions
+        function confirmDeleteAccount() {
+            document.getElementById('delete-modal').classList.remove('hidden');
+            document.getElementById('delete-modal').classList.add('flex');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+            document.getElementById('delete-modal').classList.remove('flex');
+            document.getElementById('delete-password').value = '';
+        }
+
+        async function deleteAccount() {
+            const password = document.getElementById('delete-password').value;
+            
+            if (!password) {
+                showMessage('Please enter your password to confirm', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('confirm-delete-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Deleting...';
+            
+            try {
+                const response = await fetch('/api/user/delete-account', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('Account deleted successfully. Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/logout';
+                    }, 2000);
+                } else {
+                    showMessage(data.message || 'Failed to delete account', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = 'Delete Account';
+                }
+            } catch (error) {
+                showMessage('An error occurred. Please try again.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = 'Delete Account';
+            }
+        }
+
+        // Close modal on ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeDeleteModal();
+            }
+        });
+
+        // ============ AVATAR UPLOAD ============
+        
+        // File input change handler with preview
+        document.getElementById('avatar-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const uploadBtn = document.getElementById('upload-avatar-btn');
+            const fileName = document.getElementById('file-name');
+            
+            if (file) {
+                // Validate file type
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    showMessage('Please select a valid image file (JPG, PNG, or WEBP)', 'error');
+                    e.target.value = '';
+                    return;
+                }
+                
+                // Validate file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    showMessage('File size must be less than 5MB', 'error');
+                    e.target.value = '';
+                    return;
+                }
+                
+                // Show file name
+                fileName.textContent = `Selected: ${file.name}`;
+                fileName.classList.remove('hidden');
+                
+                // Enable upload button
+                uploadBtn.disabled = false;
+                
+                // Preview image
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const preview = document.getElementById('avatar-preview');
+                    preview.innerHTML = `<img src="${event.target.result}" alt="Preview" class="w-full h-full object-cover">`;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                fileName.classList.add('hidden');
+                uploadBtn.disabled = true;
+            }
+        });
+        
+        // Avatar upload form submission
+        document.getElementById('avatar-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('avatar-input');
+            const uploadBtn = document.getElementById('upload-avatar-btn');
+            
+            if (!fileInput.files[0]) {
+                showMessage('Please select an image first', 'error');
+                return;
+            }
+            
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Uploading...';
+            
+            const formData = new FormData();
+            formData.append('avatar', fileInput.files[0]);
+            
+            try {
+                const response = await fetch('/api/user/upload-avatar', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('Profile photo updated successfully!', 'success');
+                    
+                    // Reset form
+                    fileInput.value = '';
+                    document.getElementById('file-name').classList.add('hidden');
+                    
+                    // Reload page after 1.5 seconds to show new avatar everywhere
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showMessage(data.message || 'Failed to upload photo', 'error');
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Upload';
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                showMessage('An error occurred. Please try again.', 'error');
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Upload';
+            }
+        });
+        
+        // Delete avatar function
+        async function deleteAvatar() {
+            if (!confirm('Are you sure you want to remove your profile photo?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/user/delete-avatar', {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('Profile photo removed successfully!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showMessage(data.message || 'Failed to remove photo', 'error');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showMessage('An error occurred. Please try again.', 'error');
+            }
+        }
+    </script>
+
+    <!-- Mobile Navigation Bar -->
+    <%- include('../partials/mobile-navbar') %>
+</body>
+</html>
+

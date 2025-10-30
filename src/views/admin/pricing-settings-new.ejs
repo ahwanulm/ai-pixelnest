@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <%- include('../partials/admin-styles') %>
+  <style>
+    .profit-card {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .revenue-card {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(52, 211, 153, 0.1));
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+      width: 100%;
+    }
+    input[type="range"]::-webkit-slider-track {
+      background: rgba(59, 130, 246, 0.3);
+      height: 0.5rem;
+      border-radius: 0.5rem;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      background: #3b82f6;
+      height: 1.5rem;
+      width: 1.5rem;
+      border-radius: 50%;
+      margin-top: -0.5rem;
+    }
+    input[type="range"]::-moz-range-track {
+      background: rgba(59, 130, 246, 0.3);
+      height: 0.5rem;
+      border-radius: 0.5rem;
+    }
+    input[type="range"]::-moz-range-thumb {
+      background: #3b82f6;
+      height: 1.5rem;
+      width: 1.5rem;
+      border-radius: 50%;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+
+    <div class="flex-1 ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: title }) %>
+
+      <main class="p-4 md:p-8 flex-1">
+        <div class="max-w-7xl mx-auto">
+          
+          <!-- Header -->
+          <div class="mb-6">
+            <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">💰 Pricing & Profit Calculator</h1>
+            <p class="text-sm md:text-base text-gray-400">Set your profit margins and see real-time profit projections</p>
+          </div>
+
+          <!-- Profit Dashboard Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <!-- Total Profit Margin -->
+            <div class="profit-card rounded-xl p-4">
+              <div class="text-gray-400 text-xs mb-1">Avg Profit Margin</div>
+              <div class="text-2xl font-bold text-white" id="avg-profit-margin">22.5%</div>
+              <div class="text-xs text-green-400 mt-1">
+                <i class="fas fa-arrow-up"></i> Profitable
+              </div>
+            </div>
+
+            <!-- Monthly Revenue (Projected) -->
+            <div class="revenue-card rounded-xl p-4">
+              <div class="text-gray-400 text-xs mb-1">Est. Monthly Revenue</div>
+              <div class="text-2xl font-bold text-white" id="monthly-revenue">$2,450</div>
+              <div class="text-xs text-gray-400 mt-1">Based on 1000 gen/month</div>
+            </div>
+
+            <!-- Monthly Profit -->
+            <div class="profit-card rounded-xl p-4">
+              <div class="text-gray-400 text-xs mb-1">Est. Monthly Profit</div>
+              <div class="text-2xl font-bold text-green-400" id="monthly-profit">$450</div>
+              <div class="text-xs text-gray-400 mt-1">After FAL.AI costs</div>
+            </div>
+
+            <!-- Profit per Generation -->
+            <div class="revenue-card rounded-xl p-4">
+              <div class="text-gray-400 text-xs mb-1">Avg Profit/Gen</div>
+              <div class="text-2xl font-bold text-white" id="profit-per-gen">$0.45</div>
+              <div class="text-xs text-gray-400 mt-1">Per generation</div>
+            </div>
+          </div>
+
+          <!-- Quick Pricing Guide (NEW) -->
+          <div class="glass-strong rounded-xl p-6 mb-6 border-l-4 border-yellow-500">
+            <h3 class="text-lg font-bold text-white mb-3 flex items-center">
+              <i class="fas fa-lightbulb text-yellow-400 mr-2"></i>
+              💡 Rekomendasi Pricing (Mengacu FAL.AI)
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-2 text-sm">
+                <p class="text-white font-semibold mb-2">📸 IMAGE MODELS:</p>
+                <div class="flex justify-between items-center p-2 bg-blue-500/10 rounded">
+                  <span class="text-gray-300">Profit Margin:</span>
+                  <span class="text-green-400 font-bold">15-25%</span>
+                </div>
+                <div class="flex justify-between items-center p-2 bg-blue-500/10 rounded">
+                  <span class="text-gray-300">Min Credits:</span>
+                  <span class="text-blue-400 font-bold">0.5 credits</span>
+                </div>
+                <div class="flex justify-between items-center p-2 bg-blue-500/10 rounded">
+                  <span class="text-gray-300">FAL < $0.01:</span>
+                  <span class="text-yellow-400 font-bold">Use minimum</span>
+                </div>
+                <p class="text-xs text-gray-400 mt-2">
+                  ✅ Competitive: 20% margin<br>
+                  💰 High profit: 25-30% margin
+                </p>
+              </div>
+              
+              <div class="space-y-2 text-sm">
+                <p class="text-white font-semibold mb-2">🎬 VIDEO MODELS:</p>
+                <div class="flex justify-between items-center p-2 bg-pink-500/10 rounded">
+                  <span class="text-gray-300">Profit Margin:</span>
+                  <span class="text-green-400 font-bold">20-30%</span>
+                </div>
+                <div class="flex justify-between items-center p-2 bg-pink-500/10 rounded">
+                  <span class="text-gray-300">Min Credits:</span>
+                  <span class="text-pink-400 font-bold">1.0 credits</span>
+                </div>
+                <div class="flex justify-between items-center p-2 bg-pink-500/10 rounded">
+                  <span class="text-gray-300">FAL < $0.05:</span>
+                  <span class="text-yellow-400 font-bold">Use minimum</span>
+                </div>
+                <p class="text-xs text-gray-400 mt-2">
+                  ✅ Competitive: 25% margin<br>
+                  💰 High profit: 30-35% margin
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pricing Configuration -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            
+            <!-- IMAGE Pricing -->
+            <div class="glass-strong rounded-xl p-6">
+              <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                <i class="fas fa-image text-purple-400 mr-2"></i>
+                📸 IMAGE MODELS
+              </h3>
+              
+              <form id="image-pricing-form" class="space-y-4">
+                <!-- Profit Margin Slider -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">
+                    Profit Margin: <span id="image-margin-value" class="text-green-400 font-bold">20%</span>
+                  </label>
+                  <input type="range" id="image-margin" min="0" max="50" value="20" step="1" 
+                         class="w-full" oninput="updateImageMargin(this.value)">
+                  <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>0%</span>
+                    <span>25%</span>
+                    <span>50%</span>
+                  </div>
+                </div>
+
+                <!-- Minimum Credits -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">
+                    Minimum Credits (untuk model murah)
+                  </label>
+                  <input type="number" id="image-min-credits" step="0.1" min="0.1" value="0.5"
+                         class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                         oninput="calculateProfitProjection()">
+                </div>
+
+                <!-- Cheap Threshold -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">
+                    Cheap Threshold (USD)
+                  </label>
+                  <input type="number" id="image-cheap-threshold" step="0.001" min="0" value="0.01"
+                         class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                         oninput="calculateProfitProjection()">
+                  <p class="text-xs text-gray-500 mt-1">Model di bawah $<span id="image-threshold-display">0.01</span> akan dikenakan minimum credits</p>
+                </div>
+
+                <!-- Live Preview -->
+                <div class="p-4 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                  <div class="text-xs text-gray-400 mb-2">💡 PREVIEW:</div>
+                  <div class="space-y-1 text-sm" id="image-preview">
+                    <div class="flex justify-between">
+                      <span class="text-gray-300">FAL $0.055 (FLUX Pro):</span>
+                      <span class="text-white font-bold">→ <span id="flux-pro-preview">1.5</span> credits</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-300">FAL $0.015 (Cheap):</span>
+                      <span class="text-white font-bold">→ <span id="cheap-preview">0.5</span> credits</span>
+                    </div>
+                    <div class="flex justify-between text-green-400">
+                      <span>Your Profit (FLUX):</span>
+                      <span class="font-bold">$<span id="flux-profit">0.020</span></span>
+                    </div>
+                  </div>
+                </div>
+
+                <button type="submit" class="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition font-medium">
+                  <i class="fas fa-save mr-2"></i>
+                  Save IMAGE Pricing
+                </button>
+              </form>
+            </div>
+
+            <!-- VIDEO Pricing -->
+            <div class="glass-strong rounded-xl p-6">
+              <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                <i class="fas fa-video text-pink-400 mr-2"></i>
+                🎬 VIDEO MODELS
+              </h3>
+              
+              <form id="video-pricing-form" class="space-y-4">
+                <!-- Profit Margin Slider -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">
+                    Profit Margin: <span id="video-margin-value" class="text-green-400 font-bold">25%</span>
+                  </label>
+                  <input type="range" id="video-margin" min="0" max="50" value="25" step="1" 
+                         class="w-full" oninput="updateVideoMargin(this.value)">
+                  <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>0%</span>
+                    <span>25%</span>
+                    <span>50%</span>
+                  </div>
+                </div>
+
+                <!-- Minimum Credits -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">
+                    Minimum Credits (untuk model murah)
+                  </label>
+                  <input type="number" id="video-min-credits" step="0.1" min="0.1" value="1.0"
+                         class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-pink-500"
+                         oninput="calculateProfitProjection()">
+                </div>
+
+                <!-- Cheap Threshold -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">
+                    Cheap Threshold (USD)
+                  </label>
+                  <input type="number" id="video-cheap-threshold" step="0.001" min="0" value="0.05"
+                         class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-pink-500"
+                         oninput="calculateProfitProjection()">
+                  <p class="text-xs text-gray-500 mt-1">Model di bawah $<span id="video-threshold-display">0.05</span> akan dikenakan minimum credits</p>
+                </div>
+
+                <!-- Live Preview -->
+                <div class="p-4 bg-pink-500/10 rounded-lg border border-pink-500/30">
+                  <div class="text-xs text-gray-400 mb-2">💡 PREVIEW:</div>
+                  <div class="space-y-1 text-sm" id="video-preview">
+                    <div class="flex justify-between">
+                      <span class="text-gray-300">FAL $0.32 (Kling 2.5):</span>
+                      <span class="text-white font-bold">→ <span id="kling-preview">5.0</span> credits</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-300">FAL $0.20 (SeeDance):</span>
+                      <span class="text-white font-bold">→ <span id="seedance-preview">3.0</span> credits</span>
+                    </div>
+                    <div class="flex justify-between text-green-400">
+                      <span>Your Profit (Kling):</span>
+                      <span class="font-bold">$<span id="kling-profit">0.08</span></span>
+                    </div>
+                  </div>
+                </div>
+
+                <button type="submit" class="w-full px-4 py-3 bg-gradient-to-r from-pink-600 to-red-600 text-white rounded-lg hover:from-pink-700 hover:to-red-700 transition font-medium">
+                  <i class="fas fa-save mr-2"></i>
+                  Save VIDEO Pricing
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Revenue Projection Calculator -->
+          <div class="glass-strong rounded-xl p-6 mb-6">
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+              <i class="fas fa-chart-line text-green-400 mr-2"></i>
+              📊 Revenue & Profit Projections
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">
+                  Est. Monthly Generations
+                </label>
+                <input type="number" id="monthly-gens" value="1000" min="0"
+                       class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-green-500"
+                       oninput="calculateProfitProjection()">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">
+                  Avg. Credits per Gen
+                </label>
+                <input type="number" id="avg-credits" value="2.5" step="0.1" min="0"
+                       class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-green-500"
+                       oninput="calculateProfitProjection()">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">
+                  Credit Price (USD)
+                </label>
+                <input type="number" id="credit-price-usd" value="0.05" step="0.01" min="0"
+                       class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-green-500"
+                       oninput="calculateProfitProjection()">
+              </div>
+            </div>
+
+            <!-- Projection Results -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div class="p-4 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                <div class="text-xs text-gray-400 mb-1">Total Revenue</div>
+                <div class="text-xl font-bold text-white" id="total-revenue">$125</div>
+                <div class="text-xs text-gray-500 mt-1">From credit sales</div>
+              </div>
+              
+              <div class="p-4 bg-red-500/10 rounded-lg border border-red-500/30">
+                <div class="text-xs text-gray-400 mb-1">FAL.AI Costs</div>
+                <div class="text-xl font-bold text-red-400" id="fal-costs">$100</div>
+                <div class="text-xs text-gray-500 mt-1">API charges</div>
+              </div>
+              
+              <div class="p-4 bg-green-500/10 rounded-lg border border-green-500/30">
+                <div class="text-xs text-gray-400 mb-1">Net Profit</div>
+                <div class="text-xl font-bold text-green-400" id="net-profit">$25</div>
+                <div class="text-xs text-gray-500 mt-1">After costs</div>
+              </div>
+              
+              <div class="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
+                <div class="text-xs text-gray-400 mb-1">Profit Margin</div>
+                <div class="text-xl font-bold text-yellow-400" id="profit-margin-display">20%</div>
+                <div class="text-xs text-gray-500 mt-1">ROI</div>
+              </div>
+            </div>
+
+            <!-- Yearly Projection -->
+            <div class="mt-4 p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/30">
+              <div class="flex justify-between items-center">
+                <div>
+                  <div class="text-sm text-gray-400">Yearly Projection (×12 months)</div>
+                  <div class="text-2xl font-bold text-white mt-1" id="yearly-profit">$300</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-sm text-gray-400">Yearly Revenue</div>
+                  <div class="text-xl font-bold text-purple-400 mt-1" id="yearly-revenue">$1,500</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <%- include('../partials/admin-scripts') %>
+  <script src="/js/admin-pricing-new.js"></script>
+</body>
+</html>
+

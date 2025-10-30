@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title : 'Error' %> - PixelNest</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+    <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/output.css">
+    
+    <style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: #0a0a0a;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Animated Background */
+        .bg-gradient {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
+            animation: gradientShift 15s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(5%, 5%) rotate(120deg); }
+            66% { transform: translate(-5%, 5%) rotate(240deg); }
+        }
+        
+        /* Grid Pattern */
+        .grid-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+        
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        /* Glass Morphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Error Container */
+        .error-container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            animation: fadeInUp 0.8s ease-out;
+            max-width: 1200px;
+            padding: 2rem;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Error Icon Animation */
+        .error-icon {
+            font-size: 5rem;
+            display: inline-block;
+            animation: bounce 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.5));
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.1); }
+        }
+        
+        /* Badge Styles */
+        .error-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            border: 1px solid;
+        }
+        
+        .badge-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+        
+        .badge-info {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Button Styles */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(139, 92, 246, 0.6);
+        }
+        
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: transparent;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Stack Trace */
+        .error-stack {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: left;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #9ca3af;
+            overflow-x: auto;
+            max-height: 300px;
+            line-height: 1.6;
+        }
+        
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Elements -->
+    <div class="bg-gradient"></div>
+    <div class="grid-pattern"></div>
+    
+    <!-- Error Container -->
+    <div class="error-container">
+        <!-- Logo -->
+        <div class="mb-8">
+            <a href="/" class="inline-flex items-center gap-3 group">
+                <img src="/assets/img/logo/logo.png" alt="PixelNest Logo" class="h-12 w-auto transform group-hover:scale-110 transition-transform duration-300">
+                <span class="text-2xl font-bold gradient-text">PixelNest</span>
+            </a>
+        </div>
+        
+        <!-- Error Content -->
+        <% if (error && error.status === 403) { %>
+            <!-- 403 Forbidden -->
+            <div class="error-icon">🔒</div>
+            <div class="error-badge badge-error">403 FORBIDDEN</div>
+            <div class="glass rounded-2xl p-8 md:p-12 mb-8 max-w-2xl mx-auto">
+                <h1 class="text-4xl font-black mb-4 tracking-tight">Access Denied</h1>
+                <p class="text-xl text-gray-400 mb-6 leading-relaxed">
+                    You don't have permission to access this page.
+                </p>
+                <p class="text-gray-500">
+                    <% if (message && message.includes('admin')) { %>
+                        <strong class="text-white">Admin access required.</strong> Please contact the administrator if you believe this is an error.
+                    <% } else { %>
+                        <%= message || 'This page is restricted and requires proper authorization.' %>
+                    <% } %>
+                </p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="/auth/dashboard" class="btn-primary">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                    Go to Dashboard
+                </a>
+                <a href="/" class="btn-outline">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back to Home
+                </a>
+            </div>
+            
+        <% } else if (error && error.status === 401) { %>
+            <!-- 401 Unauthorized -->
+            <div class="error-icon">🔐</div>
+            <div class="error-badge badge-warning">401 UNAUTHORIZED</div>
+            <div class="glass rounded-2xl p-8 md:p-12 mb-8 max-w-2xl mx-auto">
+                <h1 class="text-4xl font-black mb-4 tracking-tight">Authentication Required</h1>
+                <p class="text-xl text-gray-400 mb-6 leading-relaxed">
+                    You need to be logged in to access this page.
+                </p>
+                <p class="text-gray-500">
+                    Please sign in with your account to continue.
+                </p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="/auth/login" class="btn-primary">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                    </svg>
+                    Login
+                </a>
+                <a href="/" class="btn-outline">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back to Home
+                </a>
+            </div>
+            
+        <% } else { %>
+            <!-- General Error -->
+            <div class="error-icon">⚠️</div>
+            <div class="error-badge badge-error">ERROR <%= error && error.status || 500 %></div>
+            <div class="glass rounded-2xl p-8 md:p-12 mb-8 max-w-2xl mx-auto">
+                <h1 class="text-4xl font-black mb-4 tracking-tight">Something Went Wrong</h1>
+                <p class="text-xl text-gray-400 mb-6 leading-relaxed">
+                    <%= message || 'An unexpected error occurred. Please try again later.' %>
+                </p>
+                <p class="text-gray-500 text-sm">
+                    If this problem persists, please contact our support team.
+                </p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="/" class="btn-primary">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                    Back to Home
+                </a>
+                <a href="javascript:history.back()" class="btn-outline">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Go Back
+                </a>
+            </div>
+        <% } %>
+        
+        <!-- Stack Trace (Development Only) -->
+        <% if (typeof stack !== 'undefined' && stack) { %>
+            <div class="mt-8 max-w-3xl mx-auto">
+                <details class="glass rounded-xl p-6">
+                    <summary class="cursor-pointer font-semibold text-yellow-400 mb-4">
+                        🔧 Stack Trace (Development Mode)
+                    </summary>
+                    <div class="error-stack">
+                        <%= stack %>
+                    </div>
+                </details>
+            </div>
+        <% } %>
+        
+        <!-- Quick Links -->
+        <div class="glass rounded-xl p-6 max-w-2xl mx-auto mt-8">
+            <p class="text-sm text-gray-400 mb-4">Quick Links:</p>
+            <div class="flex flex-wrap gap-3 justify-center">
+                <a href="/auth/dashboard" class="text-sm text-violet-400 hover:text-violet-300 transition-colors">Dashboard</a>
+                <span class="text-gray-600">•</span>
+                <a href="/contact-page" class="text-sm text-violet-400 hover:text-violet-300 transition-colors">Contact Support</a>
+                <span class="text-gray-600">•</span>
+                <a href="/faq" class="text-sm text-violet-400 hover:text-violet-300 transition-colors">FAQ</a>
+                <span class="text-gray-600">•</span>
+                <a href="/documentation" class="text-sm text-violet-400 hover:text-violet-300 transition-colors">Documentation</a>
+            </div>
+        </div>
+        
+        <!-- Footer Note -->
+        <p class="text-gray-500 text-sm mt-8">
+            Error Code: <%= error && error.status || 500 %> | PixelNest AI Platform
+        </p>
+    </div>
+</body>
+</html>

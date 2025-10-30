@@ -1,0 +1,384 @@
+const Admin = require('../models/Admin');
+const fetch = require('node-fetch');
+
+class SunoService {
+  constructor() {
+    this.baseUrl = 'https://api.sunoapi.org/api/v1'; // Suno API v1
+    this.apiKey = null;
+  }
+
+  /**
+   * Initialize Suno service with API key from database
+   */
+  async initialize() {
+    try {
+      const config = await Admin.getApiConfig('SUNO');
+      
+      if (!config || !config.is_active) {
+        console.warn('⚠️ Suno API not configured or not active');
+        return false;
+      }
+
+      this.apiKey = config.api_key;
+      
+      // Use endpoint_url from DB, or default
+      if (config.endpoint_url) {
+        // Ensure endpoint_url includes /api/v1
+        if (!config.endpoint_url.includes('/api/v1')) {
+          this.baseUrl = config.endpoint_url + '/api/v1';
+        } else {
+          this.baseUrl = config.endpoint_url;
+        }
+      }
+      
+      // Get callback URL from config or use default
+      // For localhost development, use webhook.site as placeholder since Suno can't reach localhost
+      const isDevelopment = process.env.NODE_ENV !== 'production';
+      const defaultCallback = isDevelopment 
+        ? 'https://webhook.site/test-suno-callback' // Placeholder for dev
+        : 'https://pixelnest.app/music/callback/suno';
+      
+      this.callbackUrl = config.additional_config?.callback_url || defaultCallback;
+      
+      console.log('✅ Suno service initialized');
+      console.log('   Base URL:', this.baseUrl);
+      console.log('   Full endpoint:', `${this.baseUrl}/generate`);
+      console.log('   Callback URL:', this.callbackUrl);
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to initialize Suno service:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Generate music from text prompt (Callback-based)
+   * Suno API will send results to callback URL when generation is complete
+   * @param {Object} params - Generation parameters
+   * @param {string} params.prompt - Description of the music to generate
+   * @param {boolean} params.make_instrumental - Whether to create instrumental music
+   * @param {string} params.model - Model version (v3_5, v4, v4_5, v4_5PLUS, v5)
+   * @returns {Promise<Object>} Task info (results delivered via callback)
+   */
+  async generateMusic(params) {
+    try {
+      // Initialize if not already done
+      if (!this.apiKey) {
+        const initialized = await this.initialize();
+        if (!initialized) {
+          throw new Error('Suno API not configured');
+        }
+      }
+
+      const {
+        prompt,
+        make_instrumental = false,
+        model = 'v5',
+        custom_mode = false,
+        instrumental = false,
+        title = '',
+        tags = '',
+        vocal_gender = null, // 'm' for male, 'f' for female, null for auto
+        weirdness = 0.5, // 0-1: creativity level
+        style_weight = 0.7 // 0-1: style adherence
+      } = params;
+
+      console.log('🎵 Generating music with Suno API');
+      console.log('   API URL:', `${this.baseUrl}/generate`);
+      console.log('   Model:', model);
+      console.log('   Prompt:', prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''));
+      console.log('   Vocal Gender:', vocal_gender || 'auto');
+      console.log('   Custom Mode:', custom_mode);
+      console.log('   Weirdness:', weirdness);
+      console.log('   Style Weight:', style_weight);
+
+      // Convert model to Suno format (v5 -> V5, v4_5 -> V4_5, v3_5 -> V3_5, etc)
+      const modelFormatted = model.toUpperCase();
+      
+      // Build request body according to Suno API docs
+      // Basic required parameters from docs
+      const requestBody = {
+        prompt,
+        customMode: custom_mode, // camelCase as per docs
+        instrumental: make_instrumental || instrumental,
+        model: modelFormatted,
+        // Callback URL from config (set in admin panel)
+        callBackUrl: this.callbackUrl
+      };
+
+      // Optional parameters (if supported by Suno API)
+      if (title) requestBody.title = title;
+      if (tags) requestBody.style = tags; // 'tags' maps to 'style' in Suno API
+      
+      // Try including advanced parameters (may or may not be supported)
+      // If not supported, Suno API will ignore them
+      if (!make_instrumental && !instrumental && vocal_gender) {
+        requestBody.vocalGender = vocal_gender;
+      }
+      
+      // Add weirdness and styleWeight if provided
+      // Note: Suno uses 'weirdnessConstraint' not 'weirdness'
+      if (weirdness !== undefined && weirdness !== 0.5) {
+        requestBody.weirdnessConstraint = parseFloat(weirdness);
+      }
+      if (style_weight !== undefined && style_weight !== 0.7) {
+        requestBody.styleWeight = parseFloat(style_weight);
+      }
+
+      console.log('📤 Sending request body:', JSON.stringify(requestBody, null, 2));
+
+      const response = await fetch(`${this.baseUrl}/generate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      // Parse response
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error('❌ Failed to parse Suno API response:', jsonError);
+        console.error('   Status:', response.status, response.statusText);
+        throw new Error(`Suno API returned invalid JSON. Status: ${response.status} ${response.statusText}`);
+      }
+
+      // Check for API error response (code !== 200)
+      if (data.code && data.code !== 200) {
+        const errorMessage = data.msg || data.message || `Suno API error: ${data.code}`;
+        console.error('❌ Suno API error:', {
+          code: data.code,
+          message: data.msg,
+          data: data
+        });
+        throw new Error(errorMessage);
+      }
+
+      // Check HTTP response status
+      if (!response.ok) {
+        const errorMessage = data.message || data.error || data.detail || 
+                           `Suno API error: ${response.status} ${response.statusText}`;
+        console.error('❌ Suno API HTTP error:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: data
+        });
+        throw new Error(errorMessage);
+      }
+
+      // Validate response data
+      if (!data || !data.data || !data.data.taskId) {
+        console.error('❌ Invalid Suno response format:', data);
+        throw new Error('Suno API returned invalid response format');
+      }
+
+      const taskId = data.data.taskId;
+      console.log('✅ Suno task created:', taskId);
+      console.log('   ℹ️  Results will be sent to callback URL when ready (~30-60s)');
+      
+      // Suno API is callback-based - results delivered via webhook
+      return { 
+        taskId,
+        status: 'processing',
+        message: 'Music generation started. Awaiting callback.',
+        callback_based: true
+      };
+      
+    } catch (error) {
+      console.error('❌ Suno music generation error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Poll task status (DEPRECATED - Suno uses callbacks)
+   * This method is kept for backward compatibility but Suno API doesn't support polling
+   * Use callback handler in /music/callback/suno instead
+   * @deprecated Use callback-based workflow instead
+   */
+  async pollTaskStatus(taskId, maxAttempts = 5, intervalMs = 5000) {
+    // Suno API uses callbacks, not polling
+    console.warn('⚠️ Polling not supported by Suno API');
+    console.warn('   Results will be delivered via callback URL');
+    
+    return {
+      taskId: taskId,
+      status: 'processing',
+      message: 'Suno uses callback-based delivery. Check /music/callback/suno endpoint.',
+      audio_url: null,
+      polling_not_supported: true
+    };
+  }
+
+  /**
+   * Generate lyrics from text prompt (Free feature)
+   * @param {string} prompt - Description of the lyrics to generate
+   * @returns {Promise<Object>} Lyrics generation result
+   */
+  async generateLyrics(prompt) {
+    try {
+      if (!this.apiKey) {
+        const initialized = await this.initialize();
+        if (!initialized) {
+          throw new Error('Suno API not configured');
+        }
+      }
+
+      console.log('📝 Generating lyrics with Suno API');
+
+      const response = await fetch(`${this.baseUrl}/api/generate_lyrics`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ prompt })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Suno lyrics API request failed');
+      }
+
+      const data = await response.json();
+      console.log('✅ Lyrics generated:', data);
+      
+      return data;
+    } catch (error) {
+      console.error('❌ Suno lyrics generation error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get music generation details
+   * @param {string} taskId - Task ID from generation request
+   * @returns {Promise<Object>} Generation details
+   */
+  async getMusicDetails(taskId) {
+    try {
+      if (!this.apiKey) {
+        const initialized = await this.initialize();
+        if (!initialized) {
+          throw new Error('Suno API not configured');
+        }
+      }
+
+      const response = await fetch(`${this.baseUrl}/api/get?ids=${taskId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to get music details');
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('❌ Suno get music details error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get remaining credits
+   * @returns {Promise<Object>} Credits information
+   */
+  async getRemainingCredits() {
+    try {
+      if (!this.apiKey) {
+        const initialized = await this.initialize();
+        if (!initialized) {
+          throw new Error('Suno API not configured');
+        }
+      }
+
+      const response = await fetch(`${this.baseUrl}/api/get_credits`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to get credits');
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('❌ Suno get credits error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Extend music track
+   * @param {Object} params - Extension parameters
+   * @param {string} params.audio_id - ID of the audio to extend
+   * @param {string} params.prompt - Continuation prompt
+   * @param {string} params.continue_at - Time to continue from (seconds)
+   * @returns {Promise<Object>} Extension result
+   */
+  async extendMusic(params) {
+    try {
+      if (!this.apiKey) {
+        const initialized = await this.initialize();
+        if (!initialized) {
+          throw new Error('Suno API not configured');
+        }
+      }
+
+      const { audio_id, prompt, continue_at } = params;
+
+      const response = await fetch(`${this.baseUrl}/api/extend`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          audio_id,
+          prompt,
+          continue_at
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to extend music');
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('❌ Suno extend music error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if Suno service is available
+   */
+  async isAvailable() {
+    try {
+      const config = await Admin.getApiConfig('SUNO');
+      return config && config.is_active && config.api_key;
+    } catch (error) {
+      return false;
+    }
+  }
+}
+
+module.exports = new SunoService();
+

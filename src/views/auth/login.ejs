@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Login to PixelNest - AI Video Generation Platform">
+    <title><%= title %></title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+    <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/output.css">
+    <style>
+        .input-glow:focus {
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1), 0 0 20px rgba(139, 92, 246, 0.2);
+        }
+        .slide-in {
+            animation: slideIn 0.4s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center px-4">
+    <!-- Background Effects -->
+    <div class="fixed inset-0 -z-10">
+        <div class="absolute top-20 left-10 w-72 h-72 bg-violet-600/20 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-20 right-10 w-96 h-96 bg-fuchsia-600/20 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="w-full max-w-md">
+        <!-- Logo -->
+        <div class="text-center mb-8 slide-in">
+            <a href="/" class="inline-flex items-center justify-center gap-3 mb-4">
+                <!-- Logo Icon -->
+                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center flex-shrink-0">
+                    <img src="/assets/img/logo/logo.png" alt="PixelNest Logo" class="h-8 w-auto">
+                </div>
+                
+                <!-- Text -->
+                <div class="flex flex-col items-start">
+                    <span class="text-lg font-black text-white uppercase tracking-tight leading-none">PIXELNEST</span>
+                    <span class="text-[10px] text-gray-400 uppercase tracking-[0.15em] font-medium mt-0.5">AI VIDEO STUDIO</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- Login Card -->
+        <div class="glass rounded-2xl p-8 hover:glass-strong transition-all duration-300 slide-in backdrop-blur-xl">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-black mb-2 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Welcome Back</h1>
+                <p class="text-gray-400 text-sm">Sign in to start creating AI videos</p>
+            </div>
+
+            <% if (typeof referralCode !== 'undefined' && referralCode) { %>
+                <div class="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl slide-in">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+                        </svg>
+                        <p class="text-green-400 text-sm">
+                            <i class="fas fa-gift"></i> Kode referral aktif! Daftar sekarang dan dapatkan bonus.
+                        </p>
+                    </div>
+                </div>
+            <% } %>
+
+            <% if (error) { %>
+                <div class="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl slide-in">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                        <p class="text-red-400 text-sm">
+                            <% if (error === 'authentication_failed') { %>
+                                Authentication failed. Please try again.
+                            <% } else if (error === 'invalid_credentials') { %>
+                                Email atau password tidak valid.
+                            <% } else { %>
+                                <%= error %>
+                            <% } %>
+                        </p>
+                    </div>
+                </div>
+            <% } %>
+
+            <% if (typeof success !== 'undefined' && success) { %>
+                <div class="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl slide-in">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <p class="text-green-400 text-sm"><%= success %></p>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- Google Login Button -->
+            <a href="/auth/google<% if (typeof referralCode !== 'undefined' && referralCode) { %>?ref=<%= referralCode %><% } %>" class="block w-full mb-6">
+                <button type="button" class="w-full px-6 py-4 glass rounded-xl hover:glass-strong transition-all duration-300 group border border-white/5 hover:border-white/10">
+                    <div class="flex items-center justify-center gap-3">
+                        <svg class="w-5 h-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        <span class="font-semibold text-white/90 group-hover:text-white">Continue with Google</span>
+                    </div>
+                </button>
+            </a>
+
+            <!-- Divider -->
+            <div class="relative mb-6">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-700"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-4 bg-gray-900/50 text-gray-400 font-medium">Or continue with email</span>
+                </div>
+            </div>
+
+            <!-- Email Form -->
+            <form action="/auth/check-email?<% if (typeof referralCode !== 'undefined' && referralCode) { %>ref=<%= referralCode %><% } %>" method="POST">
+                <% if (typeof referralCode !== 'undefined' && referralCode) { %>
+                    <input type="hidden" name="referralCode" value="<%= referralCode %>">
+                <% } %>
+                <div class="space-y-4">
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
+                                </svg>
+                            </div>
+                            <input 
+                                type="email" 
+                                name="email" 
+                                id="email"
+                                required
+                                autocomplete="email"
+                                placeholder="your@email.com"
+                                class="w-full pl-12 pr-4 py-3.5 bg-black/30 border border-gray-700 rounded-xl focus:outline-none focus:border-violet-500 text-white placeholder-gray-500 transition-all duration-300 input-glow"
+                            />
+                        </div>
+                    </div>
+
+                    <button 
+                        type="submit"
+                        class="w-full px-6 py-3.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-violet-500/50 hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                        Continue
+                        <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-6 text-center text-xs text-gray-500">
+                By continuing, you agree to our 
+                <a href="/terms-of-service" class="text-violet-400 hover:text-violet-300 transition-colors">Terms of Service</a> 
+                and 
+                <a href="/privacy-policy" class="text-violet-400 hover:text-violet-300 transition-colors">Privacy Policy</a>
+            </div>
+        </div>
+
+        <!-- Back to Home -->
+        <div class="text-center mt-6">
+            <a href="/" class="text-sm text-gray-400 hover:text-white transition-colors inline-flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to Home
+            </a>
+        </div>
+    </div>
+</body>
+</html>
+

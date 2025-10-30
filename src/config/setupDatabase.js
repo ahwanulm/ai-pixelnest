@@ -1,0 +1,1088 @@
+const { pool } = require('./database');
+const initAuthDatabase = require('./authDatabase');
+const { createAdminTables } = require('./adminDatabase');
+const { migrateReferralSystem } = require('./migrateReferralSystem');
+const { migratePublicGallery } = require('./migratePublicGallery');
+const migrateAuthColumns = require('./migrateAuthColumns');
+const bcrypt = require('bcrypt');
+
+/**
+ * Comprehensive Database Setup Script
+ * 
+ * This script will initialize ALL required tables for the PixelNest application.
+ * Run this script when:
+ * - Setting up a new database
+ * - After database reset
+ * - Before deployment
+ * 
+ * Usage: npm run setup-db
+ */
+
+async function setupDatabase() {
+  console.log('\n🚀 PixelNest Database Setup Started\n');
+  console.log('═══════════════════════════════════════════════════════════\n');
+
+  try {
+    // Step 1: Create authentication tables (users, sessions)
+    console.log('📝 Step 1/7: Creating authentication tables...');
+    await initAuthDatabase();
+    console.log('✅ Authentication tables created\n');
+
+    // Step 2: Create basic application tables
+    console.log('📝 Step 2/7: Creating basic application tables...');
+    await createBasicTables();
+    console.log('✅ Basic application tables created\n');
+
+    // Step 3: Create admin tables
+    console.log('📝 Step 3/7: Creating admin tables...');
+    await createAdminTables();
+    console.log('✅ Admin tables created\n');
+
+    // Step 4: Create AI models table
+    console.log('📝 Step 4/7: Creating AI models table...');
+    await createAiModelsTables();
+    console.log('✅ AI models tables created\n');
+
+    // Step 5: Create payment tables
+    console.log('📝 Step 5/7: Creating payment tables...');
+    await createPaymentTables();
+    console.log('✅ Payment tables created\n');
+
+    // Step 6: Create referral system tables
+    console.log('📝 Step 6/7: Creating referral system tables...');
+    await migrateReferralSystem();
+    console.log('✅ Referral system tables created\n');
+
+    // Step 7: Create additional feature tables
+    console.log('📝 Step 7/8: Creating additional feature tables...');
+    await createFeatureTables();
+    console.log('✅ Additional feature tables created\n');
+
+    // Step 8: Create public gallery tables
+    console.log('📝 Step 8/9: Creating public gallery tables...');
+    await migratePublicGallery();
+    console.log('✅ Public gallery tables created\n');
+
+    // Step 9: Add authentication columns (PIN verification & password reset)
+    console.log('📝 Step 9/9: Adding authentication columns...');
+    await migrateAuthColumns();
+    console.log('✅ Authentication columns added\n');
+
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('🎉 Database Setup Completed Successfully!\n');
+    console.log('📊 Summary:');
+    console.log('  ✓ Authentication tables (users, sessions)');
+    console.log('  ✓ Basic tables (contacts, services, blog, etc.)');
+    console.log('  ✓ Admin tables (promo codes, notifications, etc.)');
+    console.log('  ✓ AI models and generation history');
+    console.log('  ✓ Payment and transaction tables');
+    console.log('  ✓ API configurations table (Tripay, etc.)');
+    console.log('  ✓ Referral system tables');
+    console.log('  ✓ Feature request and bug report tables');
+    console.log('  ✓ Auth columns (PIN verification & password reset)\n');
+
+    // Create default admin user if not exists
+    console.log('👤 Checking for default admin user...');
+    await createDefaultAdmin();
+
+    console.log('\n🚀 Your application is ready to run!');
+    console.log('═══════════════════════════════════════════════════════════\n');
+
+  } catch (error) {
+    console.error('\n❌ Database Setup Failed:', error.message);
+    console.error('\n💡 Troubleshooting:');
+    console.error('  1. Check your database connection in .env file');
+    console.error('  2. Make sure PostgreSQL is running');
+    console.error('  3. Verify database exists: createdb pixelnest_db');
+    console.error('  4. Check database user has proper permissions\n');
+    throw error;
+  }
+  // Note: Pool not ended here to allow populate models to run
+}
+
+/**
+ * Create default admin user if not exists
+ */
+async function createDefaultAdmin() {
+  const client = await pool.connect();
+  
+  try {
+    // Check if admin already exists
+    const checkAdmin = await client.query(
+      "SELECT id FROM users WHERE email = 'admin@pixelnest.pro'"
+    );
+
+    if (checkAdmin.rows.length > 0) {
+      console.log('ℹ️  Admin user already exists (admin@pixelnest.pro)');
+      return;
+    }
+
+    // Create admin user
+    const hashedPassword = await bcrypt.hash('andr0Hardcore', 10);
+    
+    // Generate unique referral code
+    const referralCode = 'ADMIN' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    const result = await client.query(`
+      INSERT INTO users (
+        email, 
+        name, 
+        password_hash, 
+        role, 
+        credits, 
+        is_active,
+        email_verified,
+        activated_at,
+        referral_code,
+        created_at
+      ) VALUES (
+        'admin@pixelnest.pro',
+        'Administrator',
+        $1,
+        'admin',
+        999999,
+        true,
+        true,
+        NOW(),
+        $2,
+        NOW()
+      ) RETURNING id, email, name, role, referral_code
+    `, [hashedPassword, referralCode]);
+
+    console.log('✅ Default admin user created!');
+    console.log(`   Email: ${result.rows[0].email}`);
+    console.log(`   Password: andr0Hardcore`);
+    console.log(`   Role: ${result.rows[0].role}`);
+    console.log(`   Credits: 999999`);
+    console.log('   ⚠️  Please change the password after first login!');
+
+  } catch (error) {
+    console.error('⚠️  Could not create default admin:', error.message);
+    // Don't fail the entire setup just because admin creation failed
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Create basic application tables
+ */
+async function createBasicTables() {
+  const client = await pool.connect();
+  
+  try {
+    // Create contacts table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS contacts (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        phone VARCHAR(50),
+        company VARCHAR(255),
+        message TEXT NOT NULL,
+        status VARCHAR(50) DEFAULT 'new',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Create services table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS services (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) UNIQUE NOT NULL,
+        description TEXT,
+        icon VARCHAR(100),
+        features JSONB,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Create testimonials table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS testimonials (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        position VARCHAR(255),
+        company VARCHAR(255),
+        testimonial TEXT NOT NULL,
+        rating INTEGER DEFAULT 5,
+        avatar_url VARCHAR(500),
+        is_featured BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Create blog_posts table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS blog_posts (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(500) NOT NULL,
+        slug VARCHAR(500) UNIQUE NOT NULL,
+        excerpt TEXT,
+        content TEXT NOT NULL,
+        author VARCHAR(255),
+        category VARCHAR(100),
+        tags VARCHAR(500),
+        image_url VARCHAR(500),
+        is_published BOOLEAN DEFAULT false,
+        views INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Create pricing_plans table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS pricing_plans (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        price DECIMAL(10, 2) NOT NULL,
+        billing_period VARCHAR(50) DEFAULT 'monthly',
+        features JSONB,
+        is_popular BOOLEAN DEFAULT false,
+        is_active BOOLEAN DEFAULT true,
+        display_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Create newsletter_subscribers table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        name VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'active',
+        subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Insert sample data for services
+    await client.query(`
+      INSERT INTO services (title, slug, description, icon, features) VALUES
+      ('Workflow Automation', 'workflow-automation', 'Automate complex business processes to boost speed, clarity, and efficiency.', '🔄', '["Multi-step automation", "Cross-platform integration", "Smart scheduling"]'),
+      ('Custom AI Solutions', 'custom-ai-solutions', 'Build tailored AI systems that align with your business goals and challenges.', '🤖', '["Custom AI models", "Business-specific logic", "Scalable architecture"]'),
+      ('AI Assistant', 'ai-assistant', 'Deploy intelligent virtual agents to streamline tasks.', '💬', '["24/7 availability", "Natural language processing", "Task automation"]'),
+      ('Sales & Marketing', 'sales-marketing', 'Leverage AI to optimize campaigns, track leads, and personalize outreach.', '📊', '["Lead tracking", "Campaign optimization", "Personalization"]')
+      ON CONFLICT (slug) DO NOTHING;
+    `);
+
+    // Insert sample pricing plans
+    await client.query(`
+      INSERT INTO pricing_plans (name, price, billing_period, features, is_popular, display_order) VALUES
+      ('Starter', 50.00, 'monthly', '["3 Automated Workflows", "Basic AI Assistant Access", "Email + Slack Integration", "Monthly Performance Reports", "Email Support"]', false, 1),
+      ('Pro', 90.00, 'monthly', '["10+ Automated Workflows", "Advanced AI Assistant Features", "Bi-Weekly Strategy Reviews", "CRM + Marketing Tool Integrations", "Priority Support"]', true, 2),
+      ('Enterprise', 0.00, 'custom', '["Unlimited Custom Workflows", "Dedicated AI Strategist", "API & Private Integrations", "Real-Time Performance Dashboards", "24/7 Premium Support + SLA"]', false, 3)
+      ON CONFLICT DO NOTHING;
+    `);
+
+    // Insert sample testimonials
+    await client.query(`
+      INSERT INTO testimonials (name, position, company, testimonial, rating, is_featured) VALUES
+      ('Daniel Kim', 'Operations Lead', 'Flowbyte', 'Truly impressive. The AI assistant is fast, accurate, and blends into our daily ops without friction.', 5, true),
+      ('Priya Mehra', 'CTO', 'Brightstack Labs', 'Game-changer. Automation flows run flawlessly. Our team now focuses only on what really matters.', 5, true),
+      ('Elena Rodriguez', 'Product Manager', 'Nexora', 'Smooth setup. Their system replaced three tools. We saw improvements in just the first week.', 5, true),
+      ('Ravi Shah', 'COO', 'PixelNest Solutions', 'Very intuitive. No fluff, just performance. Our internal processes finally feel under control.', 5, true)
+      ON CONFLICT DO NOTHING;
+    `);
+
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Create AI models and generation history tables
+ */
+async function createAiModelsTables() {
+  const client = await pool.connect();
+  
+  try {
+    // Create pricing_config table first (needed by ai_models)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS pricing_config (
+        id SERIAL PRIMARY KEY,
+        config_key VARCHAR(100) UNIQUE NOT NULL,
+        config_value DECIMAL(10, 4) NOT NULL,
+        description TEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_by INTEGER REFERENCES users(id)
+      )
+    `);
+
+    // Insert default pricing configuration
+    await client.query(`
+      INSERT INTO pricing_config (config_key, config_value, description)
+      VALUES 
+        ('profit_margin_percent', 20.00, 'Profit margin percentage on top of base price'),
+        ('base_credit_usd', 0.05, 'Base USD amount that equals 1 credit (before margin)'),
+        ('minimum_credits', 0.5, 'Minimum credits that can be charged'),
+        ('credit_rounding', 0.5, 'Round credits to nearest 0.5'),
+        ('image_profit_margin', 20.00, 'Profit margin for image generation'),
+        ('image_base_credit_usd', 0.05, 'Base credit USD for images'),
+        ('image_minimum_credits', 0.5, 'Minimum credits for images'),
+        ('video_profit_margin', 20.00, 'Profit margin for video generation'),
+        ('video_base_credit_usd', 0.10, 'Base credit USD for videos'),
+        ('video_minimum_credits', 1.0, 'Minimum credits for videos'),
+        ('credit_price_idr', 100.00, 'Price per credit in IDR')
+      ON CONFLICT (config_key) DO NOTHING;
+    `);
+
+    // Create ai_models table with advanced pricing support
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS ai_models (
+        id SERIAL PRIMARY KEY,
+        model_id VARCHAR(255) UNIQUE NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        provider VARCHAR(255),
+        description TEXT,
+        category VARCHAR(100) NOT NULL,
+        type VARCHAR(50) NOT NULL,
+        trending BOOLEAN DEFAULT false,
+        viral BOOLEAN DEFAULT false,
+        speed VARCHAR(50),
+        quality VARCHAR(50),
+        max_duration INTEGER,
+        cost INTEGER DEFAULT 1,
+        fal_price DECIMAL(10, 4) DEFAULT NULL,
+        fal_verified BOOLEAN DEFAULT false,
+        pricing_type VARCHAR(20) DEFAULT 'flat',
+        pricing_structure VARCHAR(30) DEFAULT 'simple',
+        
+        -- Per-Pixel Pricing (for Upscaling models)
+        price_per_pixel NUMERIC(10, 7) DEFAULT NULL,
+        base_resolution VARCHAR(20) DEFAULT NULL,
+        max_upscale_factor NUMERIC(4, 1) DEFAULT NULL,
+        
+        -- Per-Megapixel Pricing (for FLUX models)
+        price_per_megapixel NUMERIC(10, 3) DEFAULT NULL,
+        base_megapixels NUMERIC(4, 1) DEFAULT NULL,
+        max_megapixels NUMERIC(4, 1) DEFAULT NULL,
+        
+        -- 3D Modeling Pricing
+        base_3d_price NUMERIC(10, 2) DEFAULT NULL,
+        quality_multiplier NUMERIC(4, 2) DEFAULT NULL,
+        
+        -- Resolution-Based Pricing
+        price_sd NUMERIC(10, 3) DEFAULT NULL,
+        price_hd NUMERIC(10, 3) DEFAULT NULL,
+        price_2k NUMERIC(10, 3) DEFAULT NULL,
+        price_4k NUMERIC(10, 3) DEFAULT NULL,
+        
+        -- Duration Configuration (for video models)
+        available_durations JSONB DEFAULT NULL,
+        price_per_second NUMERIC(10, 4) DEFAULT NULL,
+        
+        is_active BOOLEAN DEFAULT true,
+        is_custom BOOLEAN DEFAULT false,
+        is_pinned BOOLEAN DEFAULT false,
+        prompt_required BOOLEAN DEFAULT true,
+        metadata JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        added_by INTEGER REFERENCES users(id)
+      )
+    `);
+
+    // Update ai_generation_history table with all needed columns
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS ai_generation_history (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        generation_type VARCHAR(50) NOT NULL,
+        sub_type VARCHAR(50),
+        type VARCHAR(50),
+        model_used VARCHAR(100),
+        model_name VARCHAR(255),
+        prompt TEXT,
+        result_url TEXT,
+        settings JSONB,
+        credits_used DECIMAL(10, 2) DEFAULT 1,
+        credits_cost DECIMAL(10, 2) DEFAULT 0,
+        cost_credits DECIMAL(10, 2) DEFAULT 0,
+        status VARCHAR(50) DEFAULT 'pending',
+        error_message TEXT,
+        job_id VARCHAR(255),
+        fal_request_id VARCHAR(255),
+        started_at TIMESTAMP DEFAULT NOW(),
+        completed_at TIMESTAMP,
+        progress INTEGER DEFAULT 0,
+        viewed_at TIMESTAMP,
+        metadata JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Add missing columns to ai_models if upgrading
+    await client.query(`
+      ALTER TABLE ai_models 
+      ADD COLUMN IF NOT EXISTS fal_price DECIMAL(10, 4) DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS fal_verified BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS pricing_type VARCHAR(20) DEFAULT 'flat',
+      ADD COLUMN IF NOT EXISTS pricing_structure VARCHAR(30) DEFAULT 'simple',
+      ADD COLUMN IF NOT EXISTS price_per_pixel NUMERIC(10, 7) DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS base_resolution VARCHAR(20) DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS max_upscale_factor NUMERIC(4, 1) DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS price_per_megapixel NUMERIC(10, 3) DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS base_megapixels NUMERIC(4, 1) DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS max_megapixels NUMERIC(4, 1) DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS base_3d_price NUMERIC(10, 2) DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS quality_multiplier NUMERIC(4, 2) DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS price_sd NUMERIC(10, 3) DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS price_hd NUMERIC(10, 3) DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS price_2k NUMERIC(10, 3) DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS price_4k NUMERIC(10, 3) DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS available_durations JSONB DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS price_per_second NUMERIC(10, 4) DEFAULT NULL;
+    `);
+
+    // Fix cost column type: INTEGER -> DECIMAL to support fractional credits
+    await client.query(`
+      ALTER TABLE ai_models 
+      ALTER COLUMN cost TYPE DECIMAL(10, 2) USING cost::DECIMAL(10, 2);
+    `);
+
+    // Fix all credits columns in ai_generation_history to DECIMAL
+    // Check and add credits_cost column if not exists
+    await client.query(`
+      ALTER TABLE ai_generation_history 
+      ADD COLUMN IF NOT EXISTS credits_cost DECIMAL(10, 2) DEFAULT 0;
+    `);
+    
+    // Now alter the columns
+    await client.query(`
+      ALTER TABLE ai_generation_history 
+      ALTER COLUMN credits_used TYPE DECIMAL(10, 2) USING credits_used::DECIMAL(10, 2);
+    `);
+    
+    // Only alter credits_cost if it exists
+    try {
+      await client.query(`
+        ALTER TABLE ai_generation_history 
+        ALTER COLUMN credits_cost TYPE DECIMAL(10, 2) USING credits_cost::DECIMAL(10, 2);
+      `);
+    } catch (err) {
+      // Column might not exist, that's okay
+      console.log('Note: credits_cost column already handled');
+    }
+
+    // Fix credits column in users table to DECIMAL
+    await client.query(`
+      ALTER TABLE users 
+      ALTER COLUMN credits TYPE DECIMAL(10, 2) USING credits::DECIMAL(10, 2);
+    `);
+
+    // Fix promo_codes: Make discount_type and discount_value NULLABLE for claim codes
+    await client.query(`
+      ALTER TABLE promo_codes 
+      ALTER COLUMN discount_type DROP NOT NULL,
+      ALTER COLUMN discount_value DROP NOT NULL;
+    `);
+
+    // Fix credit_transactions: Change amount and balance_after to DECIMAL
+    await client.query(`
+      ALTER TABLE credit_transactions 
+      ALTER COLUMN amount TYPE DECIMAL(10, 2) USING amount::DECIMAL(10, 2),
+      ALTER COLUMN balance_after TYPE DECIMAL(10, 2) USING balance_after::DECIMAL(10, 2);
+    `);
+
+    // Add missing columns to ai_generation_history if upgrading
+    await client.query(`
+      ALTER TABLE ai_generation_history 
+      ADD COLUMN IF NOT EXISTS job_id VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS fal_request_id VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS started_at TIMESTAMP DEFAULT NOW(),
+      ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS progress INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS viewed_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS sub_type VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS type VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS model_name VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS error_message TEXT,
+      ADD COLUMN IF NOT EXISTS settings JSONB,
+      ADD COLUMN IF NOT EXISTS credits_cost DECIMAL(10, 2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS cost_credits DECIMAL(10, 2) DEFAULT 0;
+    `);
+
+    // Add generation_count to users table
+    await client.query(`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS generation_count INTEGER DEFAULT 0;
+    `);
+
+    // Sync existing data from credits_cost to cost_credits
+    await client.query(`
+      UPDATE ai_generation_history
+      SET cost_credits = COALESCE(credits_cost, cost_credits, 0)
+      WHERE cost_credits IS NULL OR cost_credits = 0;
+    `);
+
+    // Create trigger function to keep credits columns in sync
+    await client.query(`
+      CREATE OR REPLACE FUNCTION sync_credits_columns()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        -- Prioritize cost_credits as the primary column
+        IF NEW.cost_credits IS NOT NULL AND NEW.cost_credits > 0 THEN
+          NEW.credits_cost = NEW.cost_credits;
+        ELSIF NEW.credits_cost IS NOT NULL AND NEW.credits_cost > 0 AND (NEW.cost_credits IS NULL OR NEW.cost_credits = 0) THEN
+          NEW.cost_credits = NEW.credits_cost;
+        END IF;
+        
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+    `);
+
+    // Drop and recreate trigger to ensure it's up to date
+    await client.query(`
+      DROP TRIGGER IF EXISTS sync_credits_trigger ON ai_generation_history;
+      
+      CREATE TRIGGER sync_credits_trigger
+        BEFORE INSERT OR UPDATE ON ai_generation_history
+        FOR EACH ROW
+        EXECUTE FUNCTION sync_credits_columns();
+    `);
+
+    // Create pinned_models table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS pinned_models (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        model_id INTEGER NOT NULL REFERENCES ai_models(id) ON DELETE CASCADE,
+        pin_order INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, model_id)
+      );
+    `);
+
+    // Create indexes
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_models_type ON ai_models(type);
+      CREATE INDEX IF NOT EXISTS idx_models_category ON ai_models(category);
+      CREATE INDEX IF NOT EXISTS idx_models_active ON ai_models(is_active);
+      CREATE INDEX IF NOT EXISTS idx_models_pinned ON ai_models(is_pinned);
+      CREATE INDEX IF NOT EXISTS idx_pricing_structure ON ai_models(pricing_structure);
+      CREATE INDEX IF NOT EXISTS idx_per_pixel_pricing ON ai_models(price_per_pixel) WHERE price_per_pixel IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_per_megapixel_pricing ON ai_models(price_per_megapixel) WHERE price_per_megapixel IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_generation_user_id ON ai_generation_history(user_id);
+      CREATE INDEX IF NOT EXISTS idx_generation_type ON ai_generation_history(generation_type);
+      CREATE INDEX IF NOT EXISTS idx_generation_status ON ai_generation_history(status);
+      CREATE INDEX IF NOT EXISTS idx_generation_job_id ON ai_generation_history(job_id);
+      CREATE INDEX IF NOT EXISTS idx_generation_fal_request_id ON ai_generation_history(fal_request_id);
+      CREATE INDEX IF NOT EXISTS idx_pinned_models_user_id ON pinned_models(user_id);
+      CREATE INDEX IF NOT EXISTS idx_pinned_models_model_id ON pinned_models(model_id);
+    `);
+
+    // Create models_stats VIEW for admin dashboard (with audio support)
+    // Drop first if exists to avoid column order issues
+    await client.query(`DROP VIEW IF EXISTS models_stats CASCADE;`);
+    
+    await client.query(`
+      CREATE OR REPLACE VIEW models_stats AS
+      SELECT 
+        COUNT(*) as total_models,
+        COUNT(*) FILTER (WHERE type = 'image') as image_models,
+        COUNT(*) FILTER (WHERE type = 'video') as video_models,
+        COUNT(*) FILTER (WHERE type = 'audio') as audio_models,
+        COUNT(*) FILTER (WHERE trending = true) as trending_models,
+        COUNT(*) FILTER (WHERE viral = true) as viral_models,
+        COUNT(*) FILTER (WHERE is_custom = true) as custom_models,
+        COUNT(*) FILTER (WHERE is_active = true) as active_models,
+        COUNT(*) FILTER (WHERE is_active = false) as inactive_models
+      FROM ai_models;
+    `);
+
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Create payment and transaction tables
+ */
+async function createPaymentTables() {
+  const client = await pool.connect();
+  
+  try {
+    // Create payment_transactions table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS payment_transactions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        reference VARCHAR(100) UNIQUE NOT NULL,
+        merchant_ref VARCHAR(100) UNIQUE,
+        payment_method VARCHAR(50) NOT NULL,
+        payment_name VARCHAR(100) NOT NULL,
+        amount INTEGER NOT NULL,
+        fee_merchant INTEGER DEFAULT 0,
+        fee_customer INTEGER DEFAULT 0,
+        total_fee INTEGER DEFAULT 0,
+        amount_received INTEGER NOT NULL,
+        credits_amount INTEGER NOT NULL,
+        credit_price_idr INTEGER NOT NULL,
+        promo_code VARCHAR(50),
+        discount_amount INTEGER DEFAULT 0,
+        pay_code VARCHAR(100),
+        pay_url TEXT,
+        checkout_url TEXT,
+        qr_url TEXT,
+        qr_string TEXT,
+        status VARCHAR(50) DEFAULT 'UNPAID',
+        paid_at TIMESTAMP,
+        expired_time TIMESTAMP,
+        payment_instructions JSONB,
+        callback_received BOOLEAN DEFAULT false,
+        callback_data JSONB,
+        metadata JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Create payment_channels table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS payment_channels (
+        id SERIAL PRIMARY KEY,
+        code VARCHAR(50) UNIQUE NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        group_channel VARCHAR(50) NOT NULL,
+        
+        -- Fee Info
+        fee_merchant_flat INTEGER DEFAULT 0,
+        fee_merchant_percent DECIMAL(5,2) DEFAULT 0,
+        fee_customer_flat INTEGER DEFAULT 0,
+        fee_customer_percent DECIMAL(5,2) DEFAULT 0,
+        
+        -- Limits
+        minimum_amount INTEGER DEFAULT 10000,
+        maximum_amount INTEGER DEFAULT 0,
+        
+        -- Icons & Display
+        icon_url TEXT,
+        is_active BOOLEAN DEFAULT true,
+        
+        -- Settings
+        settings JSONB,
+        
+        -- Audit
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Create api_configs table for external service configurations
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS api_configs (
+        id SERIAL PRIMARY KEY,
+        service_name VARCHAR(100) UNIQUE NOT NULL,
+        api_key TEXT NOT NULL,
+        api_secret TEXT,
+        endpoint_url TEXT,
+        is_active BOOLEAN DEFAULT true,
+        rate_limit INTEGER DEFAULT 100,
+        additional_config JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Create indexes for better performance
+    await client.query(`
+      -- Payment Transactions indexes
+      CREATE INDEX IF NOT EXISTS idx_payment_user_id ON payment_transactions(user_id);
+      CREATE INDEX IF NOT EXISTS idx_payment_reference ON payment_transactions(reference);
+      CREATE INDEX IF NOT EXISTS idx_payment_status ON payment_transactions(status);
+      CREATE INDEX IF NOT EXISTS idx_payment_created_at ON payment_transactions(created_at DESC);
+      
+      -- Payment Channels indexes
+      CREATE INDEX IF NOT EXISTS idx_payment_channels_code ON payment_channels(code);
+      CREATE INDEX IF NOT EXISTS idx_payment_channels_active ON payment_channels(is_active) WHERE is_active = true;
+      CREATE INDEX IF NOT EXISTS idx_payment_channels_group ON payment_channels(group_channel);
+      
+      -- API Configs indexes
+      CREATE INDEX IF NOT EXISTS idx_api_configs_service ON api_configs(service_name);
+      CREATE INDEX IF NOT EXISTS idx_api_configs_active ON api_configs(is_active) WHERE is_active = true;
+    `);
+
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Create feature request and bug report tables
+ */
+async function createFeatureTables() {
+  const client = await pool.connect();
+  
+  try {
+    // Create feature_requests table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS feature_requests (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        type VARCHAR(20),
+        request_type VARCHAR(50) CHECK (request_type IN ('ai_model', 'feature', 'bug', 'other')),
+        title VARCHAR(255) NOT NULL,
+        description TEXT NOT NULL,
+        use_case TEXT,
+        category VARCHAR(100),
+        priority VARCHAR(20) DEFAULT 'medium' CHECK (priority IN ('low', 'normal', 'medium', 'high', 'urgent')),
+        status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'under_review', 'approved', 'rejected', 'implemented')),
+        upvotes INTEGER DEFAULT 0,
+        reward_amount NUMERIC(10, 2) DEFAULT 0,
+        reward_given BOOLEAN DEFAULT FALSE,
+        reward_given_at TIMESTAMP,
+        admin_response TEXT,
+        admin_id INTEGER REFERENCES users(id),
+        responded_at TIMESTAMP,
+        reviewed_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Support both 'type' and 'request_type' columns for backward compatibility
+    await client.query(`
+      ALTER TABLE feature_requests 
+      ADD COLUMN IF NOT EXISTS type VARCHAR(20),
+      ADD COLUMN IF NOT EXISTS request_type VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS use_case TEXT,
+      ADD COLUMN IF NOT EXISTS reward_amount NUMERIC(10, 2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS reward_given BOOLEAN DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS reward_given_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP;
+    `);
+
+    // Create feature_request_votes table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS feature_request_votes (
+        id SERIAL PRIMARY KEY,
+        feature_request_id INTEGER REFERENCES feature_requests(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(feature_request_id, user_id)
+      );
+    `);
+
+    // Create feature_request_rate_limits table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS feature_request_rate_limits (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        request_count INTEGER DEFAULT 1,
+        window_start TIMESTAMP DEFAULT NOW(),
+        last_request_at TIMESTAMP DEFAULT NOW(),
+        CONSTRAINT unique_user_rate_limit UNIQUE (user_id)
+      );
+    `);
+
+    // Create indexes
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_feature_requests_type ON feature_requests(type);
+      CREATE INDEX IF NOT EXISTS idx_feature_requests_request_type ON feature_requests(request_type);
+      CREATE INDEX IF NOT EXISTS idx_feature_requests_status ON feature_requests(status);
+      CREATE INDEX IF NOT EXISTS idx_feature_requests_user ON feature_requests(user_id);
+      CREATE INDEX IF NOT EXISTS idx_feature_requests_reward_given ON feature_requests(reward_given);
+      CREATE INDEX IF NOT EXISTS idx_feature_votes_request ON feature_request_votes(feature_request_id);
+      CREATE INDEX IF NOT EXISTS idx_feature_request_rate_limits_user_id ON feature_request_rate_limits(user_id);
+      CREATE INDEX IF NOT EXISTS idx_feature_request_rate_limits_window ON feature_request_rate_limits(window_start);
+    `);
+
+    // Add email verification and activation columns to users
+    await client.query(`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS email_verification_token VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS email_verification_expires TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS password_reset_token VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS password_reset_expires TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS activation_code VARCHAR(6),
+      ADD COLUMN IF NOT EXISTS activation_code_expires_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS activation_attempts INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS activated_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS password_reset_code VARCHAR(6),
+      ADD COLUMN IF NOT EXISTS password_reset_expires_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS password_reset_attempts INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS resend_count INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS last_resend_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS resend_locked_until TIMESTAMP;
+    `);
+
+    // Create indexes for activation and password reset
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_users_activation_code ON users(activation_code) WHERE activation_code IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_users_password_reset_code ON users(password_reset_code) WHERE password_reset_code IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_users_email_verification_token ON users(email_verification_token) WHERE email_verification_token IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_users_password_reset_token ON users(password_reset_token) WHERE password_reset_token IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_users_email_verified ON users(email_verified);
+      CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active);
+    `);
+
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Populate AI models from curated list with verified pricing
+ */
+async function populateModels() {
+  try {
+    console.log('\n📦 Populating AI models with verified pricing...');
+    
+    // Use the new default models file with accurate pricing
+    const FAL_AI_MODELS = require('../data/falAiDefaultModels');
+    console.log(`📚 Found ${FAL_AI_MODELS.length} essential models with verified pricing`);
+    
+    let inserted = 0;
+    let updated = 0;
+
+    for (const model of FAL_AI_MODELS) {
+      try {
+        // Check if model exists
+        const existing = await pool.query(
+          'SELECT id FROM ai_models WHERE model_id = $1',
+          [model.id]
+        );
+
+        // Calculate credits from FAL price
+        // Formula: (fal_price × 16,000) ÷ 500 = credits
+        const calculateCredits = (falPrice, pricingStructure) => {
+          if (!falPrice || falPrice <= 0) return 1;
+          const USD_TO_IDR = 16000;
+          const IDR_PER_CREDIT = 500;
+          const priceIDR = falPrice * USD_TO_IDR;
+          const credits = Math.ceil(priceIDR / IDR_PER_CREDIT);
+          return Math.max(1, credits); // Minimum 1 credit
+        };
+
+        const credits = calculateCredits(model.fal_price, model.pricing_structure);
+
+        // ✅ Auto-detect and fix 3D models category
+        let category = model.category;
+        const is3DModel = model.id.includes('3d') ||
+                         model.id.includes('seed3d') ||
+                         model.name.toLowerCase().includes('3d') ||
+                         model.name.toLowerCase().includes('seed3d');
+
+        if (is3DModel) {
+          // Determine specific 3D category
+          const isImageTo3D = model.id.includes('seed3d') ||
+                             model.id.includes('image-to-3d') ||
+                             model.id.includes('img2mesh');
+
+          const targetCategory = isImageTo3D ? 'Image-to-3D' : 'Text-to-3D';
+
+          if (category !== targetCategory) {
+            category = targetCategory;
+            console.log(`   🎲 Detected 3D model: ${model.name} → category set to "${targetCategory}"`);
+          }
+        }
+
+        // ✅ Determine if prompt is required based on category
+        let promptRequired = true; // Default
+
+        if (category === 'Image-to-3D') {
+          promptRequired = false; // Image-to-3D models don't need prompt
+        } else if (category === 'Text-to-3D') {
+          promptRequired = true; // Text-to-3D models need prompt
+        }
+
+        if (existing.rows.length > 0) {
+          // Update existing model with all pricing fields + prompt_required
+          const updateQuery = `
+            UPDATE ai_models SET
+              name = $1, provider = $2, description = $3, category = $4,
+              type = $5, fal_price = $6, cost = $7, pricing_type = $8,
+              pricing_structure = $9, speed = $10, quality = $11, trending = $12, 
+              max_duration = $13, prompt_required = $14, is_active = true, fal_verified = true, 
+              updated_at = CURRENT_TIMESTAMP
+            WHERE model_id = $15
+          `;
+          
+          await pool.query(updateQuery, [
+            model.name, model.provider, model.description || `High-quality ${model.type} generation`,
+            category, model.type, model.fal_price, credits, model.pricing_type || 'flat',
+            model.pricing_structure || 'simple', model.speed || 'medium', 
+            model.quality || 'high', model.trending || false, model.maxDuration || null,
+            promptRequired,
+            model.id
+          ]);
+          
+          // Update advanced pricing fields if present
+          if (model.pricing_structure === 'per_megapixel') {
+            await pool.query(`
+              UPDATE ai_models SET
+                price_per_megapixel = $1,
+                base_megapixels = $2,
+                max_megapixels = $3
+              WHERE model_id = $4
+            `, [
+              model.price_per_megapixel,
+              model.base_megapixels || 1.0,
+              model.max_megapixels || 2.0,
+              model.id
+            ]);
+          }
+          
+          updated++;
+        } else {
+          // Insert new model with all pricing fields + prompt_required
+          const columns = [
+            'model_id', 'name', 'provider', 'description', 'category', 'type',
+            'fal_price', 'cost', 'pricing_type', 'pricing_structure', 
+            'speed', 'quality', 'trending', 'max_duration', 'prompt_required',
+            'is_active', 'is_custom', 'fal_verified'
+          ];
+          
+          const values = [
+            model.id, model.name, model.provider,
+            model.description || `High-quality ${model.type} generation`,
+            category, model.type, model.fal_price, credits, model.pricing_type || 'flat',
+            model.pricing_structure || 'simple', model.speed || 'medium', 
+            model.quality || 'high', model.trending || false, model.maxDuration || null,
+            promptRequired,
+            true, false, true
+          ];
+          
+          // Add advanced pricing fields if present
+          if (model.pricing_structure === 'per_megapixel') {
+            columns.push('price_per_megapixel', 'base_megapixels', 'max_megapixels');
+            values.push(
+              model.price_per_megapixel,
+              model.base_megapixels || 1.0,
+              model.max_megapixels || 2.0
+            );
+          }
+          
+          const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
+          const insertQuery = `
+            INSERT INTO ai_models (${columns.join(', ')})
+            VALUES (${placeholders})
+          `;
+          
+          await pool.query(insertQuery, values);
+          inserted++;
+        }
+      } catch (modelError) {
+        console.error(`❌ Error: ${model.name}:`, modelError.message);
+      }
+    }
+
+    // Get final stats
+    const stats = await pool.query(`
+      SELECT 
+        COUNT(*) as total,
+        COUNT(*) FILTER (WHERE type = 'image') as image_count,
+        COUNT(*) FILTER (WHERE type = 'video') as video_count,
+        COUNT(*) FILTER (WHERE type = 'audio') as audio_count
+      FROM ai_models
+    `);
+
+    const { total, image_count, video_count, audio_count } = stats.rows[0];
+    
+    console.log(`✅ Models populated: ${inserted} new, ${updated} updated`);
+    console.log(`📊 Total: ${total} models (${image_count} image, ${video_count} video, ${audio_count} audio)`);
+    
+    // ✅ Fix any existing 3D models that might be miscategorized
+    console.log('\n🎲 Checking for 3D models...');
+
+    // Fix category and prompt_required for 3D models
+    const fix3DModelsResult = await pool.query(`
+      UPDATE ai_models
+      SET
+        category = CASE
+          WHEN (model_id LIKE '%seed3d%' OR model_id LIKE '%image-to-3d%' OR model_id LIKE '%img2mesh%')
+          THEN 'Image-to-3D'
+          ELSE 'Text-to-3D'
+        END,
+        prompt_required = CASE
+          WHEN (model_id LIKE '%seed3d%' OR model_id LIKE '%image-to-3d%' OR model_id LIKE '%img2mesh%')
+          THEN false
+          ELSE true
+        END,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE
+        (
+          model_id LIKE '%3d%'
+          OR model_id LIKE '%seed3d%'
+          OR name ILIKE '%3D%'
+          OR name ILIKE '%seed3d%'
+        )
+        AND (
+          category NOT IN ('Text-to-3D', 'Image-to-3D')
+          OR (
+            (model_id LIKE '%seed3d%' OR model_id LIKE '%image-to-3d%' OR model_id LIKE '%img2mesh%')
+            AND prompt_required = true
+          )
+          OR (
+            (model_id NOT LIKE '%seed3d%' AND model_id NOT LIKE '%image-to-3d%' AND model_id NOT LIKE '%img2mesh%')
+            AND model_id LIKE '%3d%'
+            AND prompt_required = false
+          )
+        )
+      RETURNING model_id, name, category,
+                CASE
+                  WHEN (model_id LIKE '%seed3d%' OR model_id LIKE '%image-to-3d%' OR model_id LIKE '%img2mesh%')
+                  THEN 'Image-to-3D'
+                  ELSE 'Text-to-3D'
+                END as new_category
+    `);
+
+    const totalFixed = fix3DModelsResult.rows.length;
+    
+    if (totalFixed > 0) {
+      console.log(`✅ Fixed ${totalFixed} 3D model(s):`);
+
+      // Group by new category
+      const textTo3D = fix3DModelsResult.rows.filter(row => row.new_category === 'Text-to-3D');
+      const imageTo3D = fix3DModelsResult.rows.filter(row => row.new_category === 'Image-to-3D');
+
+      if (textTo3D.length > 0) {
+        console.log('   Text-to-3D models:');
+        textTo3D.forEach(row => {
+          console.log(`   - ${row.name} (${row.model_id})`);
+        });
+      }
+
+      if (imageTo3D.length > 0) {
+        console.log('   Image-to-3D models:');
+        imageTo3D.forEach(row => {
+          console.log(`   - ${row.name} (${row.model_id})`);
+        });
+      }
+    } else {
+      console.log('✅ No 3D models to fix');
+    }
+    
+  } catch (error) {
+    console.error('⚠️  Error populating models:', error.message);
+    console.log('💡 You can populate manually later with: npm run populate-models');
+  }
+}
+
+// Run the setup
+if (require.main === module) {
+  setupDatabase()
+    .then(async () => {
+      // Auto-populate models after setup
+      await populateModels();
+      // Close pool after everything is done
+      await pool.end();
+      process.exit(0);
+    })
+    .catch(async (error) => {
+      console.error('\n❌ Setup failed:', error);
+      await pool.end();
+      process.exit(1);
+    });
+}
+
+module.exports = { setupDatabase, populateModels };
+

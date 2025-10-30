@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="<%= description || 'PixelNest - Platform AI Video Generation untuk membuat video berkualitas tinggi dalam hitungan menit. Teknologi AI terdepan untuk content creators dan bisnis.' %>">
+    <title><%= title || 'PixelNest - AI Video Generation Platform' %></title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+    <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+    
+    <!-- Preconnect untuk optimasi -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <link rel="stylesheet" href="/css/output.css">
+    
+    <!-- Custom Animations -->
+    <style>
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Header Animations */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        /* Header appear animation */
+        header {
+            animation: slideDown 0.4s ease-out;
+        }
+        
+        /* Navbar menu slide animation */
+        .animate-slide-down {
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        /* Smooth backdrop blur */
+        .glass {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        
+        .glass-strong {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        
+        /* Dropdown smooth transition */
+        .group:hover .group-hover\:opacity-100 {
+            animation: fadeIn 0.2s ease-out;
+        }
+        
+        /* Mobile menu toggle animation */
+        #navbarMenu {
+            transition: all 0.3s ease-out;
+        }
+        
+        #navbarMenu.show {
+            display: block !important;
+        }
+        
+        /* Active link indicator */
+        nav a.active {
+            position: relative;
+        }
+        
+        nav a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 100%);
+            border-radius: 2px;
+        }
+        
+        /* Smooth hover underline */
+        nav a:not(.btn-primary):not(.btn-outline) {
+            position: relative;
+        }
+        
+        nav a:not(.btn-primary):not(.btn-outline)::before {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            right: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 100%);
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+        
+        nav a:not(.btn-primary):not(.btn-outline):hover::before {
+            left: 0;
+            right: 0;
+            opacity: 1;
+        }
+        
+        /* Button hover effects */
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-outline {
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px -3px rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Logo animation */
+        .logo-animate {
+            transition: transform 0.3s ease;
+        }
+        
+        .logo-animate:hover {
+            transform: scale(1.05);
+        }
+    </style>
+    
+    <!-- Page specific styles -->
+    <% if (typeof pageStyles !== 'undefined') { %>
+        <%- pageStyles %>
+    <% } %>
+</head>
+<body class="text-white bg-gray-900 min-h-screen">
+    <!-- Header -->
+    <%- include('../partials/header') %>
+    
+    <!-- Main Content -->
+    <%- body %>
+    
+    <!-- Footer -->
+    <%- include('../partials/footer') %>
+    
+    <!-- Mobile Menu Toggle Script -->
+    <script>
+        // Mobile menu toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const navbarToggle = document.getElementById('navbarToggle');
+            const navbarMenu = document.getElementById('navbarMenu');
+            
+            if (navbarToggle && navbarMenu) {
+                navbarToggle.addEventListener('click', function() {
+                    navbarMenu.classList.toggle('hidden');
+                    navbarMenu.classList.toggle('show');
+                });
+            }
+            
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (navbarMenu && !navbarMenu.classList.contains('hidden')) {
+                    if (!navbarToggle.contains(event.target) && !navbarMenu.contains(event.target)) {
+                        navbarMenu.classList.add('hidden');
+                        navbarMenu.classList.remove('show');
+                    }
+                }
+            });
+            
+            // Close mobile menu on resize to desktop
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 1024 && navbarMenu) {
+                    navbarMenu.classList.add('hidden');
+                    navbarMenu.classList.remove('show');
+                }
+            });
+            
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    const href = this.getAttribute('href');
+                    if (href !== '#' && href !== '#!') {
+                        e.preventDefault();
+                        const target = document.querySelector(href);
+                        if (target) {
+                            target.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'start'
+                            });
+                        }
+                    }
+                });
+            });
+            
+            // Add scroll effect to header
+            let lastScroll = 0;
+            const header = document.querySelector('header');
+            
+            window.addEventListener('scroll', () => {
+                const currentScroll = window.pageYOffset;
+                
+                if (currentScroll <= 0) {
+                    header.style.boxShadow = 'none';
+                } else {
+                    header.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.3)';
+                }
+                
+                lastScroll = currentScroll;
+            });
+        });
+    </script>
+    
+    <!-- Page specific scripts -->
+    <% if (typeof pageScripts !== 'undefined') { %>
+        <%- pageScripts %>
+    <% } %>
+    
+    <!-- Main JS -->
+    <script src="/js/main.js"></script>
+</body>
+</html>
+

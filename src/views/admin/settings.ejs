@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <%- include('../partials/admin-styles') %>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+
+    <div class="flex-1 ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: title }) %>
+
+      <main class="p-8 flex-1">
+        <div class="max-w-4xl mx-auto">
+          <!-- Header -->
+          <div class="mb-6">
+            <h1 class="text-3xl font-bold text-white mb-2">⚙️ System Settings</h1>
+            <p class="text-gray-400">Configure system-wide settings and default values</p>
+          </div>
+
+          <!-- Success/Error Messages -->
+          <div id="message-container"></div>
+
+          <!-- User Registration Settings -->
+          <div class="glass-strong rounded-xl p-6 mb-6">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h3 class="text-xl font-bold text-white flex items-center">
+                  <i class="fas fa-user-plus text-blue-400 mr-3"></i>
+                  User Registration Settings
+                </h3>
+                <p class="text-sm text-gray-400 mt-1">Control what happens when new users register</p>
+              </div>
+            </div>
+
+            <form id="registration-settings-form" class="space-y-6">
+              <!-- Give Default Credits Toggle -->
+              <div class="border-b pb-6" style="border-color: rgba(255, 255, 255, 0.1);">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">
+                      Give Default Credits to New Users
+                    </label>
+                    <p class="text-xs text-gray-500">
+                      Automatically give credits when users first register
+                    </p>
+                  </div>
+                  <div class="flex items-center">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" id="give_default_credits" name="give_default_credits" class="sr-only peer" <%= settings.give_default_credits ? 'checked' : '' %>>
+                      <div class="w-14 h-7 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-violet-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-violet-600"></div>
+                    </label>
+                    <span class="ml-3 text-sm font-semibold" id="toggle-status">
+                      <%= settings.give_default_credits ? 'Enabled' : 'Disabled' %>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Default Credits Amount -->
+              <div class="border-b pb-6" style="border-color: rgba(255, 255, 255, 0.1);">
+                <label class="block text-sm font-medium text-gray-300 mb-2">
+                  Default Credits Amount
+                </label>
+                <p class="text-xs text-gray-500 mb-3">
+                  How many credits should new users receive? (Only applies if enabled above)
+                </p>
+                <div class="flex items-center gap-4">
+                  <input 
+                    type="number" 
+                    id="default_user_credits" 
+                    name="default_user_credits" 
+                    value="<%= settings.default_user_credits %>" 
+                    min="0" 
+                    step="1"
+                    class="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:outline-none transition"
+                    <%= !settings.give_default_credits ? 'disabled' : '' %>
+                  >
+                  <div class="text-right">
+                    <div class="text-2xl font-bold text-yellow-400 font-mono" id="credits-display">
+                      <%= settings.default_user_credits %>
+                    </div>
+                    <div class="text-xs text-gray-500">credits</div>
+                  </div>
+                </div>
+                
+                <!-- Suggestions -->
+                <div class="mt-3 flex gap-2">
+                  <button type="button" onclick="setCredits(10)" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-lg transition">10 credits</button>
+                  <button type="button" onclick="setCredits(50)" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-lg transition">50 credits</button>
+                  <button type="button" onclick="setCredits(100)" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-lg transition">100 credits</button>
+                  <button type="button" onclick="setCredits(500)" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-lg transition">500 credits</button>
+                </div>
+              </div>
+
+              <!-- Info Box -->
+              <div class="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                <div class="flex items-start gap-3">
+                  <i class="fas fa-info-circle text-blue-400 text-xl mt-0.5"></i>
+                  <div class="flex-1 text-sm text-gray-300">
+                    <p class="font-semibold mb-1">What users can do with credits:</p>
+                    <ul class="list-disc list-inside space-y-1 text-xs text-gray-400">
+                      <li>Image Generation: ~1-2 credits per image</li>
+                      <li>Video Generation (5s): ~2-5 credits per video</li>
+                      <li>Video Generation (10s): ~4-10 credits per video</li>
+                      <li>With 100 credits: ~20-50 videos or ~100 images</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Save Button -->
+              <div class="flex justify-end gap-3 pt-4">
+                <button type="button" onclick="loadSettings()" class="px-6 py-3 glass rounded-lg hover:bg-white/10 transition">
+                  <i class="fas fa-undo mr-2"></i> Reset
+                </button>
+                <button type="submit" class="px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 rounded-lg transition font-semibold">
+                  <i class="fas fa-save mr-2"></i> Save Settings
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Credit Price Settings (Top-Up) -->
+          <div class="glass-strong rounded-xl p-6 mb-6">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h3 class="text-xl font-bold text-white flex items-center">
+                  <i class="fas fa-dollar-sign text-yellow-400 mr-3"></i>
+                  Credit Price (Top-Up)
+                </h3>
+                <p class="text-sm text-gray-400 mt-1">Set harga per credit untuk top-up via payment gateway</p>
+              </div>
+            </div>
+
+            <form id="credit-price-form" class="space-y-6">
+              <!-- Credit Price Input -->
+              <div class="border-b pb-6" style="border-color: rgba(255, 255, 255, 0.1);">
+                <label class="block text-sm font-medium text-gray-300 mb-2">
+                  Harga per 1 Credit (Rupiah)
+                </label>
+                <p class="text-xs text-gray-500 mb-3">
+                  User akan membayar harga ini saat top-up credits via Tripay
+                </p>
+                <div class="flex items-center gap-4">
+                  <div class="flex-1 relative">
+                    <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-semibold">
+                      Rp
+                    </div>
+                    <input 
+                      type="number" 
+                      id="credit_price_idr" 
+                      name="credit_price_idr" 
+                      value="2000" 
+                      min="1000" 
+                      step="100"
+                      class="w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-yellow-500 focus:outline-none transition text-lg font-semibold"
+                    >
+                  </div>
+                  <div class="text-right">
+                    <div class="text-2xl font-bold text-yellow-400 font-mono" id="price-display">
+                      Rp 2.000
+                    </div>
+                    <div class="text-xs text-gray-500">per credit</div>
+                  </div>
+                </div>
+                
+                <!-- Suggestions -->
+                <div class="mt-3 flex gap-2">
+                  <button type="button" onclick="setPrice(1000)" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-lg transition">Rp 1.000</button>
+                  <button type="button" onclick="setPrice(1500)" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-lg transition">Rp 1.500</button>
+                  <button type="button" onclick="setPrice(2000)" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-lg transition">Rp 2.000</button>
+                  <button type="button" onclick="setPrice(2500)" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-lg transition">Rp 2.500</button>
+                  <button type="button" onclick="setPrice(3000)" class="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-lg transition">Rp 3.000</button>
+                </div>
+              </div>
+
+              <!-- Example Calculation -->
+              <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                <div class="flex items-start gap-3">
+                  <i class="fas fa-calculator text-yellow-400 text-xl mt-0.5"></i>
+                  <div class="flex-1 text-sm text-gray-300">
+                    <p class="font-semibold mb-2">Contoh Perhitungan:</p>
+                    <div class="space-y-1 text-xs text-gray-400">
+                      <div class="flex justify-between">
+                        <span>100 credits =</span>
+                        <span class="font-semibold text-yellow-400" id="example-100">Rp 200.000</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span>200 credits =</span>
+                        <span class="font-semibold text-yellow-400" id="example-200">Rp 400.000</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span>500 credits =</span>
+                        <span class="font-semibold text-yellow-400" id="example-500">Rp 1.000.000</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Save Button -->
+              <div class="flex justify-end gap-3 pt-4">
+                <button type="button" onclick="loadCreditPrice()" class="px-6 py-3 glass rounded-lg hover:bg-white/10 transition">
+                  <i class="fas fa-undo mr-2"></i> Reset
+                </button>
+                <button type="submit" class="px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 rounded-lg transition font-semibold text-black">
+                  <i class="fas fa-save mr-2"></i> Update Price
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Current Settings Summary -->
+          <div class="glass-strong rounded-xl p-6">
+            <h3 class="text-lg font-bold text-white mb-4">📊 Current Configuration</h3>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="bg-white/5 rounded-lg p-4">
+                <div class="text-xs text-gray-500 mb-1">Default Credits Enabled</div>
+                <div class="text-xl font-bold" id="summary-enabled">
+                  <%= settings.give_default_credits ? '✅ Yes' : '❌ No' %>
+                </div>
+              </div>
+              <div class="bg-white/5 rounded-lg p-4">
+                <div class="text-xs text-gray-500 mb-1">Credits per New User</div>
+                <div class="text-xl font-bold text-yellow-400 font-mono" id="summary-amount">
+                  <%= settings.default_user_credits %>
+                </div>
+              </div>
+              <div class="bg-white/5 rounded-lg p-4">
+                <div class="text-xs text-gray-500 mb-1">Credit Price (Top-Up)</div>
+                <div class="text-xl font-bold text-yellow-400 font-mono" id="summary-price">
+                  Rp 2.000
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <%- include('../partials/admin-footer') %>
+    </div>
+  </div>
+
+  <%- include('../partials/admin-scripts') %>
+  
+  <script>
+    // Toggle functionality
+    const toggle = document.getElementById('give_default_credits');
+    const creditsInput = document.getElementById('default_user_credits');
+    const toggleStatus = document.getElementById('toggle-status');
+    
+    toggle.addEventListener('change', function() {
+      const enabled = this.checked;
+      creditsInput.disabled = !enabled;
+      toggleStatus.textContent = enabled ? 'Enabled' : 'Disabled';
+      
+      // Update summary
+      document.getElementById('summary-enabled').textContent = enabled ? '✅ Yes' : '❌ No';
+    });
+    
+    // Credits input update
+    creditsInput.addEventListener('input', function() {
+      document.getElementById('credits-display').textContent = this.value;
+      document.getElementById('summary-amount').textContent = this.value;
+    });
+    
+    // Set credits helper
+    function setCredits(amount) {
+      creditsInput.value = amount;
+      creditsInput.dispatchEvent(new Event('input'));
+    }
+    
+    // Form submission
+    document.getElementById('registration-settings-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const formData = {
+        give_default_credits: toggle.checked,
+        default_user_credits: parseInt(creditsInput.value)
+      };
+      
+      try {
+        const response = await fetch('/admin/api/settings/registration', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showMessage('success', '✅ Settings saved successfully!');
+        } else {
+          showMessage('error', '❌ Failed to save settings: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error saving settings:', error);
+        showMessage('error', '❌ An error occurred while saving settings');
+      }
+    });
+    
+    // Load settings
+    async function loadSettings() {
+      try {
+        const response = await fetch('/admin/api/settings/registration');
+        const data = await response.json();
+        
+        if (data.success) {
+          toggle.checked = data.settings.give_default_credits;
+          creditsInput.value = data.settings.default_user_credits;
+          toggle.dispatchEvent(new Event('change'));
+          creditsInput.dispatchEvent(new Event('input'));
+          
+          showMessage('info', 'ℹ️ Settings reloaded');
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    }
+    
+    // Show message helper
+    function showMessage(type, message) {
+      const container = document.getElementById('message-container');
+      const colors = {
+        success: 'bg-green-500/10 border-green-500/30 text-green-400',
+        error: 'bg-red-500/10 border-red-500/30 text-red-400',
+        info: 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+      };
+      
+      const alert = document.createElement('div');
+      alert.className = `mb-4 p-4 rounded-lg border ${colors[type]} animate-slide-in`;
+      alert.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span>${message}</span>
+          <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-current opacity-70 hover:opacity-100">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      `;
+      
+      container.appendChild(alert);
+      
+      setTimeout(() => {
+        alert.style.opacity = '0';
+        alert.style.transition = 'opacity 0.3s';
+        setTimeout(() => alert.remove(), 300);
+      }, 5000);
+    }
+
+    // ============ CREDIT PRICE MANAGEMENT ============
+    
+    const priceInput = document.getElementById('credit_price_idr');
+    
+    // Price input update
+    priceInput.addEventListener('input', function() {
+      const price = parseInt(this.value) || 0;
+      updatePriceDisplay(price);
+    });
+    
+    // Update price display and examples
+    function updatePriceDisplay(price) {
+      document.getElementById('price-display').textContent = `Rp ${price.toLocaleString('id-ID')}`;
+      document.getElementById('summary-price').textContent = `Rp ${price.toLocaleString('id-ID')}`;
+      
+      // Update examples
+      document.getElementById('example-100').textContent = `Rp ${(price * 100).toLocaleString('id-ID')}`;
+      document.getElementById('example-200').textContent = `Rp ${(price * 200).toLocaleString('id-ID')}`;
+      document.getElementById('example-500').textContent = `Rp ${(price * 500).toLocaleString('id-ID')}`;
+    }
+    
+    // Set price helper
+    function setPrice(amount) {
+      priceInput.value = amount;
+      priceInput.dispatchEvent(new Event('input'));
+    }
+    
+    // Load credit price from server
+    async function loadCreditPrice() {
+      try {
+        const response = await fetch('/admin/api/credit-price');
+        const data = await response.json();
+        
+        if (data.success) {
+          priceInput.value = data.price;
+          priceInput.dispatchEvent(new Event('input'));
+          showMessage('info', 'ℹ️ Credit price reloaded');
+        }
+      } catch (error) {
+        console.error('Error loading credit price:', error);
+        showMessage('error', '❌ Failed to load credit price');
+      }
+    }
+    
+    // Credit price form submission
+    document.getElementById('credit-price-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const price = parseInt(priceInput.value);
+      
+      if (price < 1000) {
+        showMessage('error', '❌ Harga minimal Rp 1.000 per credit');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/admin/api/credit-price', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ price })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showMessage('success', `✅ Harga credit berhasil diupdate menjadi Rp ${price.toLocaleString('id-ID')} per credit`);
+          updatePriceDisplay(price);
+        } else {
+          showMessage('error', '❌ Gagal update harga: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error updating credit price:', error);
+        showMessage('error', '❌ Terjadi kesalahan saat update harga');
+      }
+    });
+    
+    // Load credit price on page load
+    loadCreditPrice();
+  </script>
+</body>
+</html>

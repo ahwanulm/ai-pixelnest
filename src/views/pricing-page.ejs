@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Harga PixelNest - Sistem Credit Fleksibel untuk AI Generation">
+    <title>Harga - PixelNest</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+    <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/output.css">
+    
+    <style>
+        .pricing-card {
+            transition: all 0.3s ease;
+        }
+        .pricing-card:hover {
+            transform: translateY(-8px);
+        }
+        .price-badge {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(217, 70, 239, 0.2));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        .example-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 3px solid #8b5cf6;
+        }
+    </style>
+</head>
+<body class="text-white overflow-x-hidden">
+    <%- include('partials/header') %>
+    
+    <main class="mt-20">
+        <!-- Hero Section -->
+        <section class="relative py-20 overflow-hidden">
+            <!-- Background Effects -->
+            <div class="absolute inset-0 bg-gradient-to-b from-violet-950/20 via-zinc-950 to-zinc-950"></div>
+            <div class="absolute top-0 left-1/4 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-fuchsia-600/10 rounded-full blur-3xl"></div>
+            
+            <div class="section-container relative z-10">
+                <div class="text-center mb-16">
+                    <span class="inline-block px-6 py-2 glass rounded-full text-sm font-mono font-semibold uppercase tracking-wider mb-6 text-violet-400">
+                        💰 Harga
+                    </span>
+                    <h1 class="text-5xl md:text-7xl font-black mb-6 tracking-tight">
+                        Harga Sederhana & <span class="gradient-text">Transparan</span>
+                    </h1>
+                    <p class="text-xl md:text-2xl text-gray-400 font-light max-w-3xl mx-auto leading-relaxed">
+                        Sistem kredit yang fleksibel. Beli sekali, pakai kapan saja. <br>
+                        <span class="text-white font-semibold">Tidak ada langganan bulanan</span>, tidak ada biaya tersembunyi.
+                    </p>
+                </div>
+
+                <!-- How It Works -->
+                <div class="max-w-4xl mx-auto mb-20">
+                    <div class="glass-strong rounded-3xl p-8 md:p-12">
+                        <div class="flex items-center gap-3 mb-8">
+                            <div class="w-12 h-12 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                            </div>
+                            <h2 class="text-3xl font-black">Cara Kerjanya</h2>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-3 gap-6">
+                            <div class="text-center p-6 rounded-2xl bg-white/5 hover:bg-white/10 transition-all">
+                                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-black">
+                                    1
+                                </div>
+                                <h3 class="text-lg font-bold mb-2">Top Up Credit</h3>
+                                <p class="text-gray-400 text-sm">Beli credit sesuai kebutuhan Anda dengan harga Rp 1.500/credit</p>
+                            </div>
+                            <div class="text-center p-6 rounded-2xl bg-white/5 hover:bg-white/10 transition-all">
+                                <div class="w-16 h-16 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-black">
+                                    2
+                                </div>
+                                <h3 class="text-lg font-bold mb-2">Gunakan Untuk Generate</h3>
+                                <p class="text-gray-400 text-sm">Setiap AI model membutuhkan credit berbeda sesuai kompleksitas</p>
+                            </div>
+                            <div class="text-center p-6 rounded-2xl bg-white/5 hover:bg-white/10 transition-all">
+                                <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-black">
+                                    3
+                                </div>
+                                <h3 class="text-lg font-bold mb-2">Credit Tidak Hangus</h3>
+                                <p class="text-gray-400 text-sm">Credit Anda berlaku selamanya, gunakan kapan saja Anda mau</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing Packages -->
+                <div class="max-w-7xl mx-auto mb-20">
+                    <h2 class="text-4xl font-black text-center mb-12">Paket Top Up Credit</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <!-- Starter Pack -->
+                        <div class="pricing-card glass rounded-3xl p-8 relative">
+                            <div class="mb-6">
+                                <div class="text-sm text-gray-400 font-semibold mb-2">STARTER</div>
+                                <div class="flex items-end gap-2 mb-3">
+                                    <span class="text-5xl font-black gradient-text">50K</span>
+                                </div>
+                                <div class="price-badge px-4 py-2 rounded-xl inline-block">
+                                    <span class="text-lg font-bold">~33 Credit</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3 mb-8 text-sm">
+                                <div class="flex items-center gap-2 text-gray-300">
+                                    <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>~33 generasi gambar sederhana</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-300">
+                                    <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>~3 video pendek AI</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-300">
+                                    <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>Cocok untuk coba-coba</span>
+                                </div>
+                            </div>
+                            <a href="/billing?amount=50000" class="btn-outline w-full text-center block hover:scale-105 transition-transform">
+                                Pilih Paket
+                            </a>
+                        </div>
+
+                        <!-- Popular Pack -->
+                        <div class="pricing-card glass-strong rounded-3xl p-8 relative border-2 border-violet-500/50 transform lg:scale-105">
+                            <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                                <span class="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg">
+                                    🔥 POPULER
+                                </span>
+                            </div>
+                            <div class="mb-6">
+                                <div class="text-sm text-violet-400 font-semibold mb-2">POPULAR</div>
+                                <div class="flex items-end gap-2 mb-3">
+                                    <span class="text-5xl font-black gradient-text">100K</span>
+                                </div>
+                                <div class="price-badge px-4 py-2 rounded-xl inline-block">
+                                    <span class="text-lg font-bold">~66 Credit</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3 mb-8 text-sm">
+                                <div class="flex items-center gap-2 text-gray-300">
+                                    <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>~66 generasi gambar</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-300">
+                                    <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>~6 video berkualitas tinggi</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-300">
+                                    <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>Cocok untuk creator</span>
+                                </div>
+                            </div>
+                            <a href="/billing?amount=100000" class="btn-primary w-full text-center block hover:scale-105 transition-transform">
+                                Pilih Paket
+                            </a>
+                        </div>
+
+                        <!-- Pro Pack -->
+                        <div class="pricing-card glass rounded-3xl p-8 relative">
+                            <div class="mb-6">
+                                <div class="text-sm text-gray-400 font-semibold mb-2">PROFESSIONAL</div>
+                                <div class="flex items-end gap-2 mb-3">
+                                    <span class="text-5xl font-black gradient-text">250K</span>
+                                </div>
+                                <div class="price-badge px-4 py-2 rounded-xl inline-block">
+                                    <span class="text-lg font-bold">~166 Credit</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3 mb-8 text-sm">
+                                <div class="flex items-center gap-2 text-gray-300">
+                                    <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>~166 generasi gambar</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-300">
+                                    <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>~16 video premium AI</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-300">
+                                    <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>Untuk produksi konten</span>
+                                </div>
+                            </div>
+                            <a href="/billing?amount=250000" class="btn-outline w-full text-center block hover:scale-105 transition-transform">
+                                Pilih Paket
+                            </a>
+                        </div>
+
+                        <!-- Business Pack -->
+                        <div class="pricing-card glass rounded-3xl p-8 relative">
+                            <div class="mb-6">
+                                <div class="text-sm text-gray-400 font-semibold mb-2">BUSINESS</div>
+                                <div class="flex items-end gap-2 mb-3">
+                                    <span class="text-5xl font-black gradient-text">500K</span>
+                                </div>
+                                <div class="price-badge px-4 py-2 rounded-xl inline-block">
+                                    <span class="text-lg font-bold">~333 Credit</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3 mb-8 text-sm">
+                                <div class="flex items-center gap-2 text-gray-300">
+                                    <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>~333 generasi gambar</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-300">
+                                    <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>~33 video berkualitas 4K</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-300">
+                                    <svg class="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>Untuk bisnis & agensi</span>
+                                </div>
+                            </div>
+                            <a href="/billing?amount=500000" class="btn-outline w-full text-center block hover:scale-105 transition-transform">
+                                Pilih Paket
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Custom Amount Note -->
+                    <div class="mt-8 text-center">
+                        <p class="text-gray-400 mb-4">
+                            💡 <span class="font-semibold text-white">Ingin jumlah custom?</span> Anda bisa top up dengan jumlah berapapun di halaman billing
+                        </p>
+                        <a href="/billing" class="inline-flex items-center gap-2 text-violet-400 hover:text-violet-300 font-semibold transition-colors">
+                            <span>Buka Halaman Billing</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Pricing Examples -->
+                <div class="max-w-5xl mx-auto mb-20">
+                    <h2 class="text-4xl font-black text-center mb-4">Contoh Harga Per Generasi</h2>
+                    <p class="text-center text-gray-400 mb-12">Estimasi biaya credit untuk berbagai jenis AI generation</p>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <!-- Image Generation -->
+                        <div class="glass-strong rounded-2xl p-8">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold">Gambar AI</h3>
+                                    <p class="text-sm text-gray-400">Text-to-Image Generation</p>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="example-item p-4 rounded-xl">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-semibold">FLUX Schnell (Cepat)</span>
+                                        <span class="text-green-400 font-bold">1 credit</span>
+                                    </div>
+                                    <div class="text-xs text-gray-400">≈ Rp 1.500 per gambar</div>
+                                </div>
+                                <div class="example-item p-4 rounded-xl">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-semibold">FLUX Pro (Kualitas Tinggi)</span>
+                                        <span class="text-yellow-400 font-bold">3-5 credit</span>
+                                    </div>
+                                    <div class="text-xs text-gray-400">≈ Rp 4.500 - 7.500 per gambar</div>
+                                </div>
+                                <div class="example-item p-4 rounded-xl">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-semibold">Stable Diffusion</span>
+                                        <span class="text-green-400 font-bold">0.5-1 credit</span>
+                                    </div>
+                                    <div class="text-xs text-gray-400">≈ Rp 750 - 1.500 per gambar</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Video Generation -->
+                        <div class="glass-strong rounded-2xl p-8">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-12 h-12 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-xl flex items-center justify-center">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold">Video AI</h3>
+                                    <p class="text-sm text-gray-400">Text/Image-to-Video</p>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="example-item p-4 rounded-xl">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-semibold">Minimax Video (5s)</span>
+                                        <span class="text-yellow-400 font-bold">5-8 credit</span>
+                                    </div>
+                                    <div class="text-xs text-gray-400">≈ Rp 7.500 - 12.000 per video</div>
+                                </div>
+                                <div class="example-item p-4 rounded-xl">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-semibold">Luma AI Dream Machine</span>
+                                        <span class="text-orange-400 font-bold">8-12 credit</span>
+                                    </div>
+                                    <div class="text-xs text-gray-400">≈ Rp 12.000 - 18.000 per video</div>
+                                </div>
+                                <div class="example-item p-4 rounded-xl">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-semibold">Runway Gen-3</span>
+                                        <span class="text-red-400 font-bold">10-15 credit</span>
+                                    </div>
+                                    <div class="text-xs text-gray-400">≈ Rp 15.000 - 22.500 per video</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-6 glass rounded-2xl">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold mb-2">Harga Dapat Berubah</h4>
+                                <p class="text-sm text-gray-400 leading-relaxed">
+                                    Harga per generasi dapat berbeda tergantung model AI, resolusi, durasi, dan kompleksitas. 
+                                    Harga aktual akan ditampilkan di dashboard sebelum generate. Rate: <span class="text-white font-semibold">Rp 1.500 per credit</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Section -->
+                <div class="max-w-4xl mx-auto">
+                    <h2 class="text-4xl font-black text-center mb-12">Pertanyaan Umum</h2>
+                    <div class="space-y-4">
+                        <div class="glass-strong rounded-2xl p-6 hover:glass transition-all">
+                            <h3 class="text-lg font-bold mb-3 text-violet-400 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                                </svg>
+                                Bagaimana cara kerja sistem credit?
+                            </h3>
+                            <p class="text-gray-300 leading-relaxed">
+                                Anda membeli credit dengan harga <strong>Rp 1.500 per credit</strong>. Setiap kali generate gambar atau video, 
+                                credit akan berkurang sesuai model AI yang digunakan. Credit yang sudah dibeli tidak akan hangus dan bisa digunakan kapan saja.
+                            </p>
+                        </div>
+
+                        <div class="glass-strong rounded-2xl p-6 hover:glass transition-all">
+                            <h3 class="text-lg font-bold mb-3 text-violet-400 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                                </svg>
+                                Berapa minimum top up?
+                            </h3>
+                            <p class="text-gray-300 leading-relaxed">
+                                Minimum top up adalah <strong>1 credit (Rp 1.500)</strong>. Namun kami merekomendasikan minimal 
+                                Rp 50.000 untuk pengalaman yang lebih baik dan bisa mencoba berbagai model AI.
+                            </p>
+                        </div>
+
+                        <div class="glass-strong rounded-2xl p-6 hover:glass transition-all">
+                            <h3 class="text-lg font-bold mb-3 text-violet-400 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                                </svg>
+                                Apakah credit bisa hangus?
+                            </h3>
+                            <p class="text-gray-300 leading-relaxed">
+                                <strong>Tidak!</strong> Credit Anda berlaku selamanya dan tidak akan pernah hangus. 
+                                Gunakan kapan saja Anda membutuhkannya tanpa khawatir kehilangan credit.
+                            </p>
+                        </div>
+
+                        <div class="glass-strong rounded-2xl p-6 hover:glass transition-all">
+                            <h3 class="text-lg font-bold mb-3 text-violet-400 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                                </svg>
+                                Metode pembayaran apa yang tersedia?
+                            </h3>
+                            <p class="text-gray-300 leading-relaxed">
+                                Kami menerima berbagai metode pembayaran Indonesia melalui Tripay: 
+                                <strong>Transfer Bank</strong> (BCA, Mandiri, BNI, BRI, Permata, dll), 
+                                <strong>E-Wallet</strong> (OVO, DANA, ShopeePay, LinkAja, Gopay), 
+                                <strong>QRIS</strong>, dan <strong>Convenience Store</strong> (Alfamart, Indomaret).
+                            </p>
+                        </div>
+
+                        <div class="glass-strong rounded-2xl p-6 hover:glass transition-all">
+                            <h3 class="text-lg font-bold mb-3 text-violet-400 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                                </svg>
+                                Apakah bisa refund?
+                            </h3>
+                            <p class="text-gray-300 leading-relaxed">
+                                Credit yang sudah dibeli tidak dapat di-refund. Namun jika ada masalah teknis atau kesalahan sistem, 
+                                silakan hubungi tim support kami dan kami akan membantu menyelesaikan masalah Anda.
+                            </p>
+                        </div>
+
+                        <div class="glass-strong rounded-2xl p-6 hover:glass transition-all">
+                            <h3 class="text-lg font-bold mb-3 text-violet-400 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                                </svg>
+                                Berapa lama proses top up?
+                            </h3>
+                            <p class="text-gray-300 leading-relaxed">
+                                Credit akan masuk ke akun Anda <strong>otomatis dan instant</strong> setelah pembayaran berhasil dikonfirmasi. 
+                                Biasanya memakan waktu beberapa detik hingga 5 menit tergantung metode pembayaran yang dipilih.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CTA Section -->
+                <div class="mt-20 text-center">
+                    <div class="glass-strong rounded-3xl p-12 max-w-3xl mx-auto">
+                        <h2 class="text-4xl font-black mb-4">Siap Mulai Create?</h2>
+                        <p class="text-xl text-gray-400 mb-8">
+                            Daftar sekarang dan dapatkan <span class="text-violet-400 font-bold">credit gratis</span> untuk memulai!
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                            <a href="/auth/register" class="btn-primary text-center px-8 py-4 text-lg hover:scale-105 transition-transform">
+                                <span class="flex items-center gap-2 justify-center">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                    </svg>
+                                    Mulai Gratis
+                                </span>
+                            </a>
+                            <a href="/contact" class="btn-outline text-center px-8 py-4 text-lg hover:scale-105 transition-transform">
+                                Hubungi Sales
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <script>
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Force Refresh Models</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .container {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        h1 { color: #4ade80; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover { background: #2563eb; }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #374151;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success { color: #4ade80; }
+        .error { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Force Refresh Models Data</h1>
+        <p>Klik tombol di bawah untuk memaksa refresh data models dari database:</p>
+        
+        <button onclick="forceRefresh()">🔄 Force Refresh Now</button>
+        <button onclick="clearAndRefresh()">🗑️ Clear Cache & Refresh</button>
+        <button onclick="goToModels()">📊 Go to Models Page</button>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        const resultDiv = document.getElementById('result');
+        
+        async function forceRefresh() {
+            resultDiv.innerHTML = '⏳ Refreshing data from database...';
+            
+            try {
+                // Force no-cache request
+                const response = await fetch('/admin/api/models?_=' + Date.now() + Math.random(), {
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const kling25Std = data.models.find(m => m.name === 'Kling 2.5 Standard');
+                    const kling25Pro = data.models.find(m => m.name === 'Kling 2.5 Turbo Pro');
+                    const sora2 = data.models.find(m => m.name === 'Sora 2');
+                    
+                    let output = '✅ Data refreshed successfully!\n\n';
+                    output += `📊 Total Models: ${data.models.length}\n\n`;
+                    output += 'Key Models:\n';
+                    
+                    if (kling25Std) {
+                        output += `✅ Kling 2.5 Standard: ${kling25Std.cost} credits\n`;
+                    }
+                    if (kling25Pro) {
+                        output += `✅ Kling 2.5 Turbo Pro: ${kling25Pro.cost} credits\n`;
+                    }
+                    if (sora2) {
+                        output += `✅ Sora 2: ${sora2.cost} credits\n`;
+                    }
+                    
+                    resultDiv.innerHTML = `<span class="success">${output}</span>`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Error: ${data.message}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+        
+        async function clearAndRefresh() {
+            resultDiv.innerHTML = '🗑️ Clearing cache...';
+            
+            // Clear all caches
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+            }
+            
+            // Clear localStorage
+            localStorage.clear();
+            
+            // Clear sessionStorage
+            sessionStorage.clear();
+            
+            resultDiv.innerHTML = '✅ Cache cleared! Refreshing...';
+            
+            setTimeout(forceRefresh, 500);
+        }
+        
+        function goToModels() {
+            // Open in new tab with cache-busting
+            window.open('/admin/models?_=' + Date.now(), '_blank');
+        }
+    </script>
+</body>
+</html>

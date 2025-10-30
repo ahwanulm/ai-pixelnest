@@ -1,0 +1,79 @@
+<aside class="w-64 sidebar fixed h-full overflow-y-auto z-40">
+  <div class="p-6 border-b" style="border-color: rgba(255, 255, 255, 0.1);">
+    <div class="flex items-center mb-6">
+      <img src="/assets/img/logo/logo.png" alt="PixelNest Logo" class="h-10 w-auto">
+      <div class="ml-3">
+        <h1 class="text-xl font-black text-white uppercase tracking-tight">PixelNest</h1>
+        <p class="text-[10px] text-gray-500 uppercase tracking-widest">Admin Panel</p>
+      </div>
+    </div>
+  </div>
+  
+  <nav class="p-4">
+    <a href="/admin" class="sidebar-link block py-3 px-4 rounded-lg mb-2 <%= currentPath === '/admin' || currentPath === '/admin/' || currentPath === '/admin/dashboard' ? 'active' : '' %>">
+      <i class="fas fa-tachometer-alt"></i> Dashboard
+    </a>
+    
+    <a href="/admin/users" class="sidebar-link block py-3 px-4 rounded-lg mb-2 <%= currentPath.startsWith('/admin/users') ? 'active' : '' %>">
+      <i class="fas fa-users"></i> Users
+    </a>
+    
+    <a href="/admin/promo-codes" class="sidebar-link block py-3 px-4 rounded-lg mb-2 <%= currentPath.startsWith('/admin/promo-codes') ? 'active' : '' %>">
+      <i class="fas fa-ticket-alt"></i> Promo Codes
+    </a>
+    
+    <a href="/admin/api-configs" class="sidebar-link block py-3 px-4 rounded-lg mb-2 <%= currentPath.startsWith('/admin/api-configs') ? 'active' : '' %>">
+      <i class="fas fa-cog"></i> API Configs
+    </a>
+    
+    <a href="/admin/fal-balance" class="sidebar-link block py-3 px-4 rounded-lg mb-2 <%= currentPath.startsWith('/admin/fal-balance') ? 'active' : '' %>">
+      <i class="fas fa-wallet"></i> FAL.AI Balance
+    </a>
+    
+    <a href="/admin/models" class="sidebar-link block py-3 px-4 rounded-lg mb-2 <%= currentPath.startsWith('/admin/models') ? 'active' : '' %>">
+      <i class="fas fa-robot"></i> AI Models
+    </a>
+    
+    <a href="/admin/jobs" class="sidebar-link block py-3 px-4 rounded-lg mb-2 <%= currentPath.startsWith('/admin/jobs') ? 'active' : '' %>">
+      <i class="fas fa-tasks"></i> Generation Jobs
+    </a>
+    
+    <a href="/admin/pricing" class="sidebar-link block py-3 px-4 rounded-lg mb-2 <%= currentPath.startsWith('/admin/pricing') ? 'active' : '' %>">
+      <i class="fas fa-chart-line"></i> FAL.AI Pricing
+    </a>
+    
+    <a href="/admin/payment-transactions" class="sidebar-link block py-3 px-4 rounded-lg mb-2 <%= currentPath.startsWith('/admin/payment-transactions') ? 'active' : '' %>">
+      <i class="fas fa-credit-card"></i> Payments
+    </a>
+    
+    <a href="/referral/admin/dashboard" class="sidebar-link block py-3 px-4 rounded-lg mb-2 <%= currentPath.startsWith('/referral/admin') ? 'active' : '' %>">
+      <i class="fas fa-gift"></i> Referral System
+    </a>
+    
+    <a href="/feature-request/admin" class="sidebar-link block py-3 px-4 rounded-lg mb-2 <%= currentPath.startsWith('/feature-request/admin') ? 'active' : '' %>">
+      <i class="fas fa-lightbulb"></i> Feature Requests
+    </a>
+    
+    <a href="/admin/notifications" class="sidebar-link block py-3 px-4 rounded-lg mb-2 <%= currentPath.startsWith('/admin/notifications') ? 'active' : '' %>">
+      <i class="fas fa-bell"></i> Notifications
+    </a>
+    
+    <a href="/admin/activity-logs" class="sidebar-link block py-3 px-4 rounded-lg mb-2 <%= currentPath.startsWith('/admin/activity-logs') ? 'active' : '' %>">
+      <i class="fas fa-history"></i> Activity Logs
+    </a>
+    
+    <a href="/admin/settings" class="sidebar-link block py-3 px-4 rounded-lg mb-2 <%= currentPath.startsWith('/admin/settings') ? 'active' : '' %>">
+      <i class="fas fa-sliders-h"></i> Settings
+    </a>
+    
+    <hr class="my-4" style="border-color: rgba(255, 255, 255, 0.1);">
+    
+    <a href="/dashboard" class="sidebar-link block py-3 px-4 rounded-lg mb-2">
+      <i class="fas fa-home"></i> User Dashboard
+    </a>
+    
+    <a href="/" class="sidebar-link block py-3 px-4 rounded-lg mb-2">
+      <i class="fas fa-globe"></i> View Site
+    </a>
+  </nav>
+</aside>

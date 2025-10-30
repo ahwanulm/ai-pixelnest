@@ -1,0 +1,782 @@
+const FalAiService = require('../services/falAiService');
+const VideoStorage = require('../utils/videoStorage');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs').promises;
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../../public/uploads/temp');
+    try {
+      await fs.mkdir(uploadDir, { recursive: true });
+      cb(null, uploadDir);
+    } catch (error) {
+      cb(error);
+    }
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'));
+    }
+  }
+});
+
+const generationController = {
+  // Multer middleware
+  uploadSingle: upload.single('image'),
+  uploadMultiple: upload.fields([
+    { name: 'startImage', maxCount: 1 },
+    { name: 'endImage', maxCount: 1 }
+  ]),
+  
+  // ============ IMAGE GENERATION ============
+  
+  /**
+   * ⚠️ DEPRECATED - Redirects to queue-based generation
+   * Use /api/queue-generation/create instead
+   */
+  async generateImage(req, res) {
+    // ✨ Redirect to queue-based generation
+    const generationQueueController = require('./generationQueueController');
+    console.log('⚠️ Using deprecated endpoint /api/generate/image/generate');
+    console.log('✅ Redirecting to queue-based generation...');
+    return generationQueueController.createJob(req, res);
+    
+    // OLD BLOCKING CODE BELOW (kept for reference, not executed)
+    /*
+    try {
+      const { prompt, model, aspectRatio, type, quantity, imageUrl } = req.body;
+      const userId = req.user.id;
+      
+      // Validate input
+      if (!prompt) {
+        return res.status(400).json({
+          success: false,
+          message: 'Prompt is required'
+        });
+      }
+      
+      // Calculate cost from database (ALWAYS in sync with admin settings)
+      const numImages = parseInt(quantity) || 1;
+      const modelId = model || req.body.model_id;
+      const cost = await FalAiService.calculateCostByModel(modelId, numImages);
+      
+      // Check user credits
+      const userQuery = await require('../config/database').pool.query(
+        'SELECT credits FROM users WHERE id = $1',
+        [userId]
+      );
+      
+      if (userQuery.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+      
+      const userCredits = userQuery.rows[0].credits;
+      if (userCredits < cost) {
+        return res.status(402).json({
+          success: false,
+          message: `Insufficient credits. Required: ${cost}, Available: ${userCredits}`
+        });
+      }
+      
+      // ⚠️ DON'T DEDUCT CREDITS YET - Only deduct AFTER successful generation
+      console.log(`💰 User has ${userCredits} credits, generation will cost ${cost} credits`);
+      
+      let result;
+      let generationSuccessful = false;
+      
+      try {
+        // Generate based on type
+        switch (type) {
+          case 'text-to-image':
+            result = await FalAiService.generateImage({
+              prompt,
+              model,
+              aspectRatio,
+              numImages
+            });
+            break;
+            
+          case 'edit-image':
+            if (!imageUrl && !req.file) {
+              return res.status(400).json({
+                success: false,
+                message: 'Image is required for edit-image'
+              });
+            }
+            
+            const editImageUrl = imageUrl || `${req.protocol}://${req.get('host')}/uploads/temp/${req.file.filename}`;
+            result = await FalAiService.editImage({
+              imageUrl: editImageUrl,
+              prompt,
+              model
+            });
+            break;
+            
+          case 'upscale':
+            if (!imageUrl && !req.file) {
+              return res.status(400).json({
+                success: false,
+                message: 'Image is required for upscale'
+              });
+            }
+            
+            const upscaleImageUrl = imageUrl || `${req.protocol}://${req.get('host')}/uploads/temp/${req.file.filename}`;
+            result = await FalAiService.upscaleImage({
+              imageUrl: upscaleImageUrl,
+              scale: 2
+            });
+            break;
+            
+          case 'remove-bg':
+            if (!imageUrl && !req.file) {
+              return res.status(400).json({
+                success: false,
+                message: 'Image is required for background removal'
+              });
+            }
+            
+            const removeBgImageUrl = imageUrl || `${req.protocol}://${req.get('host')}/uploads/temp/${req.file.filename}`;
+            result = await FalAiService.removeBackground({
+              imageUrl: removeBgImageUrl
+            });
+            break;
+            
+          default:
+            return res.status(400).json({
+              success: false,
+              message: 'Invalid generation type'
+            });
+        }
+        
+        // ✅ Generation successful! Mark it
+        generationSuccessful = true;
+        console.log('✅ Generation successful! Now saving images locally...');
+        
+        // Download and save images locally to user folder
+        let localImageUrls = [];
+        try {
+          if (result.images && result.images.length > 0) {
+            // Multiple images
+            for (const image of result.images) {
+              const localPath = await VideoStorage.downloadAndSaveImage(image.url, userId);
+              localImageUrls.push(localPath);
+            }
+          } else if (result.image && result.image.url) {
+            // Single image
+            const localPath = await VideoStorage.downloadAndSaveImage(result.image.url, userId);
+            localImageUrls.push(localPath);
+          }
+          console.log('✅ Saved images locally:', localImageUrls);
+        } catch (saveError) {
+          console.error('⚠️ Failed to save images locally, using external URLs:', saveError);
+          // Fallback to external URLs if local save fails
+          localImageUrls = result.images ? result.images.map(img => img.url) : [result.image.url];
+        }
+        
+        // NOW deduct credits since generation was successful
+        await FalAiService.deductCredits(
+          userId,
+          cost,
+          `${type} generation - ${numImages}x`
+        );
+        
+        // Save to history with local URLs
+        const resultUrls = localImageUrls.join(',');
+        await FalAiService.saveGeneration(userId, {
+          generationType: 'image',
+          subType: type,
+          prompt,
+          resultUrl: resultUrls,
+          settings: {
+            model,
+            aspectRatio,
+            quantity: numImages
+          },
+          creditsCost: cost,
+          status: 'completed'
+        });
+        
+        // Clean up temp file if uploaded
+        if (req.file) {
+          try {
+            await fs.unlink(req.file.path);
+          } catch (err) {
+            console.error('Error deleting temp file:', err);
+          }
+        }
+        
+        res.json({
+          success: true,
+          data: result,
+          creditsUsed: cost,
+          creditsRemaining: userCredits - cost
+        });
+        
+      } catch (generationError) {
+        // ❌ Generation failed! Don't deduct credits
+        console.error('❌ Generation failed:', generationError.message);
+        console.log('💰 Credits NOT deducted (user still has', userCredits, 'credits)');
+        
+        // Save failed generation to history (without deducting credits)
+        try {
+          await FalAiService.saveGeneration(userId, {
+            generationType: 'image',
+            subType: type,
+            prompt,
+            resultUrl: null,
+            settings: {
+              model,
+              aspectRatio,
+              quantity: numImages
+            },
+            creditsCost: 0, // No credits charged for failed generation
+            status: 'failed',
+            errorMessage: generationError.message
+          });
+        } catch (historyError) {
+          console.error('Error saving failed generation:', historyError);
+        }
+        
+        // Clean up temp file if uploaded
+        if (req.file) {
+          try {
+            await fs.unlink(req.file.path);
+          } catch (err) {
+            console.error('Error deleting temp file:', err);
+          }
+        }
+        
+        throw generationError; // Re-throw to outer catch
+      }
+      
+    } catch (error) {
+      console.error('Image generation error:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to generate image',
+        creditsCharged: false // Inform user that no credits were charged
+      });
+    }
+  },
+  
+  */
+  },
+  
+  // ============ VIDEO GENERATION ============
+  
+  /**
+   * ⚠️ DEPRECATED - Redirects to queue-based generation  
+   * Use /api/queue-generation/create instead
+   */
+  async generateVideo(req, res) {
+    // ✨ Redirect to queue-based generation
+    const generationQueueController = require('./generationQueueController');
+    console.log('⚠️ Using deprecated endpoint /api/generate/video/generate');
+    console.log('✅ Redirecting to queue-based generation...');
+    return generationQueueController.createJob(req, res);
+    
+    // OLD BLOCKING CODE BELOW (kept for reference, not executed)
+    /*
+    try {
+      const { prompt, type, duration, aspectRatio, quantity, hasAudio, startImageUrl, endImageUrl } = req.body;
+      const userId = req.user.id;
+      
+      // Validate input
+      if (!prompt) {
+        return res.status(400).json({
+          success: false,
+          message: 'Prompt is required'
+        });
+      }
+      
+      // Calculate cost from database (ALWAYS in sync with admin settings)
+      // Pass duration, type, and hasAudio for multi-tier pricing models
+      const numVideos = parseInt(quantity) || 1;
+      const videoDuration = parseInt(duration) || 5;
+      const modelId = req.body.model || req.body.model_id;
+      const videoType = type || 'text-to-video';
+      const withAudio = hasAudio === 'true' || hasAudio === true;
+      
+      // NEW: Pass type and audio for multi-tier pricing
+      const cost = await FalAiService.calculateCostByModel(modelId, numVideos, videoDuration, videoType, withAudio);
+      
+      // Check user credits
+      const userQuery = await require('../config/database').pool.query(
+        'SELECT credits FROM users WHERE id = $1',
+        [userId]
+      );
+      
+      if (userQuery.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+      
+      const userCredits = userQuery.rows[0].credits;
+      if (userCredits < cost) {
+        return res.status(402).json({
+          success: false,
+          message: `Insufficient credits. Required: ${cost}, Available: ${userCredits}`
+        });
+      }
+      
+      // ⚠️ DON'T DEDUCT CREDITS YET - Only deduct AFTER successful generation
+      console.log(`💰 User has ${userCredits} credits, video generation will cost ${cost} credits`);
+      
+      let result;
+      let generationSuccessful = false;
+      
+      try {
+        // Generate based on type
+        switch (type) {
+          case 'text-to-video':
+            result = await FalAiService.generateVideo({
+              prompt,
+              duration: videoDuration,
+              aspectRatio
+            });
+            break;
+            
+          case 'image-to-video':
+            if (!startImageUrl && !req.files?.startImage) {
+              return res.status(400).json({
+                success: false,
+                message: 'Start image is required for image-to-video'
+              });
+            }
+            
+            const startUrl = startImageUrl || `${req.protocol}://${req.get('host')}/uploads/temp/${req.files.startImage[0].filename}`;
+            result = await FalAiService.imageToVideo({
+              imageUrl: startUrl,
+              prompt,
+              duration: videoDuration,
+              aspectRatio
+            });
+            break;
+            
+          case 'image-to-video-end':
+            if (!startImageUrl && !req.files?.startImage) {
+              return res.status(400).json({
+                success: false,
+                message: 'Start image is required'
+              });
+            }
+            if (!endImageUrl && !req.files?.endImage) {
+              return res.status(400).json({
+                success: false,
+                message: 'End image is required for this type'
+              });
+            }
+            
+            const startFrameUrl = startImageUrl || `${req.protocol}://${req.get('host')}/uploads/temp/${req.files.startImage[0].filename}`;
+            const endFrameUrl = endImageUrl || `${req.protocol}://${req.get('host')}/uploads/temp/${req.files.endImage[0].filename}`;
+            
+            result = await FalAiService.imageToVideoWithEndFrame({
+              startImageUrl: startFrameUrl,
+              endImageUrl: endFrameUrl,
+              prompt,
+              duration: videoDuration,
+              aspectRatio
+            });
+            break;
+            
+          default:
+            return res.status(400).json({
+              success: false,
+              message: 'Invalid generation type'
+            });
+        }
+        
+        // ✅ Generation successful! Mark it
+        generationSuccessful = true;
+        console.log('✅ Video generation successful! Now saving video locally...');
+        
+        // Download and save video locally to user folder
+        let localVideoUrl = result.video.url; // Fallback to external URL
+        try {
+          localVideoUrl = await VideoStorage.downloadAndSaveVideo(
+            result.video.url,
+            userId,
+            {
+              duration: videoDuration,
+              aspectRatio,
+              width: result.video.width,
+              height: result.video.height
+            }
+          );
+          console.log('✅ Saved video locally:', localVideoUrl);
+          
+          // Update result object with local URL for response
+          result.video.localUrl = localVideoUrl;
+        } catch (saveError) {
+          console.error('⚠️ Failed to save video locally, using external URL:', saveError);
+        }
+        
+        // NOW deduct credits since generation was successful
+        await FalAiService.deductCredits(
+          userId,
+          cost,
+          `${type} generation - ${videoDuration}s`
+        );
+        
+        // Save to history with local URL
+        await FalAiService.saveGeneration(userId, {
+          generationType: 'video',
+          subType: type,
+          prompt,
+          resultUrl: localVideoUrl, // Use local path
+          settings: {
+            duration: videoDuration,
+            aspectRatio,
+            quantity: numVideos
+          },
+          creditsCost: cost,
+          status: 'completed'
+        });
+        
+        // Clean up temp files if uploaded
+        if (req.files) {
+          if (req.files.startImage) {
+            try {
+              await fs.unlink(req.files.startImage[0].path);
+            } catch (err) {
+              console.error('Error deleting temp file:', err);
+            }
+          }
+          if (req.files.endImage) {
+            try {
+              await fs.unlink(req.files.endImage[0].path);
+            } catch (err) {
+              console.error('Error deleting temp file:', err);
+            }
+          }
+        }
+        
+        res.json({
+          success: true,
+          data: result,
+          creditsUsed: cost,
+          creditsRemaining: userCredits - cost
+        });
+        
+      } catch (generationError) {
+        // ❌ Generation failed! Don't deduct credits
+        console.error('❌ Video generation failed:', generationError.message);
+        console.log('💰 Credits NOT deducted (user still has', userCredits, 'credits)');
+        
+        // Save failed generation to history (without deducting credits)
+        try {
+          await FalAiService.saveGeneration(userId, {
+            generationType: 'video',
+            subType: type,
+            prompt,
+            resultUrl: null,
+            settings: {
+              duration: videoDuration,
+              aspectRatio,
+              quantity: numVideos
+            },
+            creditsCost: 0, // No credits charged for failed generation
+            status: 'failed',
+            errorMessage: generationError.message
+          });
+        } catch (historyError) {
+          console.error('Error saving failed generation:', historyError);
+        }
+        
+        // Clean up temp files if uploaded
+        if (req.files) {
+          if (req.files.startImage) {
+            try {
+              await fs.unlink(req.files.startImage[0].path);
+            } catch (err) {
+              console.error('Error deleting temp file:', err);
+            }
+          }
+          if (req.files.endImage) {
+            try {
+              await fs.unlink(req.files.endImage[0].path);
+            } catch (err) {
+              console.error('Error deleting temp file:', err);
+            }
+          }
+        }
+        
+        throw generationError; // Re-throw to outer catch
+      }
+      
+    } catch (error) {
+      console.error('Video generation error:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to generate video',
+        creditsCharged: false // Inform user that no credits were charged
+      });
+    }
+    */
+  },
+  
+  // ============ UTILITY ENDPOINTS ============
+  
+  async getHistory(req, res) {
+    try {
+      const userId = req.user.id;
+      const limit = parseInt(req.query.limit) || 100;
+      
+      const history = await FalAiService.getUserHistory(userId, limit);
+      
+      // Group by date for organized display (4 columns grid)
+      const groupedByDate = {};
+      history.forEach(item => {
+        const date = new Date(item.created_at).toLocaleDateString('id-ID', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        
+        if (!groupedByDate[date]) {
+          groupedByDate[date] = [];
+        }
+        groupedByDate[date].push(item);
+      });
+      
+      res.json({
+        success: true,
+        data: history,
+        groupedByDate: groupedByDate,
+        total: history.length
+      });
+    } catch (error) {
+      console.error('Error fetching history:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch history'
+      });
+    }
+  },
+  
+  // Gallery page view
+  async showGallery(req, res) {
+    try {
+      const userId = req.user.id;
+      const { pool } = require('../config/database');
+      
+      // Fetch user's generation history from database
+      const historyQuery = await pool.query(
+        `        SELECT 
+          id,
+          generation_type,
+          sub_type,
+          prompt,
+          result_url,
+          settings,
+          cost_credits,
+          status,
+          created_at
+        FROM ai_generation_history
+        WHERE user_id = $1 
+          AND status = 'completed'
+          AND result_url IS NOT NULL
+        ORDER BY created_at DESC
+        LIMIT 500`,
+        [userId]
+      );
+      
+      // Group generations by date for better UI
+      const generations = historyQuery.rows;
+      const groupedByDate = {};
+      
+      generations.forEach(gen => {
+        const date = new Date(gen.created_at).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        
+        if (!groupedByDate[date]) {
+          groupedByDate[date] = [];
+        }
+        
+        groupedByDate[date].push({
+          id: gen.id,
+          type: gen.generation_type,
+          subType: gen.sub_type,
+          prompt: gen.prompt,
+          url: gen.result_url,
+          settings: gen.settings,
+          cost: gen.cost_credits,
+          createdAt: gen.created_at
+        });
+      });
+      
+      // Calculate stats
+      const imageCount = generations.filter(g => g.generation_type === 'image').length;
+      const videoCount = generations.filter(g => g.generation_type === 'video').length;
+      const totalCount = generations.length;
+      
+      res.render('auth/gallery', {
+        title: 'My Gallery - Generation History',
+        user: req.user,
+        generations: generations,
+        groupedGenerations: groupedByDate,
+        stats: {
+          total: totalCount,
+          images: imageCount,
+          videos: videoCount
+        }
+      });
+    } catch (error) {
+      console.error('Error showing gallery:', error);
+      res.status(500).send('Error loading gallery');
+    }
+  },
+  
+  async getPricing(req, res) {
+    try {
+      const pricing = FalAiService.getPricing();
+      res.json({
+        success: true,
+        data: pricing
+      });
+    } catch (error) {
+      console.error('Error fetching pricing:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch pricing'
+      });
+    }
+  },
+  
+  async getUserCredits(req, res) {
+    try {
+      const userId = req.user.id;
+      
+      const result = await require('../config/database').pool.query(
+        'SELECT credits FROM users WHERE id = $1',
+        [userId]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+      
+      // Parse credits from DECIMAL (string) to number for JSON response
+      const credits = parseFloat(result.rows[0].credits) || 0;
+      
+      res.json({
+        success: true,
+        credits: credits
+      });
+    } catch (error) {
+      console.error('Error fetching credits:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch credits'
+      });
+    }
+  },
+  
+  async checkApiBalance(req, res) {
+    try {
+      // Admin only
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Admin access required'
+        });
+      }
+      
+      const balance = await FalAiService.checkBalance();
+      res.json(balance);
+    } catch (error) {
+      console.error('Error checking balance:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to check balance'
+      });
+    }
+  },
+  
+  // Delete generation from history
+  async deleteGeneration(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      // Verify ownership
+      const checkQuery = `
+        SELECT id, user_id FROM ai_generation_history 
+        WHERE id = $1
+      `;
+      const checkResult = await require('../config/database').pool.query(checkQuery, [id]);
+      
+      if (checkResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Generation not found'
+        });
+      }
+      
+      // Check if user owns this generation (or is admin)
+      if (checkResult.rows[0].user_id !== userId && req.user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to delete this generation'
+        });
+      }
+      
+      // Delete from database
+      const deleteQuery = `
+        DELETE FROM ai_generation_history 
+        WHERE id = $1
+        RETURNING id
+      `;
+      const deleteResult = await require('../config/database').pool.query(deleteQuery, [id]);
+      
+      console.log(`🗑️ Deleted generation ${id} by user ${userId}`);
+      
+      res.json({
+        success: true,
+        message: 'Generation deleted successfully',
+        id: deleteResult.rows[0].id
+      });
+      
+    } catch (error) {
+      console.error('Error deleting generation:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete generation'
+      });
+    }
+  }
+};
+
+module.exports = generationController;
+

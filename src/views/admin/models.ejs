@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <%- include('../partials/admin-styles') %>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+
+    <!-- Main Content -->
+    <div class="flex-1 ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: title }) %>
+
+      <main class="p-4 md:p-8 flex-1">
+        <!-- Page Header -->
+        <div class="mb-6">
+          <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">🤖 AI Models Management</h1>
+          <p class="text-sm md:text-base text-gray-400">Manage available AI models for image and video generation</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-6">
+          <!-- Total Models -->
+          <div class="stat-card rounded-xl p-4 md:p-6">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <p class="text-xs md:text-sm text-gray-400 font-medium">Total Models</p>
+                <h3 id="total-models" class="text-xl md:text-2xl font-bold text-white mt-1">0</h3>
+              </div>
+              <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-robot text-blue-400 text-lg md:text-xl"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Image Models -->
+          <div class="stat-card rounded-xl p-4 md:p-6">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <p class="text-xs md:text-sm text-gray-400 font-medium">Image</p>
+                <h3 id="image-models" class="text-xl md:text-2xl font-bold text-white mt-1">0</h3>
+              </div>
+              <div class="w-10 h-10 md:w-12 md:h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-image text-purple-400 text-lg md:text-xl"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Video Models -->
+          <div class="stat-card rounded-xl p-4 md:p-6">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <p class="text-xs md:text-sm text-gray-400 font-medium">Video</p>
+                <h3 id="video-models" class="text-xl md:text-2xl font-bold text-white mt-1">0</h3>
+              </div>
+              <div class="w-10 h-10 md:w-12 md:h-12 bg-pink-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-video text-pink-400 text-lg md:text-xl"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Audio Models -->
+          <div class="stat-card rounded-xl p-4 md:p-6">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <p class="text-xs md:text-sm text-gray-400 font-medium">Audio</p>
+                <h3 id="audio-models" class="text-xl md:text-2xl font-bold text-white mt-1">0</h3>
+              </div>
+              <div class="w-10 h-10 md:w-12 md:h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-music text-cyan-400 text-lg md:text-xl"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Trending -->
+          <div class="stat-card rounded-xl p-4 md:p-6">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <p class="text-xs md:text-sm text-gray-400 font-medium">Trending</p>
+                <h3 id="trending-models" class="text-xl md:text-2xl font-bold text-white mt-1">0</h3>
+              </div>
+              <div class="w-10 h-10 md:w-12 md:h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-fire text-green-400 text-lg md:text-xl"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="glass-strong rounded-xl p-4 md:p-6 mb-6">
+          <div class="flex flex-col lg:flex-row gap-4">
+            <!-- Search -->
+            <div class="flex-1">
+              <div class="relative">
+                <input 
+                  type="text" 
+                  id="search-models" 
+                  placeholder="Search models..."
+                  class="w-full px-4 py-2.5 md:py-3 pl-10 md:pl-12 bg-gray-800/50 border border-gray-700 rounded-lg text-sm md:text-base text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition"
+                >
+                <i class="fas fa-search absolute left-3 md:left-4 top-3 md:top-4 text-gray-500 text-sm md:text-base"></i>
+              </div>
+            </div>
+
+            <!-- Filters & Actions -->
+            <div class="flex flex-wrap gap-2 md:gap-3">
+              <select id="filter-type" class="flex-1 sm:flex-none px-3 md:px-4 py-2.5 md:py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-sm md:text-base text-white focus:outline-none focus:border-purple-500 transition">
+                <option value="">All Types</option>
+                <option value="image">Image</option>
+                <option value="video">Video</option>
+                <option value="audio">Audio</option>
+              </select>
+
+              <select id="filter-status" class="flex-1 sm:flex-none px-3 md:px-4 py-2.5 md:py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-sm md:text-base text-white focus:outline-none focus:border-purple-500 transition">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="trending">Trending</option>
+                <option value="viral">Viral</option>
+              </select>
+
+              <button onclick="syncFalModels()" class="w-full sm:w-auto px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm md:text-base rounded-lg hover:from-green-700 hover:to-emerald-700 transition flex items-center justify-center gap-2 font-medium">
+                <i class="fas fa-sync"></i>
+                <span>Sync FAL.AI</span>
+              </button>
+              
+    <button onclick="openSunoPricingModal()" class="w-full sm:w-auto px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white text-sm md:text-base rounded-lg hover:from-pink-700 hover:to-purple-700 transition flex items-center justify-center gap-2 font-medium" title="Add all Suno AI music models with custom pricing">
+      <i class="fas fa-music"></i>
+      <span class="hidden sm:inline">Add Suno Models</span>
+      <span class="sm:hidden">Suno</span>
+    </button>
+              
+              <button onclick="verifyFalPricing()" class="w-full sm:w-auto px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm md:text-base rounded-lg hover:from-green-700 hover:to-emerald-700 transition flex items-center justify-center gap-2 font-medium" title="Verify FAL.AI pricing accuracy">
+                <i class="fas fa-sync"></i>
+                <span class="hidden sm:inline">Verify FAL Pricing</span>
+                <span class="sm:hidden">Verify</span>
+              </button>
+              
+              <button onclick="verifyPricing()" class="w-full sm:w-auto px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-yellow-600 to-orange-600 text-white text-sm md:text-base rounded-lg hover:from-yellow-700 hover:to-orange-700 transition flex items-center justify-center gap-2 font-medium">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span class="hidden sm:inline">Fix Pricing</span>
+                <span class="sm:hidden">Fix</span>
+              </button>
+              
+              <button onclick="refreshAllPricing()" class="w-full sm:w-auto px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm md:text-base rounded-lg hover:from-purple-700 hover:to-pink-700 transition flex items-center justify-center gap-2 font-medium">
+                <i class="fas fa-refresh"></i>
+                <span class="hidden sm:inline">Refresh</span>
+                <span class="sm:hidden">Refresh</span>
+              </button>
+
+              <button onclick="openBrowseModal()" class="w-full sm:w-auto px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-sm md:text-base rounded-lg hover:from-blue-700 hover:to-cyan-700 transition flex items-center justify-center gap-2 font-medium">
+                <i class="fas fa-search"></i>
+                <span class="hidden sm:inline">Browse fal.ai</span>
+                <span class="sm:hidden">Browse</span>
+              </button>
+
+              <button onclick="openAddModal()" class="w-full sm:w-auto px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm md:text-base rounded-lg hover:from-purple-700 hover:to-pink-700 transition flex items-center justify-center gap-2 font-medium">
+                <i class="fas fa-plus"></i>
+                <span>Add Manual</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bulk Actions Bar -->
+        <div id="bulk-actions-bar" class="glass-strong rounded-xl p-4 mb-4 hidden">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <span id="selected-count" class="text-sm text-gray-300 font-medium">0 models selected</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button 
+                onclick="activateSelected()" 
+                class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition flex items-center gap-2"
+              >
+                <i class="fas fa-check-circle"></i>
+                <span>Activate Selected</span>
+              </button>
+              <button 
+                onclick="deactivateSelected()" 
+                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition flex items-center gap-2"
+              >
+                <i class="fas fa-times-circle"></i>
+                <span>Deactivate Selected</span>
+              </button>
+              <button 
+                onclick="syncSelectedPrices()" 
+                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition flex items-center gap-2"
+              >
+                <i class="fas fa-sync"></i>
+                <span>Sync Prices</span>
+              </button>
+              <button 
+                onclick="deleteSelectedModels()" 
+                class="px-4 py-2 bg-red-700 hover:bg-red-800 text-white text-sm rounded-lg transition flex items-center gap-2"
+              >
+                <i class="fas fa-trash"></i>
+                <span>Delete Selected</span>
+              </button>
+              <button 
+                onclick="clearSelection()" 
+                class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-lg transition"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Models Table -->
+        <div class="glass-strong rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[640px]">
+              <thead class="bg-gray-800/50">
+                <tr>
+                  <th class="px-3 md:px-4 py-3 md:py-4 text-left">
+                    <input 
+                      type="checkbox" 
+                      id="select-all-checkbox" 
+                      onchange="toggleSelectAll(this)"
+                      class="w-4 h-4 rounded border-gray-600 bg-gray-700 text-purple-600 focus:ring-purple-500 focus:ring-offset-gray-800 cursor-pointer"
+                      title="Select All"
+                    >
+                  </th>
+                  <th class="px-3 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Model</th>
+                  <th class="px-3 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Type</th>
+                  <th class="px-3 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider hidden lg:table-cell">Category</th>
+                  <th class="px-3 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Status</th>
+                  <th class="px-3 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">FAL Price</th>
+                  <th class="px-3 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Credits</th>
+                  <th class="px-3 md:px-6 py-3 md:py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="models-table-body" class="divide-y divide-gray-700/50">
+                <!-- Models will be loaded here -->
+                <tr>
+                  <td colspan="8" class="px-3 md:px-6 py-8 text-center text-gray-400">
+                    <i class="fas fa-spinner fa-spin text-xl md:text-2xl mb-2"></i>
+                    <p class="text-sm md:text-base">Loading models...</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="mt-6 flex flex-wrap justify-center gap-2">
+          <!-- Pagination buttons will be added here -->
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Add/Edit Model Modal -->
+  <div id="model-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="glass-strong rounded-2xl max-w-2xl w-full my-8">
+      <div class="p-4 md:p-6 border-b border-gray-700">
+        <div class="flex items-center justify-between">
+          <h3 id="modal-title" class="text-xl md:text-2xl font-bold text-white">Add New Model</h3>
+          <button onclick="closeModal()" class="text-gray-400 hover:text-white transition">
+            <i class="fas fa-times text-lg md:text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <form id="model-form" class="p-4 md:p-6 space-y-4 max-h-[calc(90vh-100px)] overflow-y-auto">
+        <input type="hidden" id="model-edit-id">
+
+        <!-- Model ID & Name -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Model ID <span class="text-red-400">*</span></label>
+            <input 
+              type="text" 
+              id="model-id" 
+              required
+              placeholder="fal-ai/flux-pro"
+              class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-purple-500"
+            >
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Model Name <span class="text-red-400">*</span></label>
+            <input 
+              type="text" 
+              id="model-name" 
+              required
+              placeholder="FLUX Pro"
+              class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-purple-500"
+            >
+          </div>
+        </div>
+
+        <!-- Provider & Description -->
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Provider</label>
+            <input 
+              type="text" 
+              id="model-provider" 
+              placeholder="Black Forest Labs"
+              class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-purple-500"
+            >
+          </div>
+          <div class="col-span-2">
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Description</label>
+            <input 
+              type="text" 
+              id="model-description" 
+              placeholder="Brief description..."
+              class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-purple-500"
+            >
+          </div>
+        </div>
+
+        <!-- Type, Category, Speed & Quality (Compact Grid) -->
+        <div class="grid grid-cols-4 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Type <span class="text-red-400">*</span></label>
+            <select 
+              id="model-type" 
+              required
+              onchange="updateCategoryOptions()"
+              class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-purple-500"
+            >
+              <option value="">Select</option>
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+              <option value="audio">Audio</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Category <span class="text-red-400">*</span></label>
+            <select 
+              id="model-category" 
+              required
+              class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-purple-500"
+            >
+              <option value="">Select</option>
+              <!-- Image Categories -->
+              <option value="Text-to-Image" data-type="image">Text-to-Image</option>
+              <option value="Image Editing" data-type="image">Image Editing</option>
+              <option value="Upscaling" data-type="image">Upscaling</option>
+              <option value="Background Removal" data-type="image">Background Removal</option>
+              <option value="Face Enhancement" data-type="image">Face Enhancement</option>
+              <option value="Style Transfer" data-type="image">Style Transfer</option>
+              <option value="Text-to-3D" data-type="image">Text-to-3D</option>
+              <option value="Image-to-3D" data-type="image">Image-to-3D</option>
+              
+              <!-- Video Categories -->
+              <option value="Text-to-Video" data-type="video">Text-to-Video</option>
+              <option value="Image-to-Video" data-type="video">Image-to-Video</option>
+              <option value="Video Editing" data-type="video">Video Editing</option>
+              <option value="Video Enhancement" data-type="video">Video Enhancement</option>
+              <option value="Video Upscaling" data-type="video">Video Upscaling</option>
+              <option value="Animation" data-type="video">Animation</option>
+              <option value="Video Effects" data-type="video">Video Effects</option>
+              
+              <!-- Audio Categories -->
+              <option value="Text-to-Speech" data-type="audio">Text-to-Speech</option>
+              <option value="Audio Generation" data-type="audio">Audio Generation</option>
+              <option value="Music Generation" data-type="audio">Music Generation</option>
+              <option value="Voice Cloning" data-type="audio">Voice Cloning</option>
+              <option value="Audio Enhancement" data-type="audio">Audio Enhancement</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Speed</label>
+            <select 
+              id="model-speed" 
+              class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-purple-500"
+            >
+              <option value="">Select</option>
+              <option value="ultra-fast">Ultra Fast</option>
+              <option value="very-fast">Very Fast</option>
+              <option value="fast">Fast</option>
+              <option value="medium">Medium</option>
+              <option value="slow">Slow</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-300 mb-1">Quality</label>
+            <select 
+              id="model-quality" 
+              class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-purple-500"
+            >
+              <option value="">Select</option>
+              <option value="excellent">Excellent</option>
+              <option value="very-good">Very Good</option>
+              <option value="good">Good</option>
+              <option value="fair">Fair</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Duration Configuration (for Video Models) -->
+        <div id="duration-config-section" class="space-y-3 p-4 bg-gradient-to-r from-blue-900/20 to-purple-900/20 rounded-lg border border-blue-500/30">
+          <div class="flex items-center gap-2">
+            <i class="fas fa-clock text-blue-400"></i>
+            <label class="text-sm font-semibold text-blue-300">⏱️ Duration Configuration</label>
+            <span class="text-xs text-gray-400">(Video models only)</span>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Available Durations -->
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Available Durations <i class="fas fa-info-circle text-cyan-400" title="Comma-separated: 5,10 or 4s,6s,8s"></i></label>
+              <input 
+                type="text" 
+                id="available-durations" 
+                placeholder="5,10 or 4s,6s,8s"
+                class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500"
+              >
+              <p class="text-xs text-gray-500 mt-1">
+                Examples:<br>
+                • Kling: <code class="text-green-400">5,10</code><br>
+                • Veo3: <code class="text-green-400">4s,6s,8s</code><br>
+                • Runway: <code class="text-green-400">5,10</code>
+              </p>
+            </div>
+            
+            <!-- Price Per Second -->
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Price Per Second ($)</label>
+              <input 
+                type="number" 
+                id="price-per-second-input" 
+                step="0.0001"
+                placeholder="0.0100"
+                oninput="autoCalculateCredits()"
+                class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500"
+              >
+              <p class="text-xs text-gray-500 mt-1">
+                Used for per-second pricing calculation
+              </p>
+            </div>
+          </div>
+          
+          <!-- Duration Preview -->
+          <div class="p-3 bg-gray-800/30 rounded-lg">
+            <p class="text-xs font-semibold text-cyan-400 mb-2">💡 Duration Preview:</p>
+            <div id="duration-preview" class="text-xs text-gray-300">
+              Enter durations above to see preview...
+            </div>
+          </div>
+          
+          <!-- Duration Type -->
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Duration Format <i class="fas fa-info-circle text-cyan-400" title="How duration is sent to API"></i></label>
+            <select 
+              id="duration-format-type" 
+              class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-blue-500"
+            >
+              <option value="number">Number (e.g., Veo: 4, 6, 8)</option>
+              <option value="string">String (e.g., Kling: "5", "10")</option>
+            </select>
+            <p class="text-xs text-gray-500 mt-1">
+              <strong>Number:</strong> Google Veo models (4, 6, 8)<br>
+              <strong>String:</strong> Kling models ("5", "10", "15")
+            </p>
+          </div>
+        </div>
+
+        <!-- Advanced Model Configuration -->
+        <div class="space-y-3 p-4 bg-gradient-to-r from-purple-900/20 to-pink-900/20 rounded-lg border border-purple-500/30">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-cog text-purple-400"></i>
+              <label class="text-sm font-semibold text-purple-300">⚙️ Advanced Configuration</label>
+            </div>
+            <button type="button" onclick="loadModelTemplate()" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded transition">
+              <i class="fas fa-download mr-1"></i> Load Template
+            </button>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Parameter Style -->
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Aspect Ratio Style</label>
+              <select 
+                id="aspect-ratio-style" 
+                class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-purple-500"
+              >
+                <option value="">Auto-detect</option>
+                <option value="aspect_ratio">aspect_ratio (16:9, 9:16, 1:1)</option>
+                <option value="image_size">image_size (square_hd, landscape_16_9, portrait_16_9)</option>
+                <option value="size">size (1024x1024, 1536x864)</option>
+              </select>
+            </div>
+            
+            <!-- Supports Features -->
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Supported Features</label>
+              <div class="flex flex-wrap gap-2 p-2 bg-gray-800/50 border border-gray-700 rounded">
+                <label class="flex items-center gap-1 text-xs">
+                  <input type="checkbox" id="supports-i2v" class="rounded bg-gray-700 border-gray-600 text-purple-600">
+                  <span class="text-gray-300">Image-to-Video</span>
+                </label>
+                <label class="flex items-center gap-1 text-xs">
+                  <input type="checkbox" id="supports-multi-image" class="rounded bg-gray-700 border-gray-600 text-purple-600">
+                  <span class="text-gray-300">Multiple Images</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Custom Parameters (JSON) -->
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">
+              Custom Parameters (JSON) 
+              <i class="fas fa-info-circle text-cyan-400" title="Additional model-specific parameters"></i>
+            </label>
+            <textarea 
+              id="custom-parameters" 
+              rows="4"
+              placeholder='Example:
+{
+  "safety_tolerance": "2",
+  "output_format": "jpeg",
+  "num_inference_steps": 50,
+  "magic_prompt_option": "AUTO"
+}'
+              oninput="validateJSON(this)"
+              class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-xs font-mono focus:outline-none focus:border-purple-500"
+            ></textarea>
+            <div id="json-validation-status" class="text-xs mt-1 hidden">
+              <!-- Validation feedback will appear here -->
+            </div>
+            <p class="text-xs text-gray-500 mt-1">
+              Add any extra parameters required by the model (must be valid JSON)
+            </p>
+          </div>
+          
+          <!-- API Endpoint Override -->
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Custom API Endpoint (Optional)</label>
+            <input 
+              type="text" 
+              id="custom-api-endpoint" 
+              placeholder="Leave empty to use model_id as endpoint"
+              class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-xs focus:outline-none focus:border-purple-500"
+            >
+            <p class="text-xs text-gray-500 mt-1">
+              Override the API endpoint if different from model_id
+            </p>
+          </div>
+          
+          <!-- Quick Actions -->
+          <div class="flex gap-2 pt-2 border-t border-purple-500/20">
+            <button type="button" onclick="previewAPIRequest()" class="flex-1 px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-xs rounded transition">
+              <i class="fas fa-eye mr-1"></i> Preview API Request
+            </button>
+            <button type="button" onclick="exportModelConfig()" class="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition">
+              <i class="fas fa-download mr-1"></i> Export Config
+            </button>
+            <button type="button" onclick="openFalDocs()" class="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition">
+              <i class="fas fa-book mr-1"></i> FAL Docs
+            </button>
+          </div>
+        </div>
+
+        <!-- Pricing Configuration -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <label class="text-sm font-semibold text-gray-300">Pricing Structure <span class="text-red-400">*</span></label>
+              <button type="button" onclick="togglePricingHelp()" class="text-cyan-400 hover:text-cyan-300 text-xs">
+                <i class="fas fa-question-circle"></i> Help
+              </button>
+            </div>
+            <select 
+              id="pricing-structure-type"
+              onchange="switchPricingStructure()"
+              class="px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500"
+            >
+              <option value="simple">Simple (Flat/Per-Second)</option>
+              <option value="per_pixel">Per-Pixel (Upscaling)</option>
+              <option value="per_megapixel">Per-Megapixel (FLUX)</option>
+              <option value="multi_tier">Multi-Tier (Veo)</option>
+              <option value="3d_modeling">3D Modeling</option>
+              <option value="resolution_based">Resolution-Based</option>
+            </select>
+          </div>
+
+          <!-- Quick Help Guide (Collapsible) -->
+          <div id="pricing-help" class="hidden p-3 bg-cyan-900/10 border border-cyan-500/20 rounded-lg text-xs">
+            <p class="font-semibold text-cyan-300 mb-2">📘 Pricing Structure Guide:</p>
+            <div class="space-y-1 text-gray-300">
+              <p>• <span class="text-white">Simple:</span> Flat rate or per-second (video models)</p>
+              <p>• <span class="text-white">Per-Pixel:</span> Upscaling models (e.g., $0.0000023/pixel)</p>
+              <p>• <span class="text-white">Per-Megapixel:</span> FLUX models (e.g., $0.055/MP)</p>
+              <p>• <span class="text-white">Multi-Tier:</span> Different prices for audio/video type</p>
+              <p>• <span class="text-white">3D Modeling:</span> Base price × quality multiplier</p>
+              <p>• <span class="text-white">Resolution-Based:</span> Different price per resolution</p>
+            </div>
+          </div>
+
+          <!-- Simple Pricing (default) -->
+          <div id="simple-pricing-section" class="p-4 bg-gray-800/30 rounded-lg border border-gray-700">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">FAL Price ($) <span class="text-red-400">*</span></label>
+                <input 
+                  type="number" 
+                  id="model-fal-price" 
+                  step="0.0001"
+                  min="0"
+                  placeholder="0.055"
+                  oninput="autoCalculateCredits()"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-purple-500"
+                >
+                <p class="text-xs text-gray-500 mt-1">Supports up to $0.0001 precision</p>
+              </div>
+              
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Pricing Type</label>
+                <select 
+                  id="model-pricing-type"
+                  onchange="autoCalculateCredits()"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-purple-500"
+                >
+                  <option value="flat">Flat Rate</option>
+                  <option value="per_second">Per Second</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Max Duration (s)</label>
+                <input 
+                  type="number" 
+                  id="model-duration" 
+                  placeholder="10"
+                  oninput="autoCalculateCredits()"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-purple-500"
+                >
+                <p class="text-xs text-gray-500 mt-0.5">Video only</p>
+              </div>
+            </div>
+            
+            <!-- Pricing Info Display -->
+            <div id="pricing-info-display" class="mt-3">
+              <!-- Auto-populated by autoCalculateCredits() -->
+            </div>
+          </div>
+
+          <!-- Per-Pixel Pricing (Upscaling) -->
+          <div id="per-pixel-pricing-section" class="hidden p-4 bg-gradient-to-r from-green-900/20 to-emerald-900/20 rounded-lg border border-green-500/30">
+            <p class="text-xs font-semibold text-green-300 mb-3">🔍 Per-Pixel Pricing (for Upscaling)</p>
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Price per Pixel ($)</label>
+                <input 
+                  type="number" 
+                  id="price-per-pixel" 
+                  step="0.0000001"
+                  placeholder="0.0000023"
+                  oninput="autoCalculateCredits()"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-green-500"
+                >
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Base Resolution</label>
+                <input 
+                  type="text" 
+                  id="base-resolution" 
+                  placeholder="1920x1080"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-green-500"
+                >
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Max Upscale Factor</label>
+                <input 
+                  type="number" 
+                  id="max-upscale-factor" 
+                  placeholder="4"
+                  oninput="autoCalculateCredits()"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-green-500"
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Per-Megapixel Pricing (FLUX) -->
+          <div id="per-megapixel-pricing-section" class="hidden p-4 bg-gradient-to-r from-indigo-900/20 to-purple-900/20 rounded-lg border border-indigo-500/30">
+            <p class="text-xs font-semibold text-indigo-300 mb-3">📐 Per-Megapixel Pricing (FLUX Models)</p>
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Price per MP ($)</label>
+                <input 
+                  type="number" 
+                  id="price-per-megapixel" 
+                  step="0.001"
+                  placeholder="0.055"
+                  oninput="autoCalculateCredits()"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500"
+                >
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Base Megapixels</label>
+                <input 
+                  type="number" 
+                  id="base-megapixels" 
+                  step="0.1"
+                  placeholder="1.0"
+                  oninput="autoCalculateCredits()"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500"
+                >
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Max Megapixels</label>
+                <input 
+                  type="number" 
+                  id="max-megapixels" 
+                  step="0.1"
+                  placeholder="2.0"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-indigo-500"
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- 3D Modeling Pricing -->
+          <div id="3d-modeling-pricing-section" class="hidden p-4 bg-gradient-to-r from-amber-900/20 to-orange-900/20 rounded-lg border border-amber-500/30">
+            <p class="text-xs font-semibold text-amber-300 mb-3">🎲 3D Modeling Pricing</p>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Base Price ($)</label>
+                <input 
+                  type="number" 
+                  id="3d-base-price" 
+                  step="0.01"
+                  placeholder="0.50"
+                  oninput="autoCalculateCredits()"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-amber-500"
+                >
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Quality Multiplier</label>
+                <select 
+                  id="3d-quality-multiplier"
+                  onchange="autoCalculateCredits()"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-amber-500"
+                >
+                  <option value="1">Standard (1x)</option>
+                  <option value="1.5">High (1.5x)</option>
+                  <option value="2">Ultra (2x)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resolution-Based Pricing -->
+          <div id="resolution-based-pricing-section" class="hidden p-4 bg-gradient-to-r from-teal-900/20 to-cyan-900/20 rounded-lg border border-teal-500/30">
+            <p class="text-xs font-semibold text-teal-300 mb-3">📏 Resolution-Based Pricing</p>
+            <div class="space-y-2">
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">SD (512x512) - $</label>
+                  <input type="number" id="price-sd" step="0.001" placeholder="0.010" oninput="autoCalculateCredits()" class="w-full px-2 py-1.5 bg-gray-800/50 border border-gray-700 rounded text-white text-sm">
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">HD (1024x1024) - $</label>
+                  <input type="number" id="price-hd" step="0.001" placeholder="0.025" oninput="autoCalculateCredits()" class="w-full px-2 py-1.5 bg-gray-800/50 border border-gray-700 rounded text-white text-sm">
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">2K (2048x2048) - $</label>
+                  <input type="number" id="price-2k" step="0.001" placeholder="0.050" oninput="autoCalculateCredits()" class="w-full px-2 py-1.5 bg-gray-800/50 border border-gray-700 rounded text-white text-sm">
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">4K (4096x4096) - $</label>
+                  <input type="number" id="price-4k" step="0.001" placeholder="0.100" oninput="autoCalculateCredits()" class="w-full px-2 py-1.5 bg-gray-800/50 border border-gray-700 rounded text-white text-sm">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Multi-Tier Pricing -->
+          <div id="multi-tier-pricing-section" class="hidden p-4 bg-gradient-to-r from-purple-900/20 to-pink-900/20 rounded-lg border border-purple-500/30">
+            <p class="text-xs font-semibold text-purple-300 mb-3">📊 Multi-Tier Pricing (e.g., Veo 3)</p>
+            <div class="space-y-3">
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">Text-to-Video (No Audio) $/s</label>
+                  <input type="number" id="price-ttv-no-audio" step="0.001" placeholder="0.50" oninput="autoCalculateCredits()" class="w-full px-2 py-1.5 bg-gray-800/50 border border-gray-700 rounded text-white text-sm">
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">Text-to-Video (Audio) $/s</label>
+                  <input type="number" id="price-ttv-with-audio" step="0.001" placeholder="0.75" oninput="autoCalculateCredits()" class="w-full px-2 py-1.5 bg-gray-800/50 border border-gray-700 rounded text-white text-sm">
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">Image-to-Video (No Audio) $/s</label>
+                  <input type="number" id="price-itv-no-audio" step="0.001" placeholder="0.10" oninput="autoCalculateCredits()" class="w-full px-2 py-1.5 bg-gray-800/50 border border-gray-700 rounded text-white text-sm">
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">Image-to-Video (Audio) $/s</label>
+                  <input type="number" id="price-itv-with-audio" step="0.001" placeholder="0.15" oninput="autoCalculateCredits()" class="w-full px-2 py-1.5 bg-gray-800/50 border border-gray-700 rounded text-white text-sm">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Max Duration (seconds)</label>
+                <input type="number" id="multi-tier-duration" placeholder="8" oninput="autoCalculateCredits()" class="w-full px-2 py-1.5 bg-gray-800/50 border border-gray-700 rounded text-white text-sm">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Auto-Calculated Credits Preview -->
+        <div class="p-4 bg-gradient-to-r from-cyan-900/20 to-blue-900/20 border border-cyan-500/30 rounded-lg" id="credits-preview">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-calculator text-cyan-400 mt-1"></i>
+            <div class="flex-1">
+              <p class="text-sm font-semibold text-cyan-400 mb-2">💰 Auto-Calculated Credits</p>
+              <div id="credits-calculation" class="text-xs text-gray-300 space-y-1">
+                <p class="text-gray-500">Enter FAL price to auto-calculate...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Hidden input for actual cost to be submitted -->
+        <input type="hidden" id="model-cost" name="cost" value="1">
+
+        <!-- Flags (Compact) -->
+        <div class="flex items-center gap-6 p-3 bg-gray-800/30 rounded-lg border border-gray-700">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="model-trending" class="w-4 h-4 rounded bg-gray-800 border-gray-700 text-purple-600">
+            <span class="text-gray-300 text-sm">🔥 Trending</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="model-viral" class="w-4 h-4 rounded bg-gray-800 border-gray-700 text-purple-600">
+            <span class="text-gray-300 text-sm">⚡ Viral</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="model-active" checked class="w-4 h-4 rounded bg-gray-800 border-gray-700 text-green-600">
+            <span class="text-gray-300 text-sm">✅ Active</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer" title="Uncheck if model only needs image/video upload (no text prompt)">
+            <input type="checkbox" id="model-prompt-required" checked class="w-4 h-4 rounded bg-gray-800 border-gray-700 text-blue-600">
+            <span class="text-gray-300 text-sm">📝 Prompt Required</span>
+          </label>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex flex-col sm:flex-row gap-3 pt-4 sticky bottom-0 bg-gray-900/95 backdrop-blur-sm -mx-4 md:-mx-6 px-4 md:px-6 py-4 border-t border-gray-700">
+          <button 
+            type="submit" 
+            class="flex-1 px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm md:text-base rounded-lg hover:from-purple-700 hover:to-pink-700 transition font-medium"
+          >
+            <i class="fas fa-save mr-2"></i>
+            Save Model
+          </button>
+          <button 
+            type="button" 
+            onclick="closeModal()"
+            class="px-4 md:px-6 py-2.5 md:py-3 bg-gray-700 text-white text-sm md:text-base rounded-lg hover:bg-gray-600 transition font-medium"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Suno Pricing Adjustment Modal -->
+  <div id="suno-pricing-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+      <!-- Header -->
+      <div class="p-4 md:p-6 border-b border-gray-700 bg-gradient-to-r from-pink-900/50 to-purple-900/50 flex-shrink-0">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-xl md:text-2xl font-bold text-white mb-2">
+              <i class="fas fa-music mr-2"></i>
+              Adjust Suno Models Pricing
+            </h3>
+            <p class="text-gray-300 text-sm md:text-base">
+              Set custom credit prices for each Suno AI model • 
+              <span class="text-yellow-400">1 Credit = IDR 2,000</span>
+            </p>
+          </div>
+          <button onclick="closeSunoPricingModal()" class="text-gray-400 hover:text-white transition p-2">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Content (Scrollable) -->
+      <div class="p-4 md:p-6 overflow-y-auto flex-1">
+        <div id="suno-models-list" class="space-y-3">
+          <!-- Models will be loaded here by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Footer (Always Visible - Sticky) -->
+      <div class="p-4 md:p-6 border-t border-gray-700 bg-gray-800/50 flex-shrink-0">
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button 
+            onclick="saveSunoModelsWithPricing()" 
+            class="flex-1 px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg hover:from-pink-700 hover:to-purple-700 transition font-medium shadow-lg shadow-pink-500/20"
+          >
+            <i class="fas fa-save mr-2"></i>
+            Save All Models with Custom Pricing
+          </button>
+          <button 
+            onclick="closeSunoPricingModal()" 
+            class="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition font-medium"
+          >
+            Cancel
+          </button>
+        </div>
+        <p class="text-xs text-gray-400 mt-3 text-center">
+          <i class="fas fa-info-circle mr-1"></i>
+          Tip: Recommended pricing 0.5 credits (IDR 1,000) untuk semua model music generation
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Browse FAL.AI Models Modal -->
+  <div id="browse-fal-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
+      <!-- Header -->
+      <div class="p-4 md:p-6 border-b border-gray-700 bg-gradient-to-r from-blue-900/50 to-cyan-900/50">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-xl md:text-2xl font-bold text-white mb-2">Browse FAL.AI Models</h3>
+            <p class="text-gray-300 text-sm md:text-base">Real-time search and import from fal.ai • <span class="text-green-400">Live Pricing</span></p>
+          </div>
+          <button onclick="closeBrowseModal()" class="text-gray-400 hover:text-white transition p-2">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="flex flex-col md:flex-row gap-4 mt-4">
+          <div class="flex-1 relative">
+            <input 
+              type="text" 
+              id="fal-search" 
+              placeholder="Search models (e.g., flux, kling, runway, sora...)" 
+              class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              oninput="searchFalModels()"
+            >
+            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="filterFalModels('all')" class="fal-filter-btn active px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium" data-type="all">
+              <i class="fas fa-th-large mr-1"></i> All
+            </button>
+            <button onclick="filterFalModels('video')" class="fal-filter-btn px-4 py-3 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition text-sm font-medium" data-type="video">
+              <i class="fas fa-video mr-1"></i> Video
+            </button>
+            <button onclick="filterFalModels('image')" class="fal-filter-btn px-4 py-3 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition text-sm font-medium" data-type="image">
+              <i class="fas fa-image mr-1"></i> Image
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="flex items-center justify-between mt-4 p-3 bg-gray-800/50 rounded-lg">
+          <div class="flex items-center gap-6 text-sm flex-wrap">
+            <span class="text-gray-400">
+              <i class="fas fa-database mr-2"></i>Found: <span id="fal-search-count" class="text-white font-bold">-</span>
+            </span>
+            <span class="text-gray-400">
+              <i class="fas fa-sync mr-2"></i>Last Updated: <span id="fal-last-sync" class="text-green-400">Live</span>
+            </span>
+            <span id="fal-api-status" class="text-gray-400">
+              <i class="fas fa-circle-notch fa-spin mr-2"></i>Checking API...
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="testFalConnection()" class="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs transition">
+              <i class="fas fa-plug mr-1"></i> Test API
+            </button>
+            <button onclick="refreshFalModels()" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs transition">
+              <i class="fas fa-refresh mr-1"></i> Refresh
+            </button>
+          </div>
+        </div>
+        
+        <!-- Source Selector & Actions -->
+        <div class="mt-3 flex items-center justify-between gap-3">
+          <!-- Source Toggle -->
+          <div class="flex items-center gap-2 bg-gray-800 rounded-lg p-1">
+            <button onclick="switchModelSource('curated')" id="source-curated" class="px-3 py-1.5 rounded text-sm font-medium transition bg-blue-600 text-white">
+              <i class="fas fa-star mr-1"></i> Curated (100+)
+            </button>
+            <button onclick="switchModelSource('all')" id="source-all" class="px-3 py-1.5 rounded text-sm font-medium transition text-gray-400 hover:text-white">
+              <i class="fas fa-globe mr-1"></i> All Models
+            </button>
+          </div>
+          
+          <!-- Sync Pricing Button -->
+          <button onclick="syncPricingFromFal()" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition">
+            <i class="fas fa-dollar-sign mr-1"></i> Sync Pricing
+          </button>
+        </div>
+        
+        <!-- Info Note -->
+        <div class="mt-3 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+          <div class="flex items-start gap-2">
+            <i class="fas fa-info-circle text-blue-400 mt-0.5"></i>
+            <div class="text-xs text-gray-300" id="source-info">
+              <strong class="text-blue-400">Curated:</strong> 100+ verified models with accurate pricing. 
+              <strong class="text-green-400">All:</strong> Includes scraped models from fal.ai (may have estimated pricing).
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Models Grid -->
+      <div class="p-4 md:p-6 max-h-[60vh] overflow-y-auto">
+        <div id="fal-models-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Models will be loaded here -->
+          <div class="col-span-full text-center py-8 text-gray-400" id="fal-loading">
+            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+            <p>Connecting to FAL.AI...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 md:p-6 border-t border-gray-700 bg-gray-900/50">
+        <div class="flex items-center justify-between text-sm">
+          <div class="text-gray-400">
+            <i class="fas fa-info-circle mr-2"></i>
+            <span class="text-yellow-400 font-bold">New Formula:</span> IDR 1,000 = 2 Credits • 
+            Click <strong class="text-white">"Import"</strong> to add model
+          </div>
+          <button onclick="closeBrowseModal()" class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%- include('../partials/admin-scripts') %>
+
+  <script src="/js/admin-models.js?v=20251029-pricing-fix"></script>
+</body>
+</html>
+

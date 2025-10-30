@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PixelNest Dashboard - Create AI Videos">
+    <title><%= title %></title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+    <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/output.css">
+</head>
+<body class="text-white">
+    <!-- Dashboard Layout -->
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar - Small Left -->
+        <aside class="fixed left-0 top-0 h-screen w-20 border-r border-white/10 flex flex-col items-center py-6 z-50 transition-all duration-300 hover:w-64 group bg-zinc-800/80 backdrop-blur-xl">
+            <!-- Logo -->
+            <div class="mb-12 flex items-center gap-3 px-4">
+                <div class="w-10 h-10 bg-violet-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </div>
+                <span class="font-black text-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">PIXELNEST</span>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 w-full space-y-1 px-3">
+                <button class="sidebar-item active">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <span class="sidebar-text">Create</span>
+                </button>
+
+                <button class="sidebar-item">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                    <span class="sidebar-text">My Videos</span>
+                </button>
+
+                <button class="sidebar-item">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    <span class="sidebar-text">Profile</span>
+                </button>
+            </nav>
+
+            <!-- Logout -->
+            <div class="w-full px-3">
+                <button class="sidebar-item" onclick="window.location.href='/logout'">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    <span class="sidebar-text">Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-20 overflow-y-auto bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800">
+            <!-- Top Bar - Minimal -->
+            <div class="sticky top-0 z-40 backdrop-blur-xl bg-zinc-900/80 border-b border-white/10">
+                <div class="max-w-7xl mx-auto px-8 py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-8">
+                        <h1 class="text-2xl font-black">Dashboard</h1>
+                        <!-- Inline Stats -->
+                        <div class="flex items-center gap-6 text-sm">
+                            <div class="flex items-center gap-2">
+                                <div class="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+                                <span class="text-gray-500">Videos:</span>
+                                <span class="font-bold">0</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-1.5 h-1.5 rounded-full bg-green-400"></div>
+                                <span class="text-gray-500">Projects:</span>
+                                <span class="font-bold">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <!-- Credits - Minimal -->
+                        <div class="flex items-center gap-2 px-4 py-2 bg-yellow-500/10 rounded-full border border-yellow-500/20">
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                            </svg>
+                            <span class="text-sm font-bold font-mono">3</span>
+                        </div>
+                        <!-- User -->
+                        <% if (user.avatar_url) { %>
+                            <img src="<%= user.avatar_url %>" alt="<%= user.name %>" class="w-9 h-9 rounded-full border-2 border-white/10">
+                        <% } else { %>
+                            <div class="w-9 h-9 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-full flex items-center justify-center text-sm font-bold">
+                                <%= user.name.charAt(0).toUpperCase() %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="max-w-7xl mx-auto px-8 py-12">
+                    <!-- Chat Mode -->
+                    <div id="chat-mode" class="creation-mode active">
+                        <!-- Model Selector -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Model</label>
+                            <select class="control-input">
+                                <option>GPT-4 Turbo (OpenAI)</option>
+                                <option>Claude 3.5 Sonnet (Anthropic)</option>
+                                <option>Gemini Pro (Google)</option>
+                                <option>Llama 3.1 70B (Meta)</option>
+                            </select>
+                        </div>
+
+                        <!-- Prompt -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Prompt</label>
+                            <textarea 
+                                id="chat-textarea"
+                                class="control-textarea"
+                                rows="8"
+                                placeholder="Ask me anything..."
+                            ></textarea>
+                            <div class="mt-1 text-xs text-gray-600 text-right font-mono">
+                                <span id="chat-counter">0</span> / 4000
+                            </div>
+                        </div>
+
+                        <!-- Quick Suggestions -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Quick Start</label>
+                            <div class="space-y-2">
+                                <button class="quick-suggestion" data-prompt="Apa itu AI dan bagaimana cara kerjanya?">
+                                    💡 Apa itu AI?
+                                </button>
+                                <button class="quick-suggestion" data-prompt="Jelaskan machine learning dengan bahasa sederhana dan berikan contoh penerapannya">
+                                    📊 Machine Learning
+                                </button>
+                                <button class="quick-suggestion" data-prompt="Buatkan code Python sederhana untuk web scraping dengan BeautifulSoup">
+                                    💻 Python Code
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Settings -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Temperature</label>
+                            <select class="control-input">
+                                <option>Balanced</option>
+                                <option>Creative</option>
+                                <option>Precise</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Image Mode -->
+                    <div id="image-mode" class="creation-mode hidden">
+                        <!-- Model Selector -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Model</label>
+                            <select class="control-input">
+                                <option>DALL·E 3 (OpenAI)</option>
+                                <option>Midjourney v6</option>
+                                <option>Stable Diffusion XL</option>
+                                <option>Ideogram 2.0</option>
+                                <option>Flux Pro</option>
+                            </select>
+                        </div>
+
+                        <!-- Prompt -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Prompt</label>
+                            <textarea 
+                                id="image-textarea"
+                                class="control-textarea"
+                                rows="6"
+                                placeholder="Describe your image..."
+                            ></textarea>
+                            <div class="mt-1 text-xs text-gray-600 text-right font-mono">
+                                <span id="image-counter">0</span> / 1000
+                            </div>
+                        </div>
+
+                        <!-- Quick Suggestions -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Quick Start</label>
+                            <div class="space-y-2">
+                            <button class="suggestion-card group" data-prompt="A majestic cyberpunk city at night with neon lights, flying cars, holographic billboards, rain reflections, cinematic, 8K, ultra detailed">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 bg-blue-600/20 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-blue-600/30 transition-colors">
+                                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                        </svg>
+                                    </div>
+                                    <div class="text-left">
+                                        <h4 class="font-semibold text-sm mb-1 text-white group-hover:text-blue-300 transition-colors">Cyberpunk City</h4>
+                                        <p class="text-xs text-gray-500">Futuristic urban landscape</p>
+                                    </div>
+                                </div>
+                            </button>
+
+                            <button class="suggestion-card group" data-prompt="Professional portrait photography of a young woman, natural lighting, bokeh background, studio quality, 50mm lens, shallow depth of field">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 bg-blue-600/20 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-blue-600/30 transition-colors">
+                                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="text-left">
+                                        <h4 class="font-semibold text-sm mb-1 text-white group-hover:text-blue-300 transition-colors">Portrait Photo</h4>
+                                        <p class="text-xs text-gray-500">Professional photography</p>
+                                    </div>
+                                </div>
+                            </button>
+
+                            <button class="suggestion-card group" data-prompt="Abstract geometric art with vibrant colors, modern minimalist style, 3D shapes, gradient background, contemporary design">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 bg-blue-600/20 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-blue-600/30 transition-colors">
+                                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                                        </svg>
+                                    </div>
+                                    <div class="text-left">
+                                        <h4 class="font-semibold text-sm mb-1 text-white group-hover:text-blue-300 transition-colors">Abstract Art</h4>
+                                        <p class="text-xs text-gray-500">Modern minimalist design</p>
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
+
+                        <div class="relative">
+                            <textarea 
+                                id="image-textarea"
+                                class="w-full px-6 py-6 bg-white/[0.05] border border-white/20 rounded-2xl text-white placeholder-gray-500 focus:border-violet-500/50 focus:bg-white/[0.08] focus:outline-none transition-all resize-none"
+                                rows="6"
+                                placeholder="A photorealistic portrait of a cyberpunk samurai in neon-lit Tokyo streets, raining, cinematic lighting, 8K..."
+                            ></textarea>
+                            
+                            <div class="absolute bottom-4 right-4 text-xs text-gray-600 font-mono">
+                                <span id="image-counter">0</span> / 1000
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-4">
+                            <div class="flex items-center gap-3">
+                                <select class="px-4 py-2 bg-white/[0.05] border border-white/20 rounded-xl text-sm focus:border-violet-500/50 focus:outline-none">
+                                    <option>DALL·E 3 (OpenAI)</option>
+                                    <option>Midjourney v6</option>
+                                    <option>Stable Diffusion XL</option>
+                                    <option>Ideogram 2.0</option>
+                                    <option>Flux Pro</option>
+                                </select>
+                                
+                                <select class="px-4 py-2 bg-white/[0.05] border border-white/20 rounded-xl text-sm focus:border-violet-500/50 focus:outline-none">
+                                    <option>1024x1024 (Square)</option>
+                                    <option>1792x1024 (Landscape)</option>
+                                    <option>1024x1792 (Portrait)</option>
+                                </select>
+
+                                <select class="px-4 py-2 bg-white/[0.05] border border-white/20 rounded-xl text-sm focus:border-violet-500/50 focus:outline-none">
+                                    <option>Style: Realistic</option>
+                                    <option>Style: Anime</option>
+                                    <option>Style: Digital Art</option>
+                                    <option>Style: 3D Render</option>
+                                </select>
+                            </div>
+
+                            <button class="px-8 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl font-bold hover:shadow-lg hover:shadow-blue-500/50 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                Generate Image
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Video Mode -->
+                    <div id="video-mode" class="creation-mode hidden">
+                        <!-- Suggestion Cards -->
+                        <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <button class="suggestion-card group" data-prompt="Cinematic drone shot flying through fluffy white clouds at golden hour, camera moving forward, peaceful atmosphere, 4K quality">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 bg-violet-600/20 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-violet-600/30 transition-colors">
+                                        <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="text-left">
+                                        <h4 class="font-semibold text-sm mb-1 text-white group-hover:text-violet-300 transition-colors">Flying Through Clouds</h4>
+                                        <p class="text-xs text-gray-500">Peaceful aerial view</p>
+                                    </div>
+                                </div>
+                            </button>
+
+                            <button class="suggestion-card group" data-prompt="Timelapse of a bustling city street from day to night, traffic lights, people walking, neon signs lighting up, urban energy">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 bg-violet-600/20 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-violet-600/30 transition-colors">
+                                        <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="text-left">
+                                        <h4 class="font-semibold text-sm mb-1 text-white group-hover:text-violet-300 transition-colors">City Timelapse</h4>
+                                        <p class="text-xs text-gray-500">Day to night transition</p>
+                                    </div>
+                                </div>
+                            </button>
+
+                            <button class="suggestion-card group" data-prompt="Serene nature scene with waterfall in lush green forest, sunlight filtering through trees, birds flying, tranquil atmosphere">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 bg-violet-600/20 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-violet-600/30 transition-colors">
+                                        <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="text-left">
+                                        <h4 class="font-semibold text-sm mb-1 text-white group-hover:text-violet-300 transition-colors">Nature Scene</h4>
+                                        <p class="text-xs text-gray-500">Peaceful forest waterfall</p>
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
+
+                        <div class="relative">
+                            <textarea 
+                                id="video-textarea"
+                                class="w-full px-6 py-6 bg-white/[0.05] border border-white/20 rounded-2xl text-white placeholder-gray-500 focus:border-violet-500/50 focus:bg-white/[0.08] focus:outline-none transition-all resize-none"
+                                rows="6"
+                                placeholder="A cinematic shot of a futuristic city at sunset, with flying cars and neon lights reflecting on glass buildings..."
+                            ></textarea>
+                            
+                            <div class="absolute bottom-4 right-4 text-xs text-gray-600 font-mono">
+                                <span id="video-counter">0</span> / 500
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-4">
+                            <div class="flex items-center gap-3">
+                                <select class="px-4 py-2 bg-white/[0.05] border border-white/20 rounded-xl text-sm focus:border-violet-500/50 focus:outline-none">
+                                    <option>Veo 2 (Google)</option>
+                                    <option>Sora 2 (OpenAI)</option>
+                                    <option>Gen-3 Alpha (Runway)</option>
+                                    <option>Pika 2.0</option>
+                                    <option>Kling AI</option>
+                                </select>
+                                
+                                <select class="px-4 py-2 bg-white/[0.05] border border-white/20 rounded-xl text-sm focus:border-violet-500/50 focus:outline-none">
+                                    <option>4K Ultra HD</option>
+                                    <option>1080p HD</option>
+                                    <option>720p</option>
+                                </select>
+
+                                <select class="px-4 py-2 bg-white/[0.05] border border-white/20 rounded-xl text-sm focus:border-violet-500/50 focus:outline-none">
+                                    <option>5 seconds</option>
+                                    <option>10 seconds</option>
+                                    <option>30 seconds</option>
+                                    <option>60 seconds</option>
+                                </select>
+                            </div>
+
+                            <button class="px-8 py-3 bg-gradient-to-r from-violet-600 to-purple-600 rounded-xl font-bold hover:shadow-lg hover:shadow-violet-500/50 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z"/>
+                                </svg>
+                                Generate Video
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Recent Creations - Grid Layout, No Cards -->
+                <section class="mb-16">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-2xl font-black mb-1">Recent Creations</h2>
+                            <p class="text-sm text-gray-500">Your AI-generated content</p>
+                        </div>
+                        <button class="text-sm text-violet-400 hover:text-violet-300 flex items-center gap-1">
+                            <span>View All</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Empty State - Clean -->
+                    <div class="text-center py-24 border border-dashed border-white/20 rounded-2xl bg-white/[0.02]">
+                        <div class="w-20 h-20 bg-gradient-to-br from-violet-600/20 to-purple-600/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-10 h-10 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">No creations yet</h3>
+                        <p class="text-gray-500 mb-8">Start creating with AI - chat, images, or videos</p>
+                        <button class="inline-flex items-center gap-2 px-6 py-3 bg-white/[0.05] border border-white/20 rounded-xl hover:bg-white/[0.08] hover:border-violet-500/50 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            <span class="font-semibold">Start Creating</span>
+                        </button>
+                    </div>
+
+                    <!-- Video Grid (when have videos) - Uncomment when needed -->
+                    <!-- 
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="group cursor-pointer">
+                            <div class="relative aspect-video bg-gradient-to-br from-gray-900 to-black rounded-xl overflow-hidden mb-3 border border-white/5">
+                                <img src="/placeholder.jpg" alt="Video" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
+                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8 5v14l11-7z"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="absolute bottom-2 right-2 px-2 py-1 bg-black/70 backdrop-blur-sm rounded text-xs font-mono">
+                                    0:05
+                                </div>
+                            </div>
+                            <h3 class="font-semibold text-sm mb-1 group-hover:text-violet-400 transition-colors">Video Title</h3>
+                            <p class="text-xs text-gray-500">Created 2 hours ago</p>
+                        </div>
+                    </div>
+                    -->
+                </section>
+
+                <!-- AI Models Section - List Style -->
+                <section>
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-black mb-1">AI Models</h2>
+                        <p class="text-sm text-gray-500">Choose the best model for your needs</p>
+                    </div>
+
+                    <div class="space-y-3">
+                        <!-- Model Item 1 -->
+                        <button class="w-full px-6 py-4 bg-white/[0.05] border border-white/20 rounded-xl hover:border-violet-500/50 hover:bg-white/[0.08] transition-all text-left group">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center font-bold text-lg">
+                                        G
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-3 mb-1">
+                                            <h3 class="font-bold">Veo 2</h3>
+                                            <span class="text-xs px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded-full">VIDEO</span>
+                                            <span class="text-xs text-gray-600">Google DeepMind</span>
+                                        </div>
+                                        <p class="text-sm text-gray-500">Photorealistic video generation with 4K Ultra HD quality</p>
+                                    </div>
+                                </div>
+                                <svg class="w-5 h-5 text-gray-600 group-hover:text-violet-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </div>
+                        </button>
+
+                        <!-- Model Item 2 -->
+                        <button class="w-full px-6 py-4 bg-white/[0.05] border border-white/20 rounded-xl hover:border-violet-500/50 hover:bg-white/[0.08] transition-all text-left group">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center font-bold text-lg">
+                                        O
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-3 mb-1">
+                                            <h3 class="font-bold">Sora 2</h3>
+                                            <span class="text-xs px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded-full">VIDEO</span>
+                                            <span class="text-xs text-gray-600">OpenAI</span>
+                                        </div>
+                                        <p class="text-sm text-gray-500">Text-to-video AI creating realistic scenes up to 60 seconds</p>
+                                    </div>
+                                </div>
+                                <svg class="w-5 h-5 text-gray-600 group-hover:text-violet-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </div>
+                        </button>
+
+                        <!-- Model Item 3 -->
+                        <button class="w-full px-6 py-4 bg-white/[0.05] border border-white/20 rounded-xl hover:border-violet-500/50 hover:bg-white/[0.08] transition-all text-left group">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-orange-600 to-red-600 rounded-xl flex items-center justify-center font-bold text-lg">
+                                        R
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-3 mb-1">
+                                            <h3 class="font-bold">Gen-3 Alpha</h3>
+                                            <span class="text-xs px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded-full">VIDEO</span>
+                                            <span class="text-xs text-gray-600">Runway ML</span>
+                                        </div>
+                                        <p class="text-sm text-gray-500">Next-generation synthesis with unparalleled fidelity</p>
+                                    </div>
+                                </div>
+                                <svg class="w-5 h-5 text-gray-600 group-hover:text-violet-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    
+    <script src="/js/main.js"></script>
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>

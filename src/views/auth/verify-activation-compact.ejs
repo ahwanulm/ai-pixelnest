@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+    <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+    <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+    
+    <link rel="stylesheet" href="/css/output.css">
+    <style>
+        body {
+            background: #1a1a1a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .glass-card {
+            background: #262626;
+            border: 1px solid #404040;
+        }
+        .code-input {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.3em;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .btn-primary {
+            background: #ffffff;
+            color: #000000;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: #e5e5e5;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 255, 255, 0.2);
+        }
+        .btn-secondary {
+            background: #2a2a2a;
+            border: 1px solid #404040;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background: #333333;
+            border-color: #505050;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+        }
+        .loading-container {
+            text-align: center;
+            padding: 40px;
+        }
+        /* Spinner Animation */
+        .spinner {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 24px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Dots Animation */
+        .loading-dots {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 16px;
+        }
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            background: #ffffff;
+            border-radius: 50%;
+            animation: pulse 1.4s ease-in-out infinite;
+        }
+        .loading-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .loading-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes pulse {
+            0%, 80%, 100% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+            40% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+        /* Progress Bar */
+        .progress-bar {
+            width: 200px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 20px auto 0;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffffff, #e5e5e5);
+            animation: progressBar 1.5s ease-in-out infinite;
+        }
+        @keyframes progressBar {
+            0% {
+                width: 0%;
+                transform: translateX(0);
+            }
+            50% {
+                width: 70%;
+            }
+            100% {
+                width: 100%;
+                transform: translateX(100%);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-sm">
+        <!-- Logo Section - Compact -->
+        <div class="text-center mb-4 fade-in">
+            <a href="/" class="inline-flex items-center space-x-2">
+                <img src="/assets/img/logo/logo.png" alt="Logo" class="h-7 w-auto">
+                <span class="text-lg font-bold text-white">PixelNest</span>
+            </a>
+        </div>
+
+        <!-- Main Card - Compact -->
+        <div class="glass-card rounded-lg p-5 fade-in" style="animation-delay: 0.1s;">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white mb-2.5">
+                    <svg class="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold text-white mb-0.5">Verifikasi Email</h1>
+                <p class="text-xs text-gray-400">Kode dikirim ke <span class="text-gray-200 font-medium"><%= email %></span></p>
+            </div>
+
+            <!-- Messages - Compact -->
+            <% if (message) { %>
+            <div class="mb-3 p-2.5 bg-white/5 border border-white/20 rounded-lg">
+                <p class="text-white text-[10px]"><%= message %></p>
+            </div>
+            <% } %>
+
+            <% if (error) { %>
+            <div class="mb-3 p-2.5 bg-white/5 border border-white/30 rounded-lg">
+                <p class="text-gray-300 text-[10px]"><%= error %></p>
+            </div>
+            <% } %>
+
+            <!-- Form -->
+            <form action="/auth/verify-activation" method="POST" id="verifyForm">
+                <input type="hidden" name="email" value="<%= email %>">
+                
+                <div class="mb-3">
+                    <label class="block text-[10px] font-medium text-gray-400 mb-1.5 text-center">Kode Aktivasi (6 digit)</label>
+                    <input 
+                        type="text" 
+                        name="code" 
+                        id="code"
+                        maxlength="6"
+                        pattern="[0-9]{6}"
+                        class="code-input w-full px-3 py-2.5 bg-neutral-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-white focus:ring-2 focus:ring-white/20 transition"
+                        placeholder="000000"
+                        required
+                        autocomplete="off"
+                        autofocus
+                    >
+                    <p class="text-[10px] text-gray-500 mt-1.5 text-center">⏱ Berlaku 15 menit</p>
+                </div>
+
+                <button 
+                    type="submit"
+                    class="btn-primary w-full py-2.5 text-white text-sm font-semibold rounded-lg mb-3"
+                >
+                    Aktivasi Akun
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="relative my-3">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-800"></div>
+                </div>
+                <div class="relative flex justify-center text-[10px]">
+                    <span class="px-2.5 bg-gray-900/80 text-gray-500">Tidak menerima kode?</span>
+                </div>
+            </div>
+
+            <!-- Resend Button - Compact -->
+            <button 
+                type="button"
+                id="resendBtn"
+                onclick="resendCode()"
+                class="btn-secondary w-full py-2 text-white text-xs rounded-lg"
+            >
+                <span class="flex items-center justify-center">
+                    <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Kirim Ulang Kode
+                </span>
+            </button>
+
+            <!-- Timer -->
+            <div id="timer" class="text-center mt-2.5 text-[10px] text-gray-500 hidden">
+                Kirim ulang dalam <span id="countdown" class="text-white font-semibold">60</span> detik
+            </div>
+
+            <!-- Tip - Compact -->
+            <div class="mt-3 p-2.5 bg-white/5 rounded-lg border border-white/10">
+                <p class="text-[10px] text-gray-400 text-center">
+                    💡 Cek folder <span class="text-white">spam</span> jika tidak menerima email
+                </p>
+            </div>
+
+            <!-- Back Link - Compact -->
+            <div class="mt-3 text-center">
+                <a href="/login" class="text-[10px] text-gray-500 hover:text-white transition">
+                    ← Kembali ke Login
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <h3 class="text-base font-semibold text-white mb-1.5">Memverifikasi Kode</h3>
+            <p class="text-xs text-gray-400" id="loadingText">Mohon tunggu sebentar...</p>
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cooldownTime = 0;
+        let countdownInterval = null;
+        let isLocked = false;
+
+        // Auto-format: numbers only
+        document.getElementById('code').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        // Resend code
+        async function resendCode() {
+            const email = document.querySelector('input[name="email"]').value;
+            const resendBtn = document.getElementById('resendBtn');
+            const timer = document.getElementById('timer');
+            const countdown = document.getElementById('countdown');
+
+            if (cooldownTime > 0 || isLocked) return;
+
+            resendBtn.disabled = true;
+            resendBtn.innerHTML = '<span class="flex items-center justify-center"><svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Mengirim...</span>';
+
+            try {
+                const response = await fetch('/auth/resend-activation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(data.message, 'success');
+
+                    cooldownTime = 60;
+                    timer.classList.remove('hidden');
+                    
+                    countdownInterval = setInterval(() => {
+                        cooldownTime--;
+                        countdown.textContent = cooldownTime;
+
+                        if (cooldownTime <= 0) {
+                            clearInterval(countdownInterval);
+                            timer.classList.add('hidden');
+                            resendBtn.disabled = false;
+                            resendBtn.innerHTML = '<span class="flex items-center justify-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Kirim Ulang Kode</span>';
+                        }
+                    }, 1000);
+                } else if (data.locked) {
+                    // User hit limit, show change email option
+                    isLocked = true;
+                    showLockedMessage(data.message, data.hoursLeft);
+                    resendBtn.disabled = true;
+                    resendBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    showMessage(data.message, 'error');
+                    resendBtn.disabled = false;
+                    resendBtn.innerHTML = '<span class="flex items-center justify-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Kirim Ulang Kode</span>';
+                }
+            } catch (error) {
+                showMessage('Gagal mengirim kode', 'error');
+                resendBtn.disabled = false;
+                resendBtn.innerHTML = '<span class="flex items-center justify-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Kirim Ulang Kode</span>';
+            }
+        }
+
+        // Show locked message with change email option
+        function showLockedMessage(message, hoursLeft) {
+            const existingMessages = document.querySelectorAll('.message-alert');
+            existingMessages.forEach(msg => msg.remove());
+
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'message-alert mb-4 p-4 bg-white/5 border border-white/30 rounded-lg';
+            alertDiv.innerHTML = `
+                <div class="text-xs text-gray-300 mb-3">${message}</div>
+                <a href="/register" class="inline-block w-full text-center py-2 px-4 bg-white text-black rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+                    🔄 Daftar dengan Email Lain
+                </a>
+            `;
+            
+            const form = document.getElementById('verifyForm');
+            form.parentNode.insertBefore(alertDiv, form);
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const existingMessages = document.querySelectorAll('.message-alert');
+            existingMessages.forEach(msg => msg.remove());
+
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `message-alert mb-4 p-3 rounded-lg border ${type === 'success' ? 'bg-white/10 border-white/30 text-white' : 'bg-white/5 border-white/20 text-gray-300'}`;
+            alertDiv.innerHTML = `<p class="text-xs">${message}</p>`;
+            
+            const form = document.getElementById('verifyForm');
+            form.parentNode.insertBefore(alertDiv, form);
+
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+
+        // Show loading overlay
+        function showLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            const loadingText = document.getElementById('loadingText');
+            overlay.style.display = 'flex';
+            
+            // Animated loading messages
+            const messages = [
+                'Memverifikasi kode aktivasi...',
+                'Mengaktifkan akun Anda...',
+                'Hampir selesai...'
+            ];
+            
+            let messageIndex = 0;
+            const messageInterval = setInterval(() => {
+                messageIndex++;
+                if (messageIndex < messages.length) {
+                    loadingText.textContent = messages[messageIndex];
+                }
+            }, 800);
+            
+            // Store interval ID to clear later
+            overlay.dataset.intervalId = messageInterval;
+        }
+
+        // Hide loading overlay
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            const intervalId = overlay.dataset.intervalId;
+            if (intervalId) {
+                clearInterval(parseInt(intervalId));
+            }
+            overlay.style.display = 'none';
+        }
+
+        // Form validation and submission with loading
+        document.getElementById('verifyForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const code = document.getElementById('code').value;
+            
+            // Validate code length
+            if (code.length !== 6) {
+                showMessage('Kode aktivasi harus 6 digit', 'error');
+                return;
+            }
+            
+            // Show loading
+            showLoading();
+            
+            // Submit form using fetch for better control
+            const formData = new FormData(this);
+            
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                // Add minimum delay for better UX (1.5s)
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Redirect to the response URL
+                window.location.href = response.url;
+                
+            } catch (error) {
+                hideLoading();
+                showMessage('Terjadi kesalahan. Silakan coba lagi.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
+

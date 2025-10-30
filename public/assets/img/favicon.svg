@@ -1,0 +1,35 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="32" height="32" fill="white" rx="6"/>
+  
+  <!-- Pixel Grid Pattern (Scaled down) -->
+  <g transform="translate(6, 6)">
+    <!-- Top -->
+    <rect x="8" y="0" width="4" height="4" fill="#334155" rx="0.5"/>
+    
+    <!-- Second row -->
+    <rect x="4" y="4" width="4" height="4" fill="#475569" rx="0.5"/>
+    <rect x="8" y="4" width="4" height="4" fill="#1e293b" rx="0.5"/>
+    <rect x="12" y="4" width="4" height="4" fill="#475569" rx="0.5"/>
+    
+    <!-- Third row -->
+    <rect x="0" y="8" width="4" height="4" fill="#64748b" rx="0.5"/>
+    <rect x="4" y="8" width="4" height="4" fill="#334155" rx="0.5"/>
+    <rect x="8" y="8" width="4" height="4" fill="#0f172a" rx="0.5"/>
+    <rect x="12" y="8" width="4" height="4" fill="#334155" rx="0.5"/>
+    <rect x="16" y="8" width="4" height="4" fill="#64748b" rx="0.5"/>
+    
+    <!-- Fourth row -->
+    <rect x="0" y="12" width="4" height="4" fill="#475569" rx="0.5"/>
+    <rect x="4" y="12" width="4" height="4" fill="#1e293b" rx="0.5"/>
+    <rect x="8" y="12" width="4" height="4" fill="#0f172a" rx="0.5"/>
+    <rect x="12" y="12" width="4" height="4" fill="#1e293b" rx="0.5"/>
+    <rect x="16" y="12" width="4" height="4" fill="#475569" rx="0.5"/>
+    
+    <!-- Bottom -->
+    <rect x="4" y="16" width="4" height="4" fill="#64748b" rx="0.5"/>
+    <rect x="8" y="16" width="4" height="4" fill="#334155" rx="0.5"/>
+    <rect x="12" y="16" width="4" height="4" fill="#64748b" rx="0.5"/>
+  </g>
+</svg>
+
