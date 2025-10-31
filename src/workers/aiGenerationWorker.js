@@ -1106,7 +1106,8 @@ async function generateAudio(modelId, prompt, settings, subType, jobId) {
     } else if (subType === 'text-to-music') {
       console.log('🎼 Generating music...');
       
-      // Log if lyrics are provided
+      // Log if lyrics are provid
+      // ed
       if (settings.advanced?.lyrics) {
         console.log(`   📝 With lyrics (${settings.advanced.lyrics.length} chars)`);
       }
