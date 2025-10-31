@@ -15,9 +15,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/output.css?v=<%= appVersion %>">
-    <script src="/js/theme-manager.js"></script>
     
     <style>
+        /* Background Grid Pattern */
+        .bg-grid-pattern {
+            background-image: 
+                linear-gradient(to right, rgba(139, 92, 246, 0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        
         /* Uniform Grid Layout */
         .gallery-grid {
             display: grid;
@@ -183,6 +190,48 @@
          * 72    - Sticky Filter Bar
          * 50    - Top Navigation Bar
          */
+        
+        /* Mobile Filter Collapse Animation */
+        @media (max-width: 1023px) {
+            #filter-content {
+                transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out;
+                overflow: hidden;
+            }
+            
+            #filter-content.hidden {
+                max-height: 0 !important;
+                opacity: 0;
+                padding-top: 0 !important;
+                padding-bottom: 0 !important;
+            }
+            
+            #filter-content:not(.hidden) {
+                max-height: 2000px;
+                opacity: 1;
+            }
+        }
+        
+        /* Desktop: Always visible */
+        @media (min-width: 1024px) {
+            #filter-content {
+                display: block !important;
+            }
+        }
+        
+        /* Mobile Filter Toggle Button */
+        #mobile-filter-toggle {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        #mobile-filter-toggle:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Smooth chevron rotation */
+        #mobile-filter-toggle i.fa-chevron-down,
+        #mobile-filter-toggle i.fa-chevron-up {
+            transition: transform 0.3s ease;
+        }
     </style>
 </head>
 <body class="bg-zinc-950 text-white">
@@ -339,7 +388,7 @@
     
     <!-- Hero Section -->
     <div class="relative bg-gradient-to-br from-violet-900/20 via-zinc-950 to-fuchsia-900/20 border-b border-white/10 <%= user ? 'mt-14 lg:mt-0' : '' %>">
-        <div class="absolute inset-0 bg-[url('/assets/img/grid.svg')] opacity-10"></div>
+        <div class="absolute inset-0 bg-grid-pattern opacity-5"></div>
         
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
             <!-- Mobile Top Bar (for non-logged-in users) -->
@@ -395,9 +444,26 @@
     
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 lg:pb-8">
-        <!-- Smart Search & Filter Bar (Compact) - NOT sticky on mobile -->
-        <div class="glass-strong rounded-xl p-3 lg:p-4 mb-6 lg:sticky lg:top-[72px] z-40">
-            <form action="/explore" method="GET">
+        <!-- Smart Search & Filter Bar (Collapsible on Mobile) -->
+        <div class="glass-strong rounded-xl mb-6 lg:sticky lg:top-[72px] z-40">
+            <!-- Mobile Filter Toggle Button (Visible only on mobile) -->
+            <button 
+                type="button"
+                id="mobile-filter-toggle"
+                onclick="toggleMobileFilters()"
+                class="lg:hidden w-full flex items-center justify-between p-3 text-white transition-all hover:bg-white/5 active:bg-white/10">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-filter text-violet-400"></i>
+                    <span class="text-sm font-semibold">Filters</span>
+                    <% if (filters.search || filters.type !== 'all' || filters.sort !== 'recent' || filters.model || filters.aspectRatio || filters.minViews || filters.creatorType) { %>
+                        <span class="px-2 py-0.5 bg-violet-500 rounded-full text-[10px] font-bold">Active</span>
+                    <% } %>
+                </div>
+                <i id="chevron-icon" class="fas fa-chevron-down transition-transform duration-300"></i>
+            </button>
+            
+            <!-- Filter Content (Collapsed on mobile by default) -->
+            <form action="/explore" method="GET" id="filter-content" class="hidden lg:block p-3 lg:p-4">
                 <!-- Main Filters Row -->
                 <div class="flex flex-col lg:flex-row gap-2 mb-3">
                     <!-- Smart Search with Autocomplete -->
@@ -757,6 +823,28 @@
     <script src="/js/public-gallery.js?v=<%= appVersion %>"></script>
     
     <script>
+        // Mobile Filter Toggle Function
+        function toggleMobileFilters() {
+            const filterContent = document.getElementById('filter-content');
+            const chevronIcon = document.getElementById('chevron-icon');
+            
+            if (filterContent && chevronIcon) {
+                const isHidden = filterContent.classList.contains('hidden');
+                
+                if (isHidden) {
+                    // Show filters
+                    filterContent.classList.remove('hidden');
+                    chevronIcon.classList.remove('fa-chevron-down');
+                    chevronIcon.classList.add('fa-chevron-up');
+                } else {
+                    // Hide filters
+                    filterContent.classList.add('hidden');
+                    chevronIcon.classList.remove('fa-chevron-up');
+                    chevronIcon.classList.add('fa-chevron-down');
+                }
+            }
+        }
+        
         // Profile Dropdown Toggle
         const profileBtn = document.getElementById('profile-btn-header');
         const profileDropdown = document.getElementById('profile-dropdown-header');

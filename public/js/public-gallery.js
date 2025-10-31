@@ -160,10 +160,19 @@ function openDetailModal(sharedId) {
     const promptElement = card.querySelector('.gallery-overlay .line-clamp-3, .line-clamp-2');
     const prompt = promptElement?.textContent.trim() || 'Tidak ada deskripsi';
     
-    // Get creator info from metadata bar
+    // Get creator info from metadata bar - improved detection
     const metadataBar = card.querySelector('.absolute.bottom-0');
-    const creatorSpan = metadataBar?.querySelector('.text-gray-300');
-    const creator = creatorSpan?.textContent.trim() || 'Anonymous';
+    const creatorContainer = metadataBar?.querySelector('.flex.items-center.gap-1\\.5.min-w-0');
+    
+    // Check if anonymous (has user-secret icon)
+    const isAnonymous = creatorContainer?.querySelector('.fa-user-secret') !== null;
+    
+    let creator = 'Anonymous';
+    if (!isAnonymous) {
+        // Get creator name from span (not anonymous)
+        const creatorSpan = creatorContainer?.querySelector('.text-gray-300.text-\\[10px\\]');
+        creator = creatorSpan?.textContent.trim() || 'Anonymous';
+    }
     
     // Get stats from metadata bar - more robust extraction
     let views = '0';
@@ -211,7 +220,7 @@ function openDetailModal(sharedId) {
         <div class="bg-black rounded-none lg:rounded-2xl max-w-6xl w-full h-screen lg:h-[90vh] overflow-hidden flex flex-col lg:flex-row shadow-2xl animate-fade-in" onclick="event.stopPropagation()">
             
             <!-- Left: Media Container (Instagram Style - Black Background) -->
-            <div class="relative flex-1 bg-black flex items-center justify-center">
+            <div class="relative flex-1 bg-black flex items-center justify-center h-[60vh] lg:h-auto">
                 <!-- Close Button (Top Right - Mobile & Desktop) -->
                 <button id="close-modal-btn" class="absolute top-3 right-3 z-50 w-10 h-10 bg-black/60 backdrop-blur-md hover:bg-black/80 rounded-full flex items-center justify-center transition-all active:scale-90 border border-white/20">
                     <i class="fas fa-times text-white text-lg"></i>
@@ -248,30 +257,30 @@ function openDetailModal(sharedId) {
             </div>
             
             <!-- Right: Info Panel (Instagram Style) -->
-            <div class="w-full lg:w-[400px] bg-zinc-950 flex flex-col border-t lg:border-t-0 lg:border-l border-zinc-800">
+            <div class="w-full lg:w-[400px] bg-zinc-950 flex flex-col border-t lg:border-t-0 lg:border-l border-zinc-800 max-h-[40vh] lg:max-h-none">
                 
-                <!-- Header: Creator Info -->
-                <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
-                    <div class="flex items-center gap-3 min-w-0 flex-1">
-                        ${creator !== 'Anonymous' ? `
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                <!-- Header: Creator Info (Compact for Mobile) -->
+                <div class="flex items-center justify-between px-3 lg:px-4 py-2 lg:py-3 border-b border-zinc-800">
+                    <div class="flex items-center gap-2 lg:gap-3 min-w-0 flex-1">
+                        ${!isAnonymous ? `
+                            <div class="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center text-xs lg:text-sm font-bold flex-shrink-0">
                                 ${creator.charAt(0).toUpperCase()}
                             </div>
                             <div class="min-w-0">
-                                <p class="text-white font-semibold text-sm truncate">${creator}</p>
-                                <p class="text-gray-400 text-xs">Creator</p>
+                                <p class="text-white font-semibold text-xs lg:text-sm truncate">${creator}</p>
+                                <p class="text-gray-400 text-[10px] lg:text-xs">Creator</p>
                             </div>
                         ` : `
-                            <div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
-                                <i class="fas fa-user-secret text-gray-400"></i>
+                            <div class="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-user-secret text-gray-400 text-xs"></i>
                             </div>
                             <div>
-                                <p class="text-white font-semibold text-sm">Anonymous</p>
-                                <p class="text-gray-400 text-xs">Creator</p>
+                                <p class="text-white font-semibold text-xs lg:text-sm">Anonymous</p>
+                                <p class="text-gray-400 text-[10px] lg:text-xs">Creator</p>
                             </div>
                         `}
                     </div>
-                    <button class="text-violet-400 hover:text-violet-300 text-xs font-semibold transition-colors">
+                    <button class="text-violet-400 hover:text-violet-300 text-xs font-semibold transition-colors hidden lg:block">
                         • • •
                     </button>
                 </div>
@@ -279,124 +288,128 @@ function openDetailModal(sharedId) {
                 <!-- Scrollable Content Area -->
                 <div class="flex-1 overflow-y-auto" style="scrollbar-width: thin; scrollbar-color: rgba(139, 92, 246, 0.3) transparent;">
                     
-                    <!-- Prompt Section -->
-                    <div class="px-4 py-4 border-b border-zinc-800">
-                        <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                                ${creator.charAt(0).toUpperCase()}
-                            </div>
+                    <!-- Prompt Section (Compact for Mobile) -->
+                    <div class="px-3 lg:px-4 py-3 lg:py-4 border-b border-zinc-800">
+                        <div class="flex items-start gap-2 lg:gap-3">
+                            ${!isAnonymous ? `
+                                <div class="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center text-[10px] lg:text-xs font-bold flex-shrink-0">
+                                    ${creator.charAt(0).toUpperCase()}
+                                </div>
+                            ` : `
+                                <div class="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-user-secret text-gray-400 text-[10px] lg:text-xs"></i>
+                                </div>
+                            `}
                             <div class="flex-1 min-w-0">
-                                <p class="text-white text-sm leading-relaxed">
-                                    <span class="font-semibold">${creator}</span> 
+                                <p class="text-white text-xs lg:text-sm leading-relaxed">
+                                    <span class="font-semibold">${isAnonymous ? 'Anonymous' : creator}</span> 
                                     <span id="prompt-text" class="text-gray-300" data-full-prompt="${prompt.replace(/"/g, '&quot;')}">
                                         ${prompt.length > 150 ? prompt.substring(0, 150) + '...' : prompt}
                                     </span>
                                     ${prompt.length > 150 ? `
-                                        <button id="show-more-btn" class="text-violet-400 hover:text-violet-300 font-medium ml-1 transition-colors">
+                                        <button id="show-more-btn" class="text-violet-400 hover:text-violet-300 font-medium ml-1 transition-colors text-xs lg:text-sm">
                                             more
                                         </button>
                                     ` : ''}
                                 </p>
-                                ${prompt.length > 150 ? `
-                                    <button id="copy-prompt-caption-btn" data-prompt="${prompt.replace(/"/g, '&quot;')}" class="mt-2 text-xs text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-1">
-                                        <i class="far fa-copy"></i> Copy prompt
-                                    </button>
-                                ` : `
-                                    <button id="copy-prompt-caption-btn" data-prompt="${prompt.replace(/"/g, '&quot;')}" class="mt-2 text-xs text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-1">
-                                        <i class="far fa-copy"></i> Copy prompt
-                                    </button>
-                                `}
+                                <button id="copy-prompt-caption-btn" data-prompt="${prompt.replace(/"/g, '&quot;')}" class="mt-1.5 lg:mt-2 text-[10px] lg:text-xs text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-1">
+                                    <i class="far fa-copy text-xs"></i> Copy prompt
+                                </button>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Technical Details -->
-                    <div class="px-4 py-4 space-y-3 border-b border-zinc-800">
-                        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                            <i class="fas fa-cog"></i> Technical Details
+                    <!-- Technical Details (Compact for Mobile) -->
+                    <div class="px-3 lg:px-4 py-3 lg:py-4 space-y-2 lg:space-y-3 border-b border-zinc-800">
+                        <h3 class="text-[10px] lg:text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 lg:gap-2">
+                            <i class="fas fa-cog text-xs"></i> Technical Details
                         </h3>
-                        <div class="space-y-2">
+                        <div class="space-y-1.5 lg:space-y-2">
                             ${model ? `
-                                <div class="flex items-center justify-between py-2 px-3 bg-zinc-900/50 rounded-lg">
-                                    <span class="text-xs text-gray-400">Model</span>
-                                    <span class="text-xs text-white font-semibold">${model}</span>
+                                <div class="flex items-center justify-between py-1.5 lg:py-2 px-2 lg:px-3 bg-zinc-900/50 rounded-lg">
+                                    <span class="text-[10px] lg:text-xs text-gray-400">Model</span>
+                                    <span class="text-[10px] lg:text-xs text-white font-semibold truncate max-w-[150px] lg:max-w-none">${model}</span>
                                 </div>
                             ` : ''}
                             ${dimensions ? `
-                                <div class="flex items-center justify-between py-2 px-3 bg-zinc-900/50 rounded-lg">
-                                    <span class="text-xs text-gray-400">Dimensions</span>
-                                    <span class="text-xs text-white font-semibold">${dimensions}</span>
+                                <div class="flex items-center justify-between py-1.5 lg:py-2 px-2 lg:px-3 bg-zinc-900/50 rounded-lg">
+                                    <span class="text-[10px] lg:text-xs text-gray-400">Dimensions</span>
+                                    <span class="text-[10px] lg:text-xs text-white font-semibold">${dimensions}</span>
                                 </div>
                             ` : ''}
-                            <div class="flex items-center justify-between py-2 px-3 bg-zinc-900/50 rounded-lg">
-                                <span class="text-xs text-gray-400">Type</span>
-                                <span class="text-xs text-white font-semibold">${type}</span>
+                            <div class="flex items-center justify-between py-1.5 lg:py-2 px-2 lg:px-3 bg-zinc-900/50 rounded-lg">
+                                <span class="text-[10px] lg:text-xs text-gray-400">Type</span>
+                                <span class="text-[10px] lg:text-xs text-white font-semibold">${type}</span>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Stats Section -->
-                    <div class="px-4 py-4 border-b border-zinc-800">
+                    <!-- Stats Section (Compact for Mobile) -->
+                    <div class="px-3 lg:px-4 py-3 lg:py-4 border-b border-zinc-800">
                         <div class="flex items-center justify-around">
                             <div class="text-center">
-                                <p id="likes-count" class="text-white font-bold text-lg">${likes.toLocaleString()}</p>
-                                <p class="text-gray-400 text-xs">Likes</p>
+                                <p id="likes-count" class="text-white font-bold text-base lg:text-lg">${likes.toLocaleString()}</p>
+                                <p class="text-gray-400 text-[10px] lg:text-xs">Likes</p>
                             </div>
-                            <div class="w-px h-10 bg-zinc-800"></div>
+                            <div class="w-px h-8 lg:h-10 bg-zinc-800"></div>
                             <div class="text-center">
-                                <p id="views-count" class="text-white font-bold text-lg">${views.toLocaleString()}</p>
-                                <p class="text-gray-400 text-xs">Views</p>
+                                <p id="views-count" class="text-white font-bold text-base lg:text-lg">${views.toLocaleString()}</p>
+                                <p class="text-gray-400 text-[10px] lg:text-xs">Views</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Footer: Action Buttons (Instagram Style) -->
-                <div class="px-4 py-3 border-t border-zinc-800 bg-zinc-950 space-y-3">
+                <!-- Footer: Action Buttons (Instagram Style - Compact for Mobile) -->
+                <div class="px-3 lg:px-4 py-2.5 lg:py-3 border-t border-zinc-800 bg-zinc-950 space-y-2 lg:space-y-3">
                     <!-- Like, Comment, Share Row -->
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-3 lg:gap-4">
                             <!-- Like Button -->
                             <button id="floating-like-btn" data-shared-id="${sharedId}" data-likes="${likes}" class="group transition-all duration-200 active:scale-90">
-                                <i class="far fa-heart text-white text-2xl group-hover:scale-110 transition-transform"></i>
+                                <i class="far fa-heart text-white text-xl lg:text-2xl group-hover:scale-110 transition-transform"></i>
                             </button>
                             
                             <!-- Comment Button (Disabled for now) -->
-                            <button class="group transition-all duration-200 active:scale-90" disabled>
-                                <i class="far fa-comment text-gray-600 text-2xl"></i>
+                            <button class="group transition-all duration-200 active:scale-90 hidden lg:block" disabled>
+                                <i class="far fa-comment text-gray-600 text-xl lg:text-2xl"></i>
                             </button>
                             
                             <!-- Share Button -->
                             <button id="copy-prompt-btn" data-prompt="${prompt.replace(/"/g, '&quot;')}" class="group transition-all duration-200 active:scale-90">
-                                <i class="far fa-paper-plane text-white text-2xl group-hover:scale-110 transition-transform"></i>
+                                <i class="far fa-paper-plane text-white text-xl lg:text-2xl group-hover:scale-110 transition-transform"></i>
                             </button>
                         </div>
                         
                         <!-- Bookmark Button -->
                         <button id="floating-bookmark-btn" data-shared-id="${sharedId}" class="group transition-all duration-200 active:scale-90">
-                            <i class="far fa-bookmark text-white text-2xl group-hover:scale-110 transition-transform"></i>
+                            <i class="far fa-bookmark text-white text-xl lg:text-2xl group-hover:scale-110 transition-transform"></i>
                         </button>
                     </div>
                     
                     <!-- Action Buttons Row -->
                     <div class="grid grid-cols-2 gap-2">
                         ${window.location.pathname !== '/dashboard' ? `
-                            <a href="/dashboard" class="px-4 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white text-center rounded-lg text-sm font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2">
-                                <i class="fas fa-magic"></i> Create Similar
+                            <a href="/dashboard" class="px-3 lg:px-4 py-2 lg:py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white text-center rounded-lg text-xs lg:text-sm font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-1.5 lg:gap-2">
+                                <i class="fas fa-magic text-xs lg:text-sm"></i> 
+                                <span class="hidden sm:inline">Create Similar</span>
+                                <span class="sm:hidden">Create</span>
                             </a>
                         ` : `
-                            <button id="copy-prompt-btn-2" data-prompt="${prompt.replace(/"/g, '&quot;')}" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 active:scale-95">
-                                <i class="fas fa-copy"></i> Copy Prompt
+                            <button id="copy-prompt-btn-2" data-prompt="${prompt.replace(/"/g, '&quot;')}" class="px-3 lg:px-4 py-2 lg:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs lg:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 lg:gap-2 active:scale-95">
+                                <i class="fas fa-copy text-xs lg:text-sm"></i> 
+                                <span class="hidden sm:inline">Copy Prompt</span>
+                                <span class="sm:hidden">Copy</span>
                             </button>
                         `}
                         
-                        <a href="${mediaUrl}" download class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 active:scale-95">
-                            <i class="fas fa-download"></i> Download
+                        <a href="${mediaUrl}" download class="px-3 lg:px-4 py-2 lg:py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-lg text-xs lg:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 lg:gap-2 active:scale-95">
+                            <i class="fas fa-download text-xs lg:text-sm"></i> Download
                         </a>
                     </div>
                     
-                    <!-- Report Button -->
-                    <button id="report-btn" data-shared-id="${sharedId}" class="w-full px-3 py-2 bg-zinc-900 hover:bg-zinc-800 text-gray-400 hover:text-red-400 rounded-lg text-xs font-medium transition-all border border-zinc-800 active:scale-95">
+                    <!-- Report Button (Hidden on Mobile for space) -->
+                    <button id="report-btn" data-shared-id="${sharedId}" class="hidden lg:block w-full px-3 py-2 bg-zinc-900 hover:bg-zinc-800 text-gray-400 hover:text-red-400 rounded-lg text-xs font-medium transition-all border border-zinc-800 active:scale-95">
                         <i class="fas fa-flag mr-1"></i> Report Content
                     </button>
                 </div>
