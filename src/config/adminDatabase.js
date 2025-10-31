@@ -10,7 +10,7 @@ const createAdminTables = async () => {
     await client.query(`
       ALTER TABLE users 
       ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'user',
-      ADD COLUMN IF NOT EXISTS credits INTEGER DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS credits DECIMAL(10, 2) DEFAULT 0,
       ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true,
       ADD COLUMN IF NOT EXISTS subscription_plan VARCHAR(100),
       ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMP;
@@ -102,10 +102,10 @@ const createAdminTables = async () => {
       CREATE TABLE IF NOT EXISTS credit_transactions (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-        amount INTEGER NOT NULL,
+        amount DECIMAL(10, 2) NOT NULL,
         transaction_type VARCHAR(50) NOT NULL,
         description TEXT,
-        balance_after INTEGER NOT NULL,
+        balance_after DECIMAL(10, 2) NOT NULL,
         admin_id INTEGER REFERENCES users(id),
         promo_code_id INTEGER REFERENCES promo_codes(id),
         metadata JSONB,

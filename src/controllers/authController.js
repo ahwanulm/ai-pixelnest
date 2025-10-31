@@ -47,6 +47,8 @@ exports.checkEmail = async (req, res) => {
       // Check if user is active
       if (!user.is_active) {
         // User registered but not activated - resend activation
+        console.log(`✅ Rendering verification page (checkEmail) for email: ${email}`); // DEBUG
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
         return res.render('auth/verify-activation-compact', {
           title: 'Aktivasi Akun - PixelNest',
           email: email,
@@ -97,6 +99,8 @@ exports.loginWithPassword = async (req, res) => {
     // Check if user is active
     const user = await User.findByEmail(email);
     if (user && !user.is_active) {
+      console.log(`✅ Rendering verification page (loginWithPassword) for email: ${email}`); // DEBUG
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
       return res.render('auth/verify-activation', {
         title: 'Aktivasi Akun - PixelNest',
         email: email,
@@ -246,6 +250,8 @@ exports.register = async (req, res) => {
     }
     
     // Redirect to verification page (don't auto-login yet)
+    console.log(`✅ Rendering verification page for email: ${email}`); // DEBUG
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.render('auth/verify-activation', {
       title: 'Verifikasi Email - PixelNest',
       email: email,

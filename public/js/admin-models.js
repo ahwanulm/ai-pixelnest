@@ -504,6 +504,35 @@ function editModel(id) {
   document.getElementById('model-active').checked = model.is_active;
   document.getElementById('model-prompt-required').checked = model.prompt_required !== false; // Default to true
   
+  // ✨ NEW BADGE: Load badge status and expiry
+  const showNewBadgeCheckbox = document.getElementById('model-show-new-badge');
+  if (showNewBadgeCheckbox) {
+    // Check if badge should still be shown (not expired)
+    let shouldShowBadge = model.show_new_badge || false;
+    
+    if (model.new_badge_until) {
+      const expiryDate = new Date(model.new_badge_until);
+      const now = new Date();
+      
+      // Auto-disable if expired
+      if (expiryDate < now) {
+        shouldShowBadge = false;
+        console.log('⏰ NEW badge expired for:', model.name);
+      } else {
+        // Store expiry date for later use
+        document.getElementById('model-edit-id').dataset.newBadgeUntil = model.new_badge_until;
+        
+        const daysLeft = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+        console.log(`✨ NEW badge active for ${model.name} (${daysLeft} days left)`);
+      }
+    }
+    
+    showNewBadgeCheckbox.checked = shouldShowBadge;
+    
+    // Show/hide info box
+    toggleNewBadgeInfo();
+  }
+  
   // Populate advanced configuration from metadata
   if (model.metadata) {
     const metadata = typeof model.metadata === 'string' ? JSON.parse(model.metadata) : model.metadata;
@@ -525,6 +554,15 @@ function editModel(id) {
     
     if (document.getElementById('supports-multi-image') && metadata.supports_multi_image) {
       document.getElementById('supports-multi-image').checked = metadata.supports_multi_image;
+      toggleMaxImagesField(); // Show multi-image config if enabled
+      
+      // Load multi-image configuration
+      if (metadata.max_images && document.getElementById('max-images')) {
+        document.getElementById('max-images').value = metadata.max_images;
+      }
+      if (metadata.multi_image_upload_mode && document.getElementById('multi-image-upload-mode')) {
+        document.getElementById('multi-image-upload-mode').value = metadata.multi_image_upload_mode;
+      }
     }
     
     // Custom parameters
@@ -709,8 +747,31 @@ async function handleSubmit(e) {
     is_active: document.getElementById('model-active').checked,
     prompt_required: promptRequired,
     is_custom: true,
-    pricing_structure: structureType
+    pricing_structure: structureType,
+    show_new_badge: document.getElementById('model-show-new-badge')?.checked || false
   };
+  
+  // ✨ NEW BADGE: Calculate expiry date (30 days from now)
+  if (modelData.show_new_badge && !isEdit) {
+    // For new models, set expiry to 30 days from now
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 30);
+    modelData.new_badge_until = expiryDate.toISOString();
+  } else if (modelData.show_new_badge && isEdit) {
+    // For existing models being edited, keep existing expiry or set new one
+    const existingExpiry = document.getElementById('model-edit-id').dataset.newBadgeUntil;
+    if (existingExpiry) {
+      modelData.new_badge_until = existingExpiry;
+    } else {
+      // If no existing expiry, set 30 days from now
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30);
+      modelData.new_badge_until = expiryDate.toISOString();
+    }
+  } else {
+    // Badge disabled, clear expiry
+    modelData.new_badge_until = null;
+  }
   
   // ✨ Add duration configuration (for video models)
   const availableDurationsInput = document.getElementById('available-durations')?.value.trim();
@@ -747,6 +808,12 @@ async function handleSubmit(e) {
   // Feature flags
   metadata.supports_i2v = document.getElementById('supports-i2v')?.checked || false;
   metadata.supports_multi_image = document.getElementById('supports-multi-image')?.checked || false;
+  
+  // Multi-image configuration
+  if (metadata.supports_multi_image) {
+    metadata.max_images = parseInt(document.getElementById('max-images')?.value) || 3;
+    metadata.multi_image_upload_mode = document.getElementById('multi-image-upload-mode')?.value || 'dynamic';
+  }
   
   // Custom parameters (parse JSON)
   const customParamsInput = document.getElementById('custom-parameters')?.value.trim();
@@ -3176,6 +3243,46 @@ async function saveSunoModelsWithPricing() {
     showToast('❌ Error: ' + error.message, 'error');
   }
 }
+
+/**
+ * Toggle Multi-Image Configuration Section
+ */
+function toggleMaxImagesField() {
+  const supportsMultiImage = document.getElementById('supports-multi-image')?.checked || false;
+  const multiImageConfig = document.getElementById('multi-image-config');
+  
+  if (multiImageConfig) {
+    if (supportsMultiImage) {
+      multiImageConfig.classList.remove('hidden');
+    } else {
+      multiImageConfig.classList.add('hidden');
+    }
+  }
+}
+
+/**
+ * Toggle NEW Badge Info Box
+ */
+function toggleNewBadgeInfo() {
+  const showNewBadge = document.getElementById('model-show-new-badge')?.checked || false;
+  const newBadgeInfo = document.getElementById('new-badge-info');
+  
+  if (newBadgeInfo) {
+    if (showNewBadge) {
+      newBadgeInfo.classList.remove('hidden');
+    } else {
+      newBadgeInfo.classList.add('hidden');
+    }
+  }
+}
+
+// Attach event listener for NEW badge checkbox
+document.addEventListener('DOMContentLoaded', function() {
+  const newBadgeCheckbox = document.getElementById('model-show-new-badge');
+  if (newBadgeCheckbox) {
+    newBadgeCheckbox.addEventListener('change', toggleNewBadgeInfo);
+  }
+});
 
 // Make functions globally available
 window.openSunoPricingModal = openSunoPricingModal;

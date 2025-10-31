@@ -164,7 +164,7 @@
                     </svg>
                 </div>
                 <h1 class="text-xl font-bold text-white mb-0.5">Verifikasi Email</h1>
-                <p class="text-xs text-gray-400">Kode dikirim ke <span class="text-gray-200 font-medium"><%= email %></span></p>
+                <p class="text-xs text-gray-400">Kode dikirim ke <span class="text-gray-200 font-medium" id="emailDisplay"><%= email %></span></p>
             </div>
 
             <!-- Messages - Compact -->
@@ -181,8 +181,8 @@
             <% } %>
 
             <!-- Form -->
-            <form action="/auth/verify-activation" method="POST" id="verifyForm">
-                <input type="hidden" name="email" value="<%= email %>">
+            <form action="/auth/verify-activation" method="POST" id="verifyForm" autocomplete="off">
+                <input type="hidden" name="email" value="<%= email %>" autocomplete="off">
                 
                 <div class="mb-3">
                     <label class="block text-[10px] font-medium text-gray-400 mb-1.5 text-center">Kode Aktivasi (6 digit)</label>
@@ -276,6 +276,18 @@
         let cooldownTime = 0;
         let countdownInterval = null;
         let isLocked = false;
+
+        // Ensure correct email is displayed (anti-cache)
+        window.addEventListener('DOMContentLoaded', function() {
+            const emailInput = document.querySelector('input[name="email"]');
+            const emailDisplay = document.getElementById('emailDisplay');
+            
+            if (emailInput && emailDisplay) {
+                const correctEmail = emailInput.value;
+                emailDisplay.textContent = correctEmail;
+                console.log('✅ Email displayed:', correctEmail);
+            }
+        });
 
         // Auto-format: numbers only
         document.getElementById('code').addEventListener('input', function(e) {

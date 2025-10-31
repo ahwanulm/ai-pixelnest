@@ -510,11 +510,74 @@
                   <span class="text-gray-300">Image-to-Video</span>
                 </label>
                 <label class="flex items-center gap-1 text-xs">
-                  <input type="checkbox" id="supports-multi-image" class="rounded bg-gray-700 border-gray-600 text-purple-600">
+                  <input type="checkbox" id="supports-multi-image" class="rounded bg-gray-700 border-gray-600 text-purple-600" onchange="toggleMaxImagesField()">
                   <span class="text-gray-300">Multiple Images</span>
                 </label>
               </div>
             </div>
+          </div>
+          
+          <!-- Multi-Image Configuration (shown when supports-multi-image is checked) -->
+          <div id="multi-image-config" class="hidden space-y-3 p-4 bg-gradient-to-r from-orange-900/20 to-yellow-900/20 rounded-lg border border-orange-500/30">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-images text-orange-400"></i>
+              <label class="text-sm font-semibold text-orange-300">📸 Multiple Image Upload Configuration</label>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+              <!-- Max Images -->
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">
+                  Max Images 
+                  <i class="fas fa-info-circle text-cyan-400" title="Maximum number of images user can upload"></i>
+                </label>
+                <input 
+                  type="number" 
+                  id="max-images" 
+                  min="2"
+                  max="10"
+                  value="3"
+                  placeholder="3"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-orange-500"
+                >
+                <p class="text-xs text-gray-500 mt-1">
+                  Range: 2-10 images
+                </p>
+              </div>
+              
+              <!-- Upload Mode -->
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">
+                  Upload Mode
+                  <i class="fas fa-info-circle text-cyan-400" title="How users can upload images"></i>
+                </label>
+                <select 
+                  id="multi-image-upload-mode" 
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-orange-500"
+                >
+                  <option value="dynamic">Dynamic (Add/Remove fields)</option>
+                  <option value="batch">Batch (Select multiple at once)</option>
+                  <option value="both">Both (Flexible)</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">
+                  How images are uploaded
+                </p>
+              </div>
+            </div>
+            
+            <!-- Multi-Image Use Cases -->
+            <div class="p-3 bg-gray-800/30 rounded-lg">
+              <p class="text-xs font-semibold text-cyan-400 mb-2">💡 Use Cases:</p>
+              <div class="text-xs text-gray-300 space-y-1">
+                <p>• <strong>Edit-Multi:</strong> Combine multiple objects/images</p>
+                <p>• <strong>Image Blending:</strong> Blend 2-3 images together</p>
+                <p>• <strong>Batch Processing:</strong> Apply same edit to multiple images</p>
+                <p>• <strong>Face Swap:</strong> Multiple source/target faces</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-3">
           </div>
           
           <!-- Custom Parameters (JSON) -->
@@ -834,7 +897,7 @@
         <input type="hidden" id="model-cost" name="cost" value="1">
 
         <!-- Flags (Compact) -->
-        <div class="flex items-center gap-6 p-3 bg-gray-800/30 rounded-lg border border-gray-700">
+        <div class="flex flex-wrap items-center gap-4 p-3 bg-gray-800/30 rounded-lg border border-gray-700">
           <label class="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" id="model-trending" class="w-4 h-4 rounded bg-gray-800 border-gray-700 text-purple-600">
             <span class="text-gray-300 text-sm">🔥 Trending</span>
@@ -842,6 +905,10 @@
           <label class="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" id="model-viral" class="w-4 h-4 rounded bg-gray-800 border-gray-700 text-purple-600">
             <span class="text-gray-300 text-sm">⚡ Viral</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer" title="Show NEW badge on model card (auto-expires after 30 days)">
+            <input type="checkbox" id="model-show-new-badge" class="w-4 h-4 rounded bg-gray-800 border-gray-700 text-yellow-600">
+            <span class="text-gray-300 text-sm">✨ Show NEW Badge</span>
           </label>
           <label class="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" id="model-active" checked class="w-4 h-4 rounded bg-gray-800 border-gray-700 text-green-600">
@@ -851,6 +918,17 @@
             <input type="checkbox" id="model-prompt-required" checked class="w-4 h-4 rounded bg-gray-800 border-gray-700 text-blue-600">
             <span class="text-gray-300 text-sm">📝 Prompt Required</span>
           </label>
+        </div>
+        
+        <!-- New Badge Info -->
+        <div id="new-badge-info" class="hidden p-3 bg-yellow-900/10 border border-yellow-500/20 rounded-lg text-xs">
+          <p class="font-semibold text-yellow-300 mb-1">💡 About NEW Badge:</p>
+          <div class="text-gray-300 space-y-1">
+            <p>• Badge will appear on model card in dashboard</p>
+            <p>• Automatically expires after 30 days from model creation</p>
+            <p>• Helps users discover recently added models</p>
+            <p>• Can be manually disabled anytime by unchecking this option</p>
+          </div>
         </div>
 
         <!-- Buttons -->

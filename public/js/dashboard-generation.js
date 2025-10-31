@@ -1,8 +1,221 @@
 // Dashboard Generation Logic
 
+// ========== DYNAMIC UPLOAD FIELDS MANAGEMENT ==========
+let dynamicUploadFieldsCount = 1;
+let maxDynamicUploadFields = 3;
+let uploadDelegationInitialized = false; // Flag to prevent multiple delegation setup
+
+/**
+ * Setup Image Upload Mode based on model configuration
+ * @param {string} imageType - The type of image operation
+ * @param {string} uploadMode - Upload mode: 'single', 'dynamic', 'batch', 'both'
+ * @param {number} maxImages - Maximum number of images allowed
+ */
+function setupImageUploadMode(imageType, uploadMode, maxImages) {
+    const addImageBtn = document.getElementById('add-image-field-btn');
+    const dynamicFieldsContainer = document.getElementById('dynamic-upload-fields');
+    const imageFilesList = document.getElementById('image-files-list');
+    const uploadLabel = document.getElementById('image-upload-label');
+    const uploadLabelMulti = document.getElementById('image-upload-label-multi');
+    
+    // ✅ SAFETY: Default to single upload if not specified
+    uploadMode = uploadMode || 'single';
+    maxImages = maxImages || 1;
+    
+    // Reset dynamic fields count
+    dynamicUploadFieldsCount = 1;
+    maxDynamicUploadFields = maxImages;
+    
+    // Show/hide appropriate labels
+    if (uploadMode === 'single' || maxImages === 1) {
+        // Single upload mode (DEFAULT for backward compatibility)
+        if (uploadLabel) uploadLabel.classList.remove('hidden');
+        if (uploadLabelMulti) uploadLabelMulti.classList.add('hidden');
+        if (addImageBtn) addImageBtn.classList.add('hidden');
+        if (imageFilesList) imageFilesList.classList.add('hidden');
+        
+        // Remove extra upload fields if any
+        removeAllDynamicUploadFields();
+        
+        console.log('📌 Upload mode: SINGLE (backward compatible)');
+    } else {
+        // Multiple upload mode (ONLY for models with supports_multi_image)
+        if (uploadLabel) uploadLabel.classList.add('hidden');
+        if (uploadLabelMulti) {
+            uploadLabelMulti.classList.remove('hidden');
+            uploadLabelMulti.textContent = `Upload Images (Max: ${maxImages})`;
+        }
+        
+        if (uploadMode === 'dynamic' || uploadMode === 'both') {
+            // Show add button for dynamic mode
+            if (addImageBtn) addImageBtn.classList.remove('hidden');
+        } else {
+            if (addImageBtn) addImageBtn.classList.add('hidden');
+        }
+        
+        console.log(`📌 Upload mode: MULTIPLE (max: ${maxImages}, mode: ${uploadMode})`);
+    }
+}
+
+/**
+ * Add a new dynamic upload field
+ */
+function addDynamicUploadField() {
+    if (dynamicUploadFieldsCount >= maxDynamicUploadFields) {
+        showNotification(`Maximum ${maxDynamicUploadFields} images allowed`, 'warning');
+        return;
+    }
+    
+    const container = document.getElementById('dynamic-upload-fields');
+    if (!container) return;
+    
+    dynamicUploadFieldsCount++;
+    const fieldIndex = dynamicUploadFieldsCount - 1;
+    
+    const fieldHTML = `
+        <div class="upload-field-item" data-field-index="${fieldIndex}">
+            <div class="relative border-2 border-dashed border-white/20 rounded-lg p-4 text-center hover:border-white/50 transition-all duration-300 cursor-pointer group hover:scale-[1.02]">
+                <span class="absolute inset-0 bg-white/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                
+                <!-- Remove button -->
+                <button type="button" class="remove-upload-field absolute top-2 right-2 z-20 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition">
+                    <i class="fas fa-times"></i>
+                </button>
+                
+                <input type="file" class="hidden image-upload-input" accept="image/*" data-index="${fieldIndex}">
+                <svg class="w-8 h-8 mx-auto mb-2 text-gray-500 group-hover:text-white transition-colors duration-300 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+                <p class="text-xs text-gray-500 group-hover:text-gray-300 transition-colors duration-300 relative z-10 image-upload-text">Click to upload image ${fieldIndex + 1}</p>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', fieldHTML);
+    
+    console.log(`✅ Added upload field ${fieldIndex + 1}/${maxDynamicUploadFields}`);
+}
+
+/**
+ * Remove a specific dynamic upload field
+ */
+function removeDynamicUploadField(fieldIndex) {
+    const field = document.querySelector(`.upload-field-item[data-field-index="${fieldIndex}"]`);
+    if (field && fieldIndex > 0) { // Don't remove the first field (index 0)
+        field.remove();
+        dynamicUploadFieldsCount--;
+        console.log(`❌ Removed upload field ${fieldIndex + 1}`);
+    }
+}
+
+/**
+ * Remove all dynamic upload fields except the first one
+ */
+function removeAllDynamicUploadFields() {
+    const container = document.getElementById('dynamic-upload-fields');
+    if (!container) return;
+    
+    const fields = container.querySelectorAll('.upload-field-item');
+    fields.forEach((field, index) => {
+        if (index > 0) { // Keep the first field
+            field.remove();
+        }
+    });
+    
+    dynamicUploadFieldsCount = 1;
+}
+
+/**
+ * ✅ Setup event delegation for upload fields (ONCE)
+ * This prevents multiple listeners on the same element
+ */
+function setupUploadDelegation() {
+    if (uploadDelegationInitialized) {
+        console.log('⏭️ Upload delegation already initialized, skipping...');
+        return;
+    }
+    
+    const container = document.getElementById('dynamic-upload-fields');
+    if (!container) return;
+    
+    console.log('🔧 Setting up event delegation for upload fields...');
+    
+    // ✅ Use event delegation on parent container - SINGLE CLICK HANDLER
+    container.addEventListener('click', function(e) {
+        // Priority 1: Check for remove button click
+        const removeBtn = e.target.closest('.remove-upload-field');
+        if (removeBtn) {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            const fieldItem = removeBtn.closest('.upload-field-item');
+            if (fieldItem) {
+                const fieldIndex = parseInt(fieldItem.dataset.fieldIndex);
+                removeDynamicUploadField(fieldIndex);
+            }
+            return; // Exit early
+        }
+        
+        // Priority 2: Check for dropzone click (upload trigger)
+        const dropzone = e.target.closest('.upload-field-item .relative');
+        if (dropzone) {
+            const fieldItem = e.target.closest('.upload-field-item');
+            if (!fieldItem) return;
+            
+            const input = fieldItem.querySelector('.image-upload-input');
+            if (!input) return;
+            
+            console.log(`🖱️ Upload field ${fieldItem.dataset.fieldIndex} clicked`);
+            
+            // Stop propagation to prevent any parent handlers
+            e.stopPropagation();
+            
+            // Trigger file input
+            input.click();
+        }
+    });
+    
+    // ✅ Handle file selection changes via delegation
+    container.addEventListener('change', function(e) {
+        if (!e.target.classList.contains('image-upload-input')) return;
+        
+        const input = e.target;
+        const fieldItem = input.closest('.upload-field-item');
+        if (!fieldItem) return;
+        
+        const textEl = fieldItem.querySelector('.image-upload-text');
+        
+        if (input.files && input.files.length > 0) {
+            const fileName = input.files[0].name;
+            const fileSize = (input.files[0].size / 1024 / 1024).toFixed(2);
+            
+            if (textEl) {
+                textEl.innerHTML = `<i class="fas fa-check-circle text-green-400 mr-1"></i> ${fileName} <span class="text-gray-600">(${fileSize} MB)</span>`;
+                textEl.classList.add('text-green-400');
+            }
+            
+            console.log(`✅ File selected for field ${input.dataset.index || 0}: ${fileName}`);
+        }
+    });
+    
+    uploadDelegationInitialized = true;
+    console.log('✅ Upload delegation initialized successfully');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // State management
     let currentQuantity = 1;
+    
+    // ===== Dynamic Upload Button =====
+    const addImageFieldBtn = document.getElementById('add-image-field-btn');
+    if (addImageFieldBtn) {
+        addImageFieldBtn.addEventListener('click', function() {
+            addDynamicUploadField();
+        });
+    }
+    
+    // ✅ Setup event delegation for upload fields (ONCE)
+    setupUploadDelegation();
     
     // ✨ Helper function to clean model names (remove fal.ai and fal.id references)
     function cleanModelName(modelName) {
@@ -686,11 +899,30 @@ document.addEventListener('DOMContentLoaded', function() {
             if (value === 'edit-image' || value === 'edit-multi' || value === 'upscale' || value === 'remove-bg' || value === 'image-to-3d') {
                 imageUploadSection.classList.remove('hidden');
                 
-                // ✅ Enable multiple file selection for edit-multi
-                if (value === 'edit-multi' && imageUploadInput) {
-                    imageUploadInput.setAttribute('multiple', 'multiple');
-                } else if (imageUploadInput) {
+                // ✅ SAFETY: Check if model supports multiple images (default to false for backward compatibility)
+                const supportsMultiImage = !!(selectedModel && selectedModel.metadata && selectedModel.metadata.supports_multi_image);
+                
+                // ✅ Default values for backward compatibility
+                const maxImages = supportsMultiImage ? (parseInt(selectedModel.metadata.max_images) || 3) : 1;
+                const uploadMode = supportsMultiImage ? (selectedModel.metadata.multi_image_upload_mode || 'dynamic') : 'single';
+                
+                // Configure upload UI based on mode
+                setupImageUploadMode(value, uploadMode, maxImages);
+                
+                // ✅ BACKWARD COMPATIBILITY: For models without metadata, use legacy single upload
+                if (imageUploadInput) {
+                    if (supportsMultiImage) {
+                        // New: Dynamic multiple upload via separate fields
+                        imageUploadInput.removeAttribute('multiple');
+                    } else {
+                        // Legacy: Single file upload (default behavior)
                     imageUploadInput.removeAttribute('multiple');
+                    }
+                }
+                
+                console.log(`📸 Image upload configured: ${supportsMultiImage ? 'MULTIPLE' : 'SINGLE'} mode`);
+                if (supportsMultiImage) {
+                    console.log(`   Max images: ${maxImages}, Upload mode: ${uploadMode}`);
                 }
                 
                 // ✅ Hide aspect ratio picker for edit operations (will auto-detect from uploaded image)
@@ -1333,23 +1565,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('model', model);
                 
                 // Handle image upload for edit modes
-                if (imageType !== 'text-to-image') {
-                    const imageUpload = document.getElementById('image-upload');
+                if (imageType !== 'text-to-image' && imageType !== 'text-to-3d') {
                     const imageUrl = document.getElementById('image-upload-url')?.value;
                     
-                    if (imageUpload.files.length > 0) {
-                        // ✅ Handle multi-image editing (edit-multi)
-                        if (imageType === 'edit-multi' && imageUpload.files.length > 1) {
-                            // Upload ALL files for batch processing
-                            Array.from(imageUpload.files).forEach((file, index) => {
-                                formData.append('images', file); // Use 'images' (plural) for multi
-                            });
-                        } else {
-                            // Single image upload
-                            formData.append('startImage', imageUpload.files[0]);
+                    // ✅ Collect all images from dynamic upload fields
+                    const allUploadInputs = document.querySelectorAll('.image-upload-input');
+                    const uploadedFiles = [];
+                    
+                    allUploadInputs.forEach(input => {
+                        if (input.files && input.files.length > 0) {
+                            uploadedFiles.push(...Array.from(input.files));
                         }
-                    } else if (imageUrl) {
-                        formData.append('startImageUrl', imageUrl);
+                    });
+                    
+                    // ✅ SAFETY: Check if model supports multiple images (default to false)
+                    const supportsMultiImage = !!(selectedModel && selectedModel.metadata && selectedModel.metadata.supports_multi_image);
+                    const maxImages = supportsMultiImage ? (parseInt(selectedModel.metadata.max_images) || 3) : 1;
+                    
+                    if (uploadedFiles.length > 0) {
+                        // ✅ Validate max images limit
+                        if (supportsMultiImage && uploadedFiles.length > maxImages) {
+                            cleanupEarlyLoading();
+                            showNotification(`Maximum ${maxImages} images allowed for this model`, 'error');
+                            return;
+                        }
+                        
+                        // ✅ Handle multiple images ONLY if model supports it
+                        if (supportsMultiImage && uploadedFiles.length > 1) {
+                            // Multiple images: Use 'images' field for batch processing
+                            // FAL.AI will process each image separately and combine results
+                            uploadedFiles.forEach((file, index) => {
+                                formData.append('images', file);
+                            });
+                            console.log(`✅ Uploading ${uploadedFiles.length} images for batch processing (fal-ai: one request per image)`);
+                        } else {
+                            // Single image: Use 'startImage' field (standard behavior)
+                            formData.append('startImage', uploadedFiles[0]);
+                            console.log(`✅ Uploading 1 image for processing`);
+                            
+                            // ⚠️ SAFETY: Warn if user uploaded multiple files but model doesn't support it
+                            if (uploadedFiles.length > 1) {
+                                console.warn(`⚠️  Model does not support multiple images. Only using first image.`);
+                                showNotification('Model only supports 1 image. Using first image only.', 'warning');
+                            }
+                        }
+                    } else if (imageUrl && imageUrl.trim()) {
+                        // URL fallback
+                        formData.append('startImageUrl', imageUrl.trim());
+                        console.log(`✅ Using image URL for processing`);
                     } else {
                         cleanupEarlyLoading();
                         showNotification('Please upload an image or provide URL', 'error');

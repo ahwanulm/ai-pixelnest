@@ -537,11 +537,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // File Upload Click Handlers
+    // ✅ DISABLED: All upload field handling is now in dashboard-generation.js
+    // This prevents conflicts with dynamic upload fields
+    /*
     const imageUploadDiv = document.querySelector('#image-upload-section .border-dashed');
     const imageUploadInput = document.getElementById('image-upload');
     
     if (imageUploadDiv && imageUploadInput) {
-        imageUploadDiv.addEventListener('click', () => imageUploadInput.click());
+        imageUploadDiv.addEventListener('click', function(e) {
+            if (e.target.closest('.upload-field-item')) {
+                return;
+            }
+            imageUploadInput.click();
+        });
+        
         imageUploadInput.addEventListener('change', function() {
             const imageFilesList = document.getElementById('image-files-list');
             const imageUploadText = document.getElementById('image-upload-text');
@@ -601,6 +610,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    */
 
     // Video Start Frame Upload
     const videoStartDiv = document.getElementById('video-start-frame-dropzone');

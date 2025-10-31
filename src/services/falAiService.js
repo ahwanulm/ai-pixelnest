@@ -89,7 +89,7 @@ const FalAiService = {
     // Handle both calling formats:
     // 1. generateImage(model_id, prompt, settings) - from worker
     // 2. generateImage(options) - from other places
-    let model, aspectRatio, numImages, image_url;
+    let model, aspectRatio, numImages, image_url, image_urls;
     
     if (typeof modelOrOptions === 'string') {
       // Format 1: (model_id, prompt, settings)
@@ -97,6 +97,7 @@ const FalAiService = {
       aspectRatio = settings?.aspectRatio || settings?.ratio || '1:1';
       numImages = parseInt(settings?.quantity || settings?.numImages) || 1;
       image_url = settings?.image_url; // ✅ For edit operations (upscale, remove-bg, etc)
+      image_urls = settings?.image_urls; // ✅ For models that require array (gpt-image, etc)
     } else {
       // Format 2: (options)
       const options = modelOrOptions;
@@ -105,11 +106,12 @@ const FalAiService = {
       aspectRatio = options.aspectRatio || '1:1';
       numImages = options.numImages || 1;
       image_url = options.image_url; // ✅ For edit operations
+      image_urls = options.image_urls; // ✅ For models that require array
     }
     
     // ✅ Smart routing: Only route specific inpainting models to editImage()
     // Other editing models (object-removal, etc) use standard generateImage with image_url
-    const isInpaintingModel = image_url && (
+    const isInpaintingModel = (image_url || (image_urls && image_urls.length > 0)) && (
       model === 'fal-ai/flux-pro/inpainting' ||
       model.includes('flux') && model.includes('inpainting')
     );
@@ -130,10 +132,15 @@ const FalAiService = {
       // Build input based on model type - Following FAL.AI documentation
       const input = { prompt: prompt };
       
-      // ✅ Add image_url if provided (for edit-image, upscale, remove-bg operations)
-      if (image_url) {
+      // ✅ Add image_urls (array) if provided (for models like gpt-image-1-mini/edit)
+      if (image_urls && Array.isArray(image_urls)) {
+        input.image_urls = image_urls;
+        console.log('🖼️  Image URLs (array) included for edit operation:', image_urls.length, 'images');
+      }
+      // ✅ Add image_url (string) if provided (for edit-image, upscale, remove-bg operations)
+      else if (image_url) {
         input.image_url = image_url;
-        console.log('🖼️  Image URL included for edit operation');
+        console.log('🖼️  Image URL (string) included for edit operation');
       }
       
       // ========== IMAGE EDITING MODELS (Object Removal, Face Enhancement, etc) ==========

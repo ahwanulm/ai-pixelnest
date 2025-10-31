@@ -114,6 +114,7 @@
                             <div class="flex items-center gap-1.5 mb-0.5">
                                 <p class="text-sm font-semibold text-white line-clamp-1 flex-1">${escapeHtml(model.name)}</p>
                                 ${isPinned ? '<i class="fas fa-thumbtack text-yellow-400 text-xs"></i>' : ''}
+                                ${shouldShowNewBadge(model) ? '<span class="px-1.5 py-0.5 bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 text-[10px] font-bold rounded uppercase">NEW</span>' : ''}
                                 ${model.viral ? '<i class="fas fa-fire text-pink-400 text-xs"></i>' : ''}
                                 ${model.trending ? '<i class="fas fa-star text-yellow-400 text-xs"></i>' : ''}
                             </div>
@@ -543,6 +544,25 @@
             "'": '&#039;'
         };
         return text.replace(/[&<>"']/g, m => map[m]);
+    }
+    
+    /**
+     * Check if NEW badge should be shown
+     * Badge shown if:
+     * 1. show_new_badge flag is true
+     * 2. new_badge_until date has not expired
+     */
+    function shouldShowNewBadge(model) {
+        if (!model.show_new_badge) return false;
+        
+        // If no expiry date set, don't show badge (safety)
+        if (!model.new_badge_until) return false;
+        
+        // Check if badge has expired
+        const expiryDate = new Date(model.new_badge_until);
+        const now = new Date();
+        
+        return expiryDate > now;
     }
     
     /**

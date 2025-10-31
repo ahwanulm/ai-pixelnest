@@ -76,7 +76,7 @@
                 </div>
                 <h1 class="text-2xl font-bold text-white mb-1">Verifikasi Email</h1>
                 <p class="text-gray-400 text-xs">Kode dikirim ke</p>
-                <p class="text-violet-400 font-semibold text-sm"><%= email %></p>
+                <p class="text-violet-400 font-semibold text-sm" id="emailDisplay"><%= email %></p>
             </div>
 
             <!-- Success/Info Message -->
@@ -104,8 +104,8 @@
             <% } %>
 
             <!-- Verification Form -->
-            <form action="/auth/verify-activation" method="POST" id="verifyForm">
-                <input type="hidden" name="email" value="<%= email %>">
+            <form action="/auth/verify-activation" method="POST" id="verifyForm" autocomplete="off">
+                <input type="hidden" name="email" value="<%= email %>" autocomplete="off">
                 
                 <!-- Code Input -->
                 <div class="mb-4">
@@ -195,6 +195,18 @@
     <script>
         let cooldownTime = 0;
         let countdownInterval = null;
+
+        // Ensure correct email is displayed (anti-cache)
+        window.addEventListener('DOMContentLoaded', function() {
+            const emailInput = document.querySelector('input[name="email"]');
+            const emailDisplay = document.getElementById('emailDisplay');
+            
+            if (emailInput && emailDisplay) {
+                const correctEmail = emailInput.value;
+                emailDisplay.textContent = correctEmail;
+                console.log('✅ Email displayed:', correctEmail);
+            }
+        });
 
         // Auto-format code input (numbers only)
         document.getElementById('code').addEventListener('input', function(e) {

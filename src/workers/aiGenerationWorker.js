@@ -583,22 +583,49 @@ async function generateImage(modelId, prompt, settings, uploadedFiles, jobId) {
   console.log(`🎨 Generating ${quantity} image(s) with ${name}`);
 
   // ✅ CRITICAL: Handle multiple images for edit-multi (batch processing)
+  // ✅ Handle multiple images for batch processing (FAL.AI compatible)
+  // FAL.AI processes one image_url per request, so we make multiple requests
   if (uploadedFiles && uploadedFiles.multiImages && uploadedFiles.multiImages.length > 0) {
-    console.log(`🎨 Edit-Multi: Processing ${uploadedFiles.multiImages.length} images in batch`);
+    console.log(`🎨 Batch Processing: ${uploadedFiles.multiImages.length} images`);
+    console.log(`   FAL.AI Strategy: One request per image (sequential processing)`);
     
     const results = [];
     const totalImages = uploadedFiles.multiImages.length;
     
     for (let i = 0; i < totalImages; i++) {
       const imageFile = uploadedFiles.multiImages[i];
-      console.log(`   Processing image ${i + 1}/${totalImages}: ${imageFile.filename}`);
+      console.log(`   [${i + 1}/${totalImages}] Processing: ${imageFile.filename}`);
       
       try {
-        // Convert image to Data URI
+        // ✅ Convert image to Data URI (FAL.AI accepts data URIs)
         const imageDataUri = await convertImageToDataUri(imageFile.fullPath);
-        const batchSettings = { ...settings, image_url: imageDataUri };
         
-        // Process image with model
+        // ✅ FIX: Check if model requires image_urls (array) or image_url (string)
+        const requiresImageUrlsArray = model_id.includes('gpt-image') || 
+                                       model_id.includes('mini/edit') ||
+                                       model_id.includes('image-editor');
+        
+        console.log(`   🔍 Model ID: ${model_id}`);
+        console.log(`   🔍 Requires image_urls array? ${requiresImageUrlsArray}`);
+        console.log(`   🔍 Settings before modification:`, Object.keys(settings));
+        
+        // ✅ Create settings with correct image parameter format
+        const batchSettings = { 
+          ...settings
+        };
+        
+        if (requiresImageUrlsArray) {
+          batchSettings.image_urls = [imageDataUri];
+          console.log(`   ✅ Using image_urls array format for ${model_id}`);
+          console.log(`   ✅ image_urls length: ${batchSettings.image_urls.length}`);
+        } else {
+          batchSettings.image_url = imageDataUri;
+          console.log(`   ✅ Using image_url string format for ${model_id}`);
+        }
+        
+        console.log(`   🔍 Final settings keys:`, Object.keys(batchSettings));
+        
+        // ✅ Process this image with FAL.AI (one request per image)
         const result = await falAiService.generateImage(model_id, prompt, batchSettings);
         results.push(result);
         
@@ -606,23 +633,25 @@ async function generateImage(modelId, prompt, settings, uploadedFiles, jobId) {
         const progress = 30 + ((i + 1) / totalImages) * 40; // 30-70%
         await updateJobStatus(jobId, 'processing', Math.round(progress));
         
-        console.log(`   ✅ Image ${i + 1}/${totalImages} processed successfully`);
+        console.log(`   ✅ [${i + 1}/${totalImages}] Processed successfully`);
       } catch (err) {
-        console.error(`   ❌ Failed to process image ${i + 1}:`, err.message);
-        // Continue with other images even if one fails
+        console.error(`   ❌ [${i + 1}/${totalImages}] Failed:`, err.message);
+        // Continue with other images even if one fails (partial success)
       }
     }
     
     if (results.length === 0) {
-      throw new Error('Failed to process any images in batch');
+      throw new Error('Failed to process any images in batch. All requests failed.');
     }
     
-    // Combine all results
+    // ✅ Combine all results into single response
+    // User will see all generated images in one result
     const combinedResult = {
       images: results.flatMap(r => r.images || [])
     };
     
-    console.log(`✅ Batch processing complete: ${combinedResult.images.length} images generated`);
+    console.log(`✅ Batch complete: ${results.length}/${totalImages} images processed successfully`);
+    console.log(`   Total output images: ${combinedResult.images.length}`);
     await updateJobStatus(jobId, 'processing', 70);
     return combinedResult;
   }
@@ -636,17 +665,49 @@ async function generateImage(modelId, prompt, settings, uploadedFiles, jobId) {
       const imagePath = uploadedFiles.startImageFullPath || path.join(__dirname, '../../public', uploadedFiles.startImagePath);
       try {
         const imageDataUri = await convertImageToDataUri(imagePath);
-        enhancedSettings.image_url = imageDataUri;
-        console.log('🖼️ Edit image detected - converted to Data URI (base64)');
+        
+        // ✅ FIX: Check if model requires image_urls (array) or image_url (string)
+        // Models like gpt-image-1-mini/edit use image_urls (plural)
+        const requiresImageUrlsArray = model_id.includes('gpt-image') || 
+                                       model_id.includes('mini/edit') ||
+                                       model_id.includes('image-editor');
+        
+        if (requiresImageUrlsArray) {
+          enhancedSettings.image_urls = [imageDataUri];
+          console.log('🖼️ Edit image detected - converted to Data URI (image_urls array)');
+        } else {
+          enhancedSettings.image_url = imageDataUri;
+          console.log('🖼️ Edit image detected - converted to Data URI (image_url string)');
+        }
       } catch (err) {
         console.error('⚠️ Failed to convert image to Data URI:', err);
         // Fallback to URL (may not work with localhost)
-        enhancedSettings.image_url = uploadedFiles.startImageUrl || `${process.env.BASE_URL || 'http://localhost:3000'}${uploadedFiles.startImagePath}`;
-        console.log('🖼️ Fallback: Using URL:', enhancedSettings.image_url);
+        const fallbackUrl = uploadedFiles.startImageUrl || `${process.env.BASE_URL || 'http://localhost:3000'}${uploadedFiles.startImagePath}`;
+        
+        const requiresImageUrlsArray = model_id.includes('gpt-image') || 
+                                       model_id.includes('mini/edit') ||
+                                       model_id.includes('image-editor');
+        
+        if (requiresImageUrlsArray) {
+          enhancedSettings.image_urls = [fallbackUrl];
+          console.log('🖼️ Fallback: Using URL (image_urls array):', enhancedSettings.image_urls);
+        } else {
+          enhancedSettings.image_url = fallbackUrl;
+          console.log('🖼️ Fallback: Using URL (image_url string):', enhancedSettings.image_url);
+        }
       }
     } else if (uploadedFiles.startImageUrl) {
-      enhancedSettings.image_url = uploadedFiles.startImageUrl;
-      console.log('🔗 Edit image detected (from URL):', enhancedSettings.image_url);
+      const requiresImageUrlsArray = model_id.includes('gpt-image') || 
+                                     model_id.includes('mini/edit') ||
+                                     model_id.includes('image-editor');
+      
+      if (requiresImageUrlsArray) {
+        enhancedSettings.image_urls = [uploadedFiles.startImageUrl];
+        console.log('🔗 Edit image detected (from URL - image_urls array):', enhancedSettings.image_urls);
+      } else {
+        enhancedSettings.image_url = uploadedFiles.startImageUrl;
+        console.log('🔗 Edit image detected (from URL - image_url string):', enhancedSettings.image_url);
+      }
     }
   }
 
