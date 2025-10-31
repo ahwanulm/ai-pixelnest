@@ -37,6 +37,9 @@ async function migrateModelsManagement() {
         cost INTEGER DEFAULT 1,
         is_active BOOLEAN DEFAULT true,
         is_custom BOOLEAN DEFAULT false, -- if added by admin
+        -- NEW Badge Feature
+        show_new_badge BOOLEAN DEFAULT FALSE,
+        new_badge_until TIMESTAMP NULL,
         metadata JSONB, -- extra data like supported features
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -73,6 +76,13 @@ async function migrateModelsManagement() {
     
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_models_custom ON ai_models(is_custom);
+    `);
+    
+    // ✨ NEW Badge Feature: Create index for badge performance
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_new_badge_expiry 
+      ON ai_models (show_new_badge, new_badge_until) 
+      WHERE show_new_badge = true;
     `);
     
     console.log('✓ Indexes created');

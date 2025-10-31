@@ -3235,6 +3235,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Helper function to get natural dimensions from media element
+    function getNaturalDimensions(element) {
+        if (!element) return { width: 0, height: 0 };
+        
+        // For images: use naturalWidth/naturalHeight
+        if (element.tagName === 'IMG') {
+            return {
+                width: element.naturalWidth || element.width || 0,
+                height: element.naturalHeight || element.height || 0
+            };
+        }
+        
+        // For videos: use videoWidth/videoHeight
+        if (element.tagName === 'VIDEO') {
+            return {
+                width: element.videoWidth || element.width || 0,
+                height: element.videoHeight || element.height || 0
+            };
+        }
+        
+        // Fallback to regular dimensions
+        return {
+            width: element.width || 0,
+            height: element.height || 0
+        };
+    }
+
     // Helper function to calculate aspect ratio from dimensions
     function calculateAspectRatio(width, height) {
         if (!width || !height) return '1:1';
@@ -3284,10 +3311,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const creditsUsed = metadata?.creditsCost ? 
             parseFloat(parseFloat(metadata.creditsCost).toFixed(2)) : 0;
         
-        // Use aspect ratio from settings (what user selected), fallback to calculated
+        // Get natural dimensions from image element
+        const naturalDims = getNaturalDimensions(image);
+        
+        // Use aspect ratio from settings (what user selected), fallback to calculated from natural dimensions
         const actualAspectRatio = metadata?.settings?.aspectRatio || 
                                   metadata?.settings?.aspect_ratio ||
-                                  calculateAspectRatio(image.width, image.height);
+                                  calculateAspectRatio(naturalDims.width, naturalDims.height);
         
         // ✨ CRITICAL FIX: Calculate unique image number based on quantity and position
         // If quantity > 1, show "Image 1 of 3", "Image 2 of 3", etc.
@@ -3361,7 +3391,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas fa-image mr-1"></i> Image
                             </div>
                             <div class="text-xs text-gray-400">
-                                ${image.width} × ${image.height}
+                                ${naturalDims.width} × ${naturalDims.height}
                             </div>
                             <div class="text-xs text-blue-300">
                                 ${actualAspectRatio}
@@ -3430,7 +3460,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="p-4">
                     <p class="text-sm text-gray-300 leading-relaxed line-clamp-2 mb-2">${prompt}</p>
                     <p class="text-xs text-gray-500 mb-2"><i class="fas fa-robot mr-1"></i> ${modelName}</p>
-                    <p class="text-xs text-gray-400 mb-2">${image.width} × ${image.height} • ${actualAspectRatio}</p>
+                    <p class="text-xs text-gray-400 mb-2">${naturalDims.width} × ${naturalDims.height} • ${actualAspectRatio}</p>
                     <div class="pt-2 border-t border-white/10 flex items-center justify-between">
                         <span class="text-xs text-gray-500"><i class="fas fa-clock mr-1"></i> ${timestamp}</span>
                         <span class="text-xs text-yellow-400"><i class="fas fa-coins mr-1"></i> ${creditsUsed.toFixed(1)}</span>
@@ -3652,10 +3682,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const creditsUsed = metadata?.creditsCost ? 
             parseFloat(parseFloat(metadata.creditsCost).toFixed(2)) : 0;
         
-        // Use aspect ratio from settings (what user selected), fallback to calculated
+        // Get natural dimensions from video element
+        const naturalDims = getNaturalDimensions(video);
+        
+        // Use aspect ratio from settings (what user selected), fallback to calculated from natural dimensions
         const actualAspectRatio = metadata?.settings?.aspectRatio || 
                                   metadata?.settings?.aspect_ratio ||
-                                  calculateAspectRatio(video.width, video.height);
+                                  calculateAspectRatio(naturalDims.width, naturalDims.height);
         
         // Add click handler for detail view
         card.addEventListener('click', (e) => {
@@ -3723,7 +3756,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas fa-video mr-1"></i> Video
                             </div>
                             <div class="text-xs text-gray-400">
-                                ${video.width} × ${video.height}
+                                ${naturalDims.width} × ${naturalDims.height}
                             </div>
                             <div class="text-xs text-gray-400">
                                 • ${duration}s
@@ -3797,7 +3830,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="p-4">
                     <p class="text-sm text-gray-300 leading-relaxed line-clamp-2 mb-2">${prompt}</p>
                     <p class="text-xs text-gray-500 mb-2"><i class="fas fa-robot mr-1"></i> ${modelName}</p>
-                    <p class="text-xs text-gray-400 mb-2">${video.width} × ${video.height} • ${duration}s • ${actualAspectRatio}</p>
+                    <p class="text-xs text-gray-400 mb-2">${naturalDims.width} × ${naturalDims.height} • ${duration}s • ${actualAspectRatio}</p>
                     <div class="pt-2 border-t border-white/10 flex items-center justify-between">
                         <span class="text-xs text-gray-500"><i class="fas fa-clock mr-1"></i> ${timestamp}</span>
                         <span class="text-xs text-yellow-400"><i class="fas fa-coins mr-1"></i> ${creditsUsed.toFixed(1)}</span>

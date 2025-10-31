@@ -99,6 +99,14 @@ router.post('/api/payment-transactions/update-expired', logAdminActivity('update
 router.get('/api/credit-price', adminController.getCreditPrice);
 router.put('/api/credit-price', logAdminActivity('update_credit_price'), adminController.updateCreditPrice);
 
+// ============ MODEL CONNECTION TESTING ============
+router.get('/model-test', adminController.getModelTest);
+router.post('/api/test-fal-connection', adminController.testFalConnection);
+router.post('/api/test-suno-connection', adminController.testSunoConnection);
+router.post('/api/test-db-connection', adminController.testDbConnection);
+router.post('/api/test-model-connection', adminController.testModelConnection);
+router.get('/api/models', adminController.getModelsForTesting); // Already exists, reusing
+
 // ============ FAL.AI PRICING VERIFICATION (NEW!) ============
 const falPricingRouter = require('./falPricing');
 router.use('/api/fal-pricing', falPricingRouter);

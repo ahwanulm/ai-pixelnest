@@ -377,6 +377,10 @@ async function createAiModelsTables() {
         available_durations JSONB DEFAULT NULL,
         price_per_second NUMERIC(10, 4) DEFAULT NULL,
         
+        -- NEW Badge Feature
+        show_new_badge BOOLEAN DEFAULT FALSE,
+        new_badge_until TIMESTAMP NULL,
+        
         is_active BOOLEAN DEFAULT true,
         is_custom BOOLEAN DEFAULT false,
         is_pinned BOOLEAN DEFAULT false,
@@ -437,7 +441,9 @@ async function createAiModelsTables() {
       ADD COLUMN IF NOT EXISTS price_2k NUMERIC(10, 3) DEFAULT NULL,
       ADD COLUMN IF NOT EXISTS price_4k NUMERIC(10, 3) DEFAULT NULL,
       ADD COLUMN IF NOT EXISTS available_durations JSONB DEFAULT NULL,
-      ADD COLUMN IF NOT EXISTS price_per_second NUMERIC(10, 4) DEFAULT NULL;
+      ADD COLUMN IF NOT EXISTS price_per_second NUMERIC(10, 4) DEFAULT NULL,
+      ADD COLUMN IF NOT EXISTS show_new_badge BOOLEAN DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS new_badge_until TIMESTAMP NULL;
     `);
 
     // Fix cost column type: INTEGER -> DECIMAL to support fractional credits

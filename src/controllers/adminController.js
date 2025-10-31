@@ -2,6 +2,9 @@ const { pool } = require('../config/database');
 const Admin = require('../models/Admin');
 const { syncApiConfigToEnv, checkSyncStatus, reloadEnv } = require('../utils/envSync');
 const tripayService = require('../services/tripayService');
+const falAiService = require('../services/falAiService');
+const falAiRealtime = require('../services/falAiRealtime');
+const sunoService = require('../services/sunoService');
 
 const adminController = {
   // ============ DASHBOARD ============
@@ -946,6 +949,9 @@ const adminController = {
         price_hd,
         price_2k,
         price_4k,
+        // ✨ NEW BADGE: Badge configuration
+        show_new_badge,
+        new_badge_until,
         // ✨ NEW PRICING TYPES - stored in metadata
         // Per Image pricing
         price_per_image,
@@ -1119,12 +1125,28 @@ const adminController = {
         falVerification.message = 'Verification failed: ' + verifyError.message;
       }
 
+      // ✨ NEW BADGE: Calculate expiry date if badge is enabled
+      let badgeExpiryDate = null;
+      if (show_new_badge) {
+        if (new_badge_until) {
+          // Use provided expiry date
+          badgeExpiryDate = new_badge_until;
+        } else {
+          // Set expiry to 30 days from now
+          const expiryDate = new Date();
+          expiryDate.setDate(expiryDate.getDate() + 30);
+          badgeExpiryDate = expiryDate.toISOString();
+        }
+        console.log('✨ NEW badge enabled for', name, 'until', badgeExpiryDate);
+      }
+
       // Build dynamic insert query to handle all pricing structures
       const columns = [
         'model_id', 'name', 'provider', 'description', 'category', 'type',
         'trending', 'viral', 'speed', 'quality', 'max_duration', 'cost', 
         'fal_price', 'pricing_type', 'pricing_structure',
-        'is_active', 'is_custom', 'prompt_required', 'added_by', 'fal_verified'
+        'is_active', 'is_custom', 'prompt_required', 'added_by', 'fal_verified',
+        'show_new_badge', 'new_badge_until'
       ];
       
       const values = [
@@ -1147,7 +1169,9 @@ const adminController = {
         is_custom || true,
         prompt_required !== false, // Default to true
         req.user?.id || null,
-        falVerification.verified
+        falVerification.verified,
+        show_new_badge || false,
+        badgeExpiryDate
       ];
       
       // ✨ Add metadata if provided (including enhanced pricing metadata)
@@ -1314,6 +1338,9 @@ const adminController = {
         price_hd,
         price_2k,
         price_4k,
+        // ✨ NEW BADGE: Badge configuration  
+        show_new_badge,
+        new_badge_until,
         // ✨ NEW PRICING TYPES - stored in metadata
         // Per Image pricing
         price_per_image,
@@ -1396,6 +1423,38 @@ const adminController = {
         values.push(prompt_required !== false); // Default to true
         paramCount++;
       }
+
+      // ✨ NEW BADGE: Handle badge updates
+      if (show_new_badge !== undefined) {
+        fields.push(`show_new_badge = $${paramCount}`);
+        values.push(show_new_badge);
+        paramCount++;
+        
+        // Handle expiry date logic
+        if (show_new_badge && !new_badge_until) {
+          // If enabling badge without expiry date, set 30 days from now
+          const expiryDate = new Date();
+          expiryDate.setDate(expiryDate.getDate() + 30);
+          fields.push(`new_badge_until = $${paramCount}`);
+          values.push(expiryDate.toISOString());
+          paramCount++;
+          console.log('✨ NEW badge enabled for model', id, 'until', expiryDate.toISOString());
+        } else if (!show_new_badge) {
+          // If disabling badge, clear expiry date
+          fields.push(`new_badge_until = $${paramCount}`);
+          values.push(null);
+          paramCount++;
+          console.log('✨ NEW badge disabled for model', id);
+        }
+      }
+      
+      if (new_badge_until !== undefined && show_new_badge) {
+        fields.push(`new_badge_until = $${paramCount}`);
+        values.push(new_badge_until);
+        paramCount++;
+        console.log('✨ NEW badge expiry updated for model', id, 'until', new_badge_until);
+      }
+
       if (speed !== undefined) {
         fields.push(`speed = $${paramCount}`);
         values.push(speed);
@@ -3336,7 +3395,293 @@ const adminController = {
         message: 'Failed to sync pricing: ' + error.message
       });
     }
-  }
+  },
+  
+  // ============ MODEL CONNECTION TESTING ============
+
+  // Get model test page
+  async getModelTest(req, res) {
+    try {
+      res.render('admin/model-test', {
+        title: 'Model Connection Test',
+        pageTitle: 'Model Connection Test',
+        user: req.user,
+      });
+    } catch (error) {
+      console.error('Error loading model test page:', error);
+      res.status(500).render('error', {
+        title: 'Error',
+        message: 'Failed to load model test page',
+        error: process.env.NODE_ENV === 'development' ? error : null,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : null
+      });
+    }
+  },
+
+  // Test FAL.AI connection
+  async testFalConnection(req, res) {
+    try {
+      console.log('🧪 Testing FAL.AI connection...');
+      
+      // Use the existing FalAiRealtime service to test connection (already instantiated)
+      const connectionResult = await falAiRealtime.verifyApiConnection();
+      
+      console.log('FAL.AI connection result:', connectionResult);
+      
+      res.json({
+        success: true,
+        connected: connectionResult.connected,
+        message: connectionResult.message,
+        error: connectionResult.error,
+        status: connectionResult.status,
+        api_key_valid: connectionResult.api_key_valid
+      });
+    } catch (error) {
+      console.error('Error testing FAL.AI connection:', error);
+      res.json({
+        success: false,
+        connected: false,
+        error: error.message,
+        message: 'Failed to test FAL.AI connection'
+      });
+    }
+  },
+
+  // Test Suno API connection
+  async testSunoConnection(req, res) {
+    try {
+      console.log('🧪 Testing Suno connection...');
+      
+      // Check if Suno API key is configured
+      const result = await pool.query(
+        "SELECT api_key FROM api_configs WHERE service_name = 'SUNO' AND is_active = true LIMIT 1"
+      );
+      
+      if (result.rows.length === 0 || !result.rows[0].api_key) {
+        return res.json({
+          success: true,
+          connected: false,
+          error: 'No API key configured',
+          message: 'Please configure Suno API key in API Config page'
+        });
+      }
+
+      // Test connection with a simple status check (no generation)
+      try {
+        const testResult = await sunoService.testConnection();
+        
+        res.json({
+          success: true,
+          connected: testResult.success || false,
+          message: testResult.message || 'Suno API connection test completed',
+          credits_available: testResult.credits_available,
+          api_status: testResult.status
+        });
+      } catch (sunoError) {
+        console.error('Suno connection test failed:', sunoError);
+        res.json({
+          success: true,
+          connected: false,
+          error: sunoError.message,
+          message: 'Suno API connection failed'
+        });
+      }
+    } catch (error) {
+      console.error('Error testing Suno connection:', error);
+      res.json({
+        success: false,
+        connected: false,
+        error: error.message,
+        message: 'Failed to test Suno connection'
+      });
+    }
+  },
+
+  // Test database connection
+  async testDbConnection(req, res) {
+    try {
+      console.log('🧪 Testing database connection...');
+      
+      // Test basic database connectivity
+      const testQuery = await pool.query('SELECT NOW() as current_time');
+      
+      // Get some basic stats
+      const modelsResult = await pool.query('SELECT COUNT(*) as count FROM ai_models');
+      const usersResult = await pool.query('SELECT COUNT(*) as count FROM users');
+      
+      res.json({
+        success: true,
+        connected: true,
+        message: 'Database connection successful',
+        models_count: parseInt(modelsResult.rows[0].count),
+        users_count: parseInt(usersResult.rows[0].count),
+        server_time: testQuery.rows[0].current_time
+      });
+    } catch (error) {
+      console.error('Error testing database connection:', error);
+      res.json({
+        success: false,
+        connected: false,
+        error: error.message,
+        message: 'Database connection failed'
+      });
+    }
+  },
+
+  // Test specific model connection
+  async testModelConnection(req, res) {
+    try {
+      const { model_id, test_type, prompt } = req.body;
+      
+      console.log(`🧪 Testing model connection: ${model_id} (${test_type})`);
+      
+      if (!model_id) {
+        return res.json({
+          success: false,
+          error: 'Model ID is required'
+        });
+      }
+
+      // Get model details from database
+      const modelResult = await pool.query(
+        'SELECT model_id, name, type, provider, is_active FROM ai_models WHERE model_id = $1',
+        [model_id]
+      );
+
+      if (modelResult.rows.length === 0) {
+        return res.json({
+          success: false,
+          error: 'Model not found in database'
+        });
+      }
+
+      const model = modelResult.rows[0];
+      const startTime = Date.now();
+
+      let testResult = {
+        model_id: model.model_id,
+        model_name: model.name,
+        model_type: model.type,
+        provider: model.provider,
+        is_active: model.is_active
+      };
+
+      try {
+        switch (test_type) {
+          case 'availability':
+            // Test if model endpoint exists (without generation)
+            if (model.provider === 'FAL' || !model.provider) {
+              const balanceCheck = await falAiService.checkBalance();
+              testResult.model_available = balanceCheck.apiKeyValid || false;
+              testResult.api_accessible = balanceCheck.success;
+            } else if (model.provider === 'SUNO') {
+              const sunoTest = await sunoService.testConnection();
+              testResult.model_available = sunoTest.success || false;
+              testResult.api_accessible = sunoTest.success;
+            } else {
+              testResult.model_available = true; // Assume available for other providers
+              testResult.api_accessible = true;
+            }
+            break;
+
+          case 'parameters':
+            // Test parameter validation (without actual generation)
+            testResult.parameters_valid = true;
+            testResult.test_prompt = prompt;
+            
+            // Basic parameter validation
+            if (model.type === 'image' && (!prompt || prompt.trim().length < 3)) {
+              testResult.parameters_valid = false;
+              testResult.validation_error = 'Image models require prompt with at least 3 characters';
+            } else if (model.type === 'video' && (!prompt || prompt.trim().length < 5)) {
+              testResult.parameters_valid = false;
+              testResult.validation_error = 'Video models require prompt with at least 5 characters';
+            }
+            break;
+
+          case 'dry-run':
+            // Perform a dry run test (simulate request without generation)
+            testResult.dry_run_successful = true;
+            testResult.estimated_cost = 0; // No actual generation
+            testResult.test_prompt = prompt;
+            
+            // Simulate request validation
+            if (model.provider === 'FAL' || !model.provider) {
+              const configCheck = await falAiService.checkBalance();
+              testResult.api_configured = configCheck.success;
+            } else if (model.provider === 'SUNO') {
+              const sunoCheck = await sunoService.testConnection();
+              testResult.api_configured = sunoCheck.success;
+            }
+            break;
+
+          default:
+            return res.json({
+              success: false,
+              error: 'Invalid test type. Use: availability, parameters, or dry-run'
+            });
+        }
+
+        const responseTime = Date.now() - startTime;
+        testResult.response_time = `${responseTime}ms`;
+
+        res.json({
+          success: true,
+          message: `Model test completed: ${test_type}`,
+          model_available: testResult.model_available !== false,
+          parameters_valid: testResult.parameters_valid !== false,
+          response_time: testResult.response_time,
+          details: testResult
+        });
+
+      } catch (modelTestError) {
+        console.error('Model test error:', modelTestError);
+        const responseTime = Date.now() - startTime;
+        
+        res.json({
+          success: false,
+          error: modelTestError.message,
+          model_available: false,
+          parameters_valid: false,
+          response_time: `${responseTime}ms`,
+          details: testResult
+        });
+      }
+
+    } catch (error) {
+      console.error('Error testing model connection:', error);
+      res.json({
+        success: false,
+        error: error.message,
+        message: 'Failed to test model connection'
+      });
+    }
+  },
+
+  // Get models for testing (API endpoint)
+  async getModelsForTesting(req, res) {
+    try {
+      const result = await pool.query(`
+        SELECT model_id, name, type, provider, is_active, cost
+        FROM ai_models 
+        WHERE is_active = true 
+        ORDER BY type, name
+      `);
+
+      res.json({
+        success: true,
+        models: result.rows
+      });
+    } catch (error) {
+      console.error('Error fetching models for testing:', error);
+      res.json({
+        success: false,
+        error: error.message,
+        models: []
+      });
+    }
+  },
+
 };
 
 module.exports = adminController;

@@ -3465,6 +3465,7 @@
                                 </div>
                                 <p class="text-xs text-gray-400 line-clamp-2 mb-2">${model.description || 'AI model for generation'}</p>
                                 <div class="flex items-center gap-2 flex-wrap">
+                                    ${shouldShowNewBadge(model) ? '<span class="text-xs px-2 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold animate-pulse">✨ NEW</span>' : ''}
                                     <span class="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-300 font-semibold">
                                         ${model.category || 'General'}
                                     </span>

@@ -589,6 +589,9 @@
         return expiryDate > now;
     }
     
+    // Make shouldShowNewBadge globally accessible
+    window.shouldShowNewBadge = shouldShowNewBadge;
+    
     /**
      * Toggle Pin Model
      */

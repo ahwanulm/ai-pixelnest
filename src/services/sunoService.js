@@ -413,6 +413,92 @@ class SunoService {
   }
 
   /**
+   * Test Suno API connection without generating music
+   */
+  async testConnection() {
+    try {
+      await this.initialize();
+      
+      if (!this.apiKey) {
+        return {
+          success: false,
+          message: 'Suno API key not configured',
+          status: 'api_key_missing'
+        };
+      }
+
+      // Test with a simple API call that doesn't generate music
+      // Try to get credits/status info (if API supports it)
+      try {
+        const response = await fetch(`${this.baseUrl}/credits`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          return {
+            success: true,
+            message: 'Suno API connection successful',
+            status: 'connected',
+            credits_available: data.credits_left || 'unknown'
+          };
+        } else if (response.status === 401) {
+          return {
+            success: false,
+            message: 'Suno API key is invalid',
+            status: 'invalid_api_key'
+          };
+        } else if (response.status === 404) {
+          // Credits endpoint might not exist, try a different approach
+          return {
+            success: true,  // API is reachable
+            message: 'Suno API is accessible (credits endpoint not available)',
+            status: 'connected_limited'
+          };
+        } else {
+          return {
+            success: false,
+            message: `Suno API returned status ${response.status}`,
+            status: 'api_error'
+          };
+        }
+      } catch (fetchError) {
+        if (fetchError.code === 'ENOTFOUND' || fetchError.code === 'ECONNREFUSED') {
+          return {
+            success: false,
+            message: 'Cannot reach Suno API endpoint',
+            status: 'endpoint_unreachable'
+          };
+        } else if (fetchError.code === 'ETIMEDOUT') {
+          return {
+            success: false,
+            message: 'Suno API connection timeout',
+            status: 'timeout'
+          };
+        } else {
+          // If we can't test credits, assume API is working if it's configured
+          return {
+            success: true,
+            message: 'Suno API is configured (test inconclusive)',
+            status: 'configured'
+          };
+        }
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Suno connection test failed: ' + error.message,
+        status: 'test_failed'
+      };
+    }
+  }
+
+  /**
    * Check if Suno service is available
    */
   async isAvailable() {

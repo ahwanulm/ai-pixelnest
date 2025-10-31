@@ -58,8 +58,9 @@ router.get('/all', async (req, res) => {
       query += ' AND viral = true';
     }
     
-    // Order by viral, trending, then name
+    // Order by NEW badge, viral, trending, then name
     query += ` ORDER BY 
+      CASE WHEN show_new_badge = true AND new_badge_until > NOW() THEN 0 ELSE 1 END,
       CASE WHEN viral THEN 0 ELSE 1 END,
       CASE WHEN trending THEN 0 ELSE 1 END,
       name ASC`;
@@ -111,6 +112,7 @@ router.get('/search', async (req, res) => {
     }
     
     query += ` ORDER BY 
+      CASE WHEN show_new_badge = true AND new_badge_until > NOW() THEN 0 ELSE 1 END,
       CASE WHEN viral THEN 0 ELSE 1 END,
       CASE WHEN trending THEN 0 ELSE 1 END,
       name ASC
@@ -169,6 +171,7 @@ router.get('/dashboard', async (req, res) => {
       ORDER BY 
         ${userId ? 'CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END,' : ''}
         ${userId ? 'p.pin_order ASC NULLS LAST,' : ''}
+        CASE WHEN m.show_new_badge = true AND m.new_badge_until > NOW() THEN 0 ELSE 1 END,
         CASE WHEN m.viral THEN 0 ELSE 1 END,
         CASE WHEN m.trending THEN 0 ELSE 1 END,
         m.name ASC
