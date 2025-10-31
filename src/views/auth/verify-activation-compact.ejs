@@ -407,39 +407,21 @@
         }
 
         // Form validation and submission with loading
-        document.getElementById('verifyForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
+        document.getElementById('verifyForm').addEventListener('submit', function(e) {
             const code = document.getElementById('code').value;
             
             // Validate code length
             if (code.length !== 6) {
+                e.preventDefault();
                 showMessage('Kode aktivasi harus 6 digit', 'error');
                 return;
             }
             
-            // Show loading
+            // Show loading overlay when form is valid
             showLoading();
             
-            // Submit form using fetch for better control
-            const formData = new FormData(this);
-            
-            try {
-                const response = await fetch(this.action, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                // Add minimum delay for better UX (1.5s)
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                
-                // Redirect to the response URL
-                window.location.href = response.url;
-                
-            } catch (error) {
-                hideLoading();
-                showMessage('Terjadi kesalahan. Silakan coba lagi.', 'error');
-            }
+            // Let form submit normally (no e.preventDefault())
+            // Server will handle redirect after successful activation
         });
     </script>
 </body>

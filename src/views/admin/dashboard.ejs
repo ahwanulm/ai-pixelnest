@@ -30,14 +30,14 @@
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-gray-400 text-sm font-medium">Total Users</p>
-                <h3 class="text-3xl font-bold text-white mt-2"><%= stats.totalUsers.toLocaleString() %></h3>
+                <h3 class="text-3xl font-bold text-white mt-2"><%= (stats.totalUsers || 0).toLocaleString() %></h3>
               </div>
               <div class="w-14 h-14 rounded-xl bg-blue-500/20 flex items-center justify-center">
                 <i class="fas fa-users text-blue-400 text-2xl"></i>
               </div>
             </div>
             <p class="text-sm text-gray-400 mt-4">
-              <span class="text-green-400 font-semibold">+<%= stats.newUsersThisMonth %></span> this month
+              <span class="text-green-400 font-semibold">+<%= (stats.newUsersThisMonth || 0).toLocaleString() %></span> this month
             </p>
           </div>
 
@@ -46,7 +46,7 @@
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-gray-400 text-sm font-medium">Active Users</p>
-                <h3 class="text-3xl font-bold text-white mt-2"><%= stats.activeUsers.toLocaleString() %></h3>
+                <h3 class="text-3xl font-bold text-white mt-2"><%= (stats.activeUsers || 0).toLocaleString() %></h3>
               </div>
               <div class="w-14 h-14 rounded-xl bg-green-500/20 flex items-center justify-center">
                 <i class="fas fa-user-check text-green-400 text-2xl"></i>
@@ -62,7 +62,7 @@
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-gray-400 text-sm font-medium">Total Credits</p>
-                <h3 class="text-3xl font-bold text-white mt-2"><%= stats.totalCredits.toLocaleString() %></h3>
+                <h3 class="text-3xl font-bold text-white mt-2"><%= (stats.totalCredits || 0).toLocaleString() %></h3>
               </div>
               <div class="w-14 h-14 rounded-xl bg-yellow-500/20 flex items-center justify-center">
                 <i class="fas fa-coins text-yellow-400 text-2xl"></i>
@@ -78,14 +78,151 @@
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-gray-400 text-sm font-medium">AI Generations</p>
-                <h3 class="text-3xl font-bold text-white mt-2"><%= stats.totalGenerations.toLocaleString() %></h3>
+                <h3 class="text-3xl font-bold text-white mt-2"><%= (stats.totalGenerations || 0).toLocaleString() %></h3>
               </div>
               <div class="w-14 h-14 rounded-xl bg-purple-500/20 flex items-center justify-center">
                 <i class="fas fa-magic text-purple-400 text-2xl"></i>
               </div>
             </div>
             <p class="text-sm text-gray-400 mt-4">
-              <span class="text-green-400 font-semibold">+<%= stats.generationsThisMonth %></span> this month
+              <span class="text-green-400 font-semibold">+<%= (stats.generationsThisMonth || 0).toLocaleString() %></span> this month
+            </p>
+          </div>
+        </div>
+
+        <!-- Financial Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <!-- Total Revenue -->
+          <div class="stat-card rounded-xl p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-400 text-sm font-medium">Total Revenue</p>
+                <h3 class="text-3xl font-bold text-white mt-2">Rp <%= (stats.totalRevenue || 0).toLocaleString('id-ID') %></h3>
+              </div>
+              <div class="w-14 h-14 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                <i class="fas fa-money-bill-wave text-emerald-400 text-2xl"></i>
+              </div>
+            </div>
+            <p class="text-sm text-gray-400 mt-4">
+              <span class="text-green-400 font-semibold">Rp <%= (stats.revenueThisMonth || 0).toLocaleString('id-ID') %></span> this month
+            </p>
+          </div>
+
+          <!-- Total Transactions -->
+          <div class="stat-card rounded-xl p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-400 text-sm font-medium">Total Transactions</p>
+                <h3 class="text-3xl font-bold text-white mt-2"><%= (stats.totalTransactions || 0).toLocaleString() %></h3>
+              </div>
+              <div class="w-14 h-14 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                <i class="fas fa-receipt text-indigo-400 text-2xl"></i>
+              </div>
+            </div>
+            <p class="text-sm text-gray-400 mt-4">
+              <span class="text-blue-400 font-semibold">+<%= (stats.transactionsThisMonth || 0).toLocaleString() %></span> this month
+            </p>
+          </div>
+
+          <!-- Pending Payments -->
+          <div class="stat-card rounded-xl p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-400 text-sm font-medium">Pending Payments</p>
+                <h3 class="text-3xl font-bold text-white mt-2"><%= (stats.pendingPaymentsCount || 0).toLocaleString() %></h3>
+              </div>
+              <div class="w-14 h-14 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                <i class="fas fa-clock text-amber-400 text-2xl"></i>
+              </div>
+            </div>
+            <p class="text-sm text-gray-400 mt-4">
+              Rp <%= (stats.pendingPaymentsAmount || 0).toLocaleString('id-ID') %>
+              <% if (stats.activePendingPaymentsCount !== undefined && stats.activePendingPaymentsCount < (stats.pendingPaymentsCount || 0)) { %>
+                <span class="text-amber-400">(<%= (stats.activePendingPaymentsCount || 0) %> aktif)</span>
+              <% } %>
+            </p>
+          </div>
+
+          <!-- Payment Success Rate -->
+          <div class="stat-card rounded-xl p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-400 text-sm font-medium">Payment Success Rate</p>
+                <h3 class="text-3xl font-bold text-white mt-2"><%= (stats.paymentSuccessRate || 0) %>%</h3>
+              </div>
+              <div class="w-14 h-14 rounded-xl bg-teal-500/20 flex items-center justify-center">
+                <i class="fas fa-chart-line text-teal-400 text-2xl"></i>
+              </div>
+            </div>
+            <p class="text-sm text-gray-400 mt-4">
+              Paid vs Total
+            </p>
+          </div>
+        </div>
+
+        <!-- Today's Activity Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <!-- Generations Today -->
+          <div class="stat-card rounded-xl p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-400 text-sm font-medium">Generations Today</p>
+                <h3 class="text-3xl font-bold text-white mt-2"><%= (stats.generationsToday || 0).toLocaleString() %></h3>
+              </div>
+              <div class="w-14 h-14 rounded-xl bg-pink-500/20 flex items-center justify-center">
+                <i class="fas fa-sparkles text-pink-400 text-2xl"></i>
+              </div>
+            </div>
+            <p class="text-sm text-gray-400 mt-4">
+              Last 24 hours
+            </p>
+          </div>
+
+          <!-- Credit Transactions Today -->
+          <div class="stat-card rounded-xl p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-400 text-sm font-medium">Credit Transactions</p>
+                <h3 class="text-3xl font-bold text-white mt-2"><%= (stats.creditTransactionsToday || 0).toLocaleString() %></h3>
+              </div>
+              <div class="w-14 h-14 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+                <i class="fas fa-exchange-alt text-cyan-400 text-2xl"></i>
+              </div>
+            </div>
+            <p class="text-sm text-gray-400 mt-4">
+              <span class="text-green-400 font-semibold">+<%= (stats.creditsAddedToday || 0).toLocaleString() %></span> credits today
+            </p>
+          </div>
+
+          <!-- Average Credits -->
+          <div class="stat-card rounded-xl p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-400 text-sm font-medium">Avg Credits/User</p>
+                <h3 class="text-3xl font-bold text-white mt-2"><%= (stats.averageCreditsPerUser || 0).toLocaleString() %></h3>
+              </div>
+              <div class="w-14 h-14 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                <i class="fas fa-chart-bar text-orange-400 text-2xl"></i>
+              </div>
+            </div>
+            <p class="text-sm text-gray-400 mt-4">
+              Average distribution
+            </p>
+          </div>
+
+          <!-- Active Subscriptions -->
+          <div class="stat-card rounded-xl p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-400 text-sm font-medium">Active Subscriptions</p>
+                <h3 class="text-3xl font-bold text-white mt-2"><%= (stats.activeSubscriptions || 0).toLocaleString() %></h3>
+              </div>
+              <div class="w-14 h-14 rounded-xl bg-rose-500/20 flex items-center justify-center">
+                <i class="fas fa-crown text-rose-400 text-2xl"></i>
+              </div>
+            </div>
+            <p class="text-sm text-gray-400 mt-4">
+              Premium users
             </p>
           </div>
         </div>
@@ -102,7 +239,7 @@
             </div>
             
             <div class="space-y-4">
-              <% if (stats.recentActivities.length === 0) { %>
+              <% if (!stats.recentActivities || stats.recentActivities.length === 0) { %>
                 <p class="text-gray-500 text-center py-8">No recent activity</p>
               <% } else { %>
                 <% stats.recentActivities.forEach(activity => { %>
@@ -165,10 +302,23 @@
 
             <hr class="my-6" style="border-color: rgba(255, 255, 255, 0.1);">
 
+            <h4 class="text-sm font-semibold text-gray-400 mb-3">Quick Stats</h4>
             <div class="space-y-3">
               <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
                 <span class="text-sm text-gray-400">Active Promo Codes</span>
-                <span class="text-lg font-bold text-white"><%= stats.activePromoCodes %></span>
+                <span class="text-lg font-bold text-white"><%= (stats.activePromoCodes || 0) %></span>
+              </div>
+              <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                <span class="text-sm text-gray-400">Active Subscriptions</span>
+                <span class="text-lg font-bold text-white"><%= (stats.activeSubscriptions || 0) %></span>
+              </div>
+              <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                <span class="text-sm text-gray-400">Today's Generations</span>
+                <span class="text-lg font-bold text-white"><%= (stats.generationsToday || 0) %></span>
+              </div>
+              <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                <span class="text-sm text-gray-400">Payment Success Rate</span>
+                <span class="text-lg font-bold text-white"><%= (stats.paymentSuccessRate || 0) %>%</span>
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 const tripayService = require('../services/tripayService');
 const { pool } = require('../config/database');
 const Referral = require('../models/Referral');
+const emailService = require('../services/emailService');
 
 /**
  * Payment Controller
@@ -747,6 +748,36 @@ const PaymentController = {
           // Continue even if referral commission fails
         }
 
+        // Send topup success email notification
+        try {
+          const userResult = await client.query(
+            'SELECT name, email FROM users WHERE id = $1',
+            [transaction.user_id]
+          );
+          
+          if (userResult.rows.length > 0) {
+            const user = userResult.rows[0];
+            
+            // Send email asynchronously (non-blocking)
+            await emailService.sendTopupSuccessEmailAsync(
+              user.email,
+              user.name,
+              {
+                credits_amount: transaction.credits_amount,
+                amount: callbackData.amount,
+                payment_method: callbackData.payment_name,
+                reference: callbackData.reference,
+                paid_at: new Date()
+              }
+            );
+            
+            console.log(`📧 Topup success email notification queued for ${user.email}`);
+          }
+        } catch (emailError) {
+          console.error('Error sending topup success email:', emailError);
+          // Continue even if email fails - don't block the transaction
+        }
+
         console.log(`✅ Credits added to user ${transaction.user_id}: +${transaction.credits_amount} credits, new balance: ${newBalance}`);
       }
 
@@ -878,6 +909,36 @@ const PaymentController = {
               synced_manually: true
             })
           ]);
+
+          // Send topup success email notification
+          try {
+            const userResult = await client.query(
+              'SELECT name, email FROM users WHERE id = $1',
+              [transaction.user_id]
+            );
+            
+            if (userResult.rows.length > 0) {
+              const user = userResult.rows[0];
+              
+              // Send email asynchronously (non-blocking)
+              await emailService.sendTopupSuccessEmailAsync(
+                user.email,
+                user.name,
+                {
+                  credits_amount: transaction.credits_amount,
+                  amount: tripayData.amount,
+                  payment_method: tripayData.payment_name || 'Manual Sync',
+                  reference: reference,
+                  paid_at: new Date()
+                }
+              );
+              
+              console.log(`📧 Topup success email notification queued for ${user.email}`);
+            }
+          } catch (emailError) {
+            console.error('Error sending topup success email:', emailError);
+            // Continue even if email fails - don't block the transaction
+          }
 
           console.log(`✅ Credits added to user ${transaction.user_id}: +${transaction.credits_amount} credits`);
         }

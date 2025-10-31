@@ -3893,6 +3893,14 @@ h1, h2, h3, h4, h5, h6 {
   background-color: rgb(9 9 11 / 0.95);
 }
 
+.bg-rose-500\/20 {
+  background-color: rgb(244 63 94 / 0.2);
+}
+
+.bg-teal-500\/20 {
+  background-color: rgb(20 184 166 / 0.2);
+}
+
 .bg-opacity-80 {
   --tw-bg-opacity: 0.8;
 }
@@ -5443,6 +5451,16 @@ h1, h2, h3, h4, h5, h6 {
 
 .text-yellow-500\/20 {
   color: rgb(234 179 8 / 0.2);
+}
+
+.text-amber-400 {
+  --tw-text-opacity: 1;
+  color: rgb(251 191 36 / var(--tw-text-opacity, 1));
+}
+
+.text-rose-400 {
+  --tw-text-opacity: 1;
+  color: rgb(251 113 133 / var(--tw-text-opacity, 1));
 }
 
 .underline {

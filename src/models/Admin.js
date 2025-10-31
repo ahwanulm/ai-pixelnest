@@ -630,63 +630,239 @@ const Admin = {
   async getDashboardStats() {
     const stats = {};
 
+    // Helper function to safely execute queries
+    const safeQuery = async (query, defaultValue = 0) => {
+      try {
+        const result = await pool.query(query);
+        if (result.rows && result.rows[0]) {
+          const value = result.rows[0].total || result.rows[0].average || result.rows[0].paid || result.rows[0].amount_total || defaultValue;
+          return typeof value === 'string' ? parseInt(value) || defaultValue : (value || defaultValue);
+        }
+        return defaultValue;
+      } catch (error) {
+        console.error('Dashboard stats query error:', error.message);
+        return defaultValue;
+      }
+    };
+
+    // Helper function for queries that return objects/arrays
+    const safeQueryRows = async (query, defaultValue = []) => {
+      try {
+        const result = await pool.query(query);
+        return result.rows || defaultValue;
+      } catch (error) {
+        console.error('Dashboard stats query error:', error.message);
+        return defaultValue;
+      }
+    };
+
     // Total users
-    const usersQuery = 'SELECT COUNT(*) as total FROM users';
-    const usersResult = await pool.query(usersQuery);
-    stats.totalUsers = parseInt(usersResult.rows[0].total);
+    stats.totalUsers = await safeQuery('SELECT COUNT(*) as total FROM users', 0);
 
     // Active users (logged in last 30 days)
-    const activeUsersQuery = `
+    stats.activeUsers = await safeQuery(`
       SELECT COUNT(*) as total FROM users 
       WHERE last_login > NOW() - INTERVAL '30 days'
-    `;
-    const activeUsersResult = await pool.query(activeUsersQuery);
-    stats.activeUsers = parseInt(activeUsersResult.rows[0].total);
+    `, 0);
 
     // New users this month
-    const newUsersQuery = `
+    stats.newUsersThisMonth = await safeQuery(`
       SELECT COUNT(*) as total FROM users 
       WHERE created_at > DATE_TRUNC('month', NOW())
-    `;
-    const newUsersResult = await pool.query(newUsersQuery);
-    stats.newUsersThisMonth = parseInt(newUsersResult.rows[0].total);
+    `, 0);
 
     // Total credits distributed
-    const creditsQuery = 'SELECT SUM(credits) as total FROM users';
-    const creditsResult = await pool.query(creditsQuery);
-    stats.totalCredits = parseInt(creditsResult.rows[0].total) || 0;
+    stats.totalCredits = await safeQuery('SELECT COALESCE(SUM(credits), 0) as total FROM users', 0);
 
     // Total generations
-    const generationsQuery = 'SELECT COUNT(*) as total FROM ai_generation_history';
-    const generationsResult = await pool.query(generationsQuery);
-    stats.totalGenerations = parseInt(generationsResult.rows[0].total) || 0;
+    try {
+      const generationsResult = await pool.query('SELECT COUNT(*) as total FROM ai_generation_history');
+      stats.totalGenerations = parseInt(generationsResult.rows[0]?.total) || 0;
+    } catch (error) {
+      console.error('Error fetching total generations:', error.message);
+      stats.totalGenerations = 0;
+    }
 
     // Generations this month
-    const monthGenerationsQuery = `
-      SELECT COUNT(*) as total FROM ai_generation_history 
-      WHERE created_at > DATE_TRUNC('month', NOW())
-    `;
-    const monthGenerationsResult = await pool.query(monthGenerationsQuery);
-    stats.generationsThisMonth = parseInt(monthGenerationsResult.rows[0].total) || 0;
+    try {
+      const monthGenerationsResult = await pool.query(`
+        SELECT COUNT(*) as total FROM ai_generation_history 
+        WHERE created_at > DATE_TRUNC('month', NOW())
+      `);
+      stats.generationsThisMonth = parseInt(monthGenerationsResult.rows[0]?.total) || 0;
+    } catch (error) {
+      console.error('Error fetching generations this month:', error.message);
+      stats.generationsThisMonth = 0;
+    }
 
     // Active promo codes
-    const promoQuery = `
-      SELECT COUNT(*) as total FROM promo_codes 
-      WHERE is_active = true AND (valid_until IS NULL OR valid_until > NOW())
-    `;
-    const promoResult = await pool.query(promoQuery);
-    stats.activePromoCodes = parseInt(promoResult.rows[0].total);
+    try {
+      const promoResult = await pool.query(`
+        SELECT COUNT(*) as total FROM promo_codes 
+        WHERE is_active = true AND (valid_until IS NULL OR valid_until > NOW())
+      `);
+      stats.activePromoCodes = parseInt(promoResult.rows[0]?.total) || 0;
+    } catch (error) {
+      console.error('Error fetching active promo codes:', error.message);
+      stats.activePromoCodes = 0;
+    }
 
     // Recent activities
-    const recentActivitiesQuery = `
+    stats.recentActivities = await safeQueryRows(`
       SELECT a.*, u.name as user_name
       FROM user_activity_logs a
       LEFT JOIN users u ON a.user_id = u.id
       ORDER BY a.created_at DESC
       LIMIT 10
-    `;
-    const recentActivitiesResult = await pool.query(recentActivitiesQuery);
-    stats.recentActivities = recentActivitiesResult.rows;
+    `, []);
+
+    // Total Revenue (from paid transactions)
+    try {
+      const totalRevenueResult = await pool.query(`
+        SELECT COALESCE(SUM(amount_received), 0) as total 
+        FROM payment_transactions 
+        WHERE status = 'PAID'
+      `);
+      stats.totalRevenue = parseInt(totalRevenueResult.rows[0]?.total) || 0;
+    } catch (error) {
+      console.error('Error fetching total revenue:', error.message);
+      stats.totalRevenue = 0;
+    }
+
+    // Revenue this month
+    try {
+      const revenueThisMonthResult = await pool.query(`
+        SELECT COALESCE(SUM(amount_received), 0) as total 
+        FROM payment_transactions 
+        WHERE status = 'PAID' AND paid_at > DATE_TRUNC('month', NOW())
+      `);
+      stats.revenueThisMonth = parseInt(revenueThisMonthResult.rows[0]?.total) || 0;
+    } catch (error) {
+      console.error('Error fetching revenue this month:', error.message);
+      stats.revenueThisMonth = 0;
+    }
+
+    // Total Transactions
+    try {
+      const totalTransactionsResult = await pool.query('SELECT COUNT(*) as total FROM payment_transactions');
+      stats.totalTransactions = parseInt(totalTransactionsResult.rows[0]?.total) || 0;
+    } catch (error) {
+      console.error('Error fetching total transactions:', error.message);
+      stats.totalTransactions = 0;
+    }
+
+    // Pending Payments - Count all UNPAID and PENDING transactions
+    // Note: Includes both active and expired, as they still need to be paid or handled
+    try {
+      const pendingPaymentsResult = await pool.query(`
+        SELECT 
+          COUNT(*) as total, 
+          COALESCE(SUM(amount_received), 0) as amount_total
+        FROM payment_transactions 
+        WHERE status IN ('UNPAID', 'PENDING')
+      `);
+      stats.pendingPaymentsCount = parseInt(pendingPaymentsResult.rows[0]?.total) || 0;
+      stats.pendingPaymentsAmount = parseInt(pendingPaymentsResult.rows[0]?.amount_total) || 0;
+      
+      // Also get count of active (not expired) pending payments separately
+      const activePendingResult = await pool.query(`
+        SELECT COUNT(*) as total
+        FROM payment_transactions 
+        WHERE status IN ('UNPAID', 'PENDING')
+          AND (expired_time IS NULL OR expired_time > NOW())
+      `);
+      stats.activePendingPaymentsCount = parseInt(activePendingResult.rows[0]?.total) || 0;
+    } catch (error) {
+      console.error('Error fetching pending payments:', error.message);
+      // If table doesn't exist or other error, set to 0
+      stats.pendingPaymentsCount = 0;
+      stats.pendingPaymentsAmount = 0;
+      stats.activePendingPaymentsCount = 0;
+    }
+
+    // Credit Transactions Today
+    try {
+      const creditTransactionsTodayResult = await pool.query(`
+        SELECT COUNT(*) as total, COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0) as amount_total
+        FROM credit_transactions 
+        WHERE created_at >= CURRENT_DATE
+      `);
+      stats.creditTransactionsToday = parseInt(creditTransactionsTodayResult.rows[0]?.total) || 0;
+      stats.creditsAddedToday = parseInt(creditTransactionsTodayResult.rows[0]?.amount_total) || 0;
+    } catch (error) {
+      console.error('Error fetching credit transactions today:', error.message);
+      stats.creditTransactionsToday = 0;
+      stats.creditsAddedToday = 0;
+    }
+
+    // Average Credits per User
+    try {
+      const avgCreditsResult = await pool.query(`
+        SELECT COALESCE(AVG(credits), 0) as average 
+        FROM users 
+        WHERE credits > 0
+      `);
+      stats.averageCreditsPerUser = Math.round(parseFloat(avgCreditsResult.rows[0]?.average) || 0);
+    } catch (error) {
+      console.error('Error fetching average credits:', error.message);
+      stats.averageCreditsPerUser = 0;
+    }
+
+    // Generations Today
+    try {
+      const generationsTodayResult = await pool.query(`
+        SELECT COUNT(*) as total 
+        FROM ai_generation_history 
+        WHERE created_at >= CURRENT_DATE
+      `);
+      stats.generationsToday = parseInt(generationsTodayResult.rows[0]?.total) || 0;
+    } catch (error) {
+      console.error('Error fetching generations today:', error.message);
+      stats.generationsToday = 0;
+    }
+
+    // Active Subscriptions
+    try {
+      const activeSubscriptionsResult = await pool.query(`
+        SELECT COUNT(*) as total 
+        FROM users 
+        WHERE subscription_plan IS NOT NULL 
+        AND (subscription_expires_at IS NULL OR subscription_expires_at > NOW())
+      `);
+      stats.activeSubscriptions = parseInt(activeSubscriptionsResult.rows[0]?.total) || 0;
+    } catch (error) {
+      console.error('Error fetching active subscriptions:', error.message);
+      stats.activeSubscriptions = 0;
+    }
+
+    // Transactions this month
+    try {
+      const transactionsThisMonthResult = await pool.query(`
+        SELECT COUNT(*) as total 
+        FROM payment_transactions 
+        WHERE created_at > DATE_TRUNC('month', NOW())
+      `);
+      stats.transactionsThisMonth = parseInt(transactionsThisMonthResult.rows[0]?.total) || 0;
+    } catch (error) {
+      console.error('Error fetching transactions this month:', error.message);
+      stats.transactionsThisMonth = 0;
+    }
+
+    // Success Rate (paid vs total transactions)
+    try {
+      const successRateResult = await pool.query(`
+        SELECT 
+          COUNT(*) FILTER (WHERE status = 'PAID') as paid,
+          COUNT(*) as total
+        FROM payment_transactions
+      `);
+      const paidCount = parseInt(successRateResult.rows[0]?.paid) || 0;
+      const totalCount = parseInt(successRateResult.rows[0]?.total) || 0;
+      stats.paymentSuccessRate = totalCount > 0 ? Math.round((paidCount / totalCount) * 100) : 0;
+    } catch (error) {
+      console.error('Error fetching payment success rate:', error.message);
+      stats.paymentSuccessRate = 0;
+    }
 
     return stats;
   },
