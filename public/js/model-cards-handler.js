@@ -168,7 +168,6 @@
         const cardsHTML = models.map(model => createModelCard(model, type)).join('');
         container.innerHTML = cardsHTML;
         
-        console.log(`✅ Rendered ${models.length} ${type} model cards`);
     }
     
     /**
@@ -198,7 +197,6 @@
      * @param {boolean} shouldCollapse - Whether to collapse after selection (default: true)
      */
     window.selectModelCard = function(modelId, type, shouldCollapse = true) {
-        console.log(`🎯 Selecting ${type} model:`, modelId);
         
         const models = type === 'image' ? imageModels : videoModels;
         const model = models.find(m => m.id == modelId);
@@ -219,7 +217,6 @@
         try {
             localStorage.setItem(`selected_${type}_model_id`, modelId);
             localStorage.setItem(`selected_${type}_model`, JSON.stringify(model));
-            console.log(`💾 Saved ${type} model to localStorage:`, model.name);
         } catch (e) {
             console.warn('Failed to save model to localStorage:', e);
         }
@@ -265,14 +262,12 @@
             collapseModelCards(type);
         }
         
-        console.log(`✅ Selected ${type} model:`, model.name, `(${model.cost_credits || model.cost} credits)`, shouldCollapse ? '(collapsed)' : '(expanded)');
     };
     
     /**
      * Collapse model cards container
      */
     function collapseModelCards(type) {
-        console.log('🔽 collapseModelCards() called for type:', type);
         
         const cardsId = type === 'image' ? 'image-model-cards' : 
                        type === 'video' ? 'video-model-cards' : 
@@ -284,38 +279,28 @@
                            type === 'video' ? 'expand-video-models' : 
                            'expand-audio-models';
         
-        console.log('🔍 Looking for elements:', { cardsId, searchId, expandBtnId });
         
         const cardsContainer = document.getElementById(cardsId);
         const searchContainer = document.getElementById(searchId);
         const expandBtn = document.getElementById(expandBtnId);
-        
-        console.log('🔍 Elements found:', { 
-            cards: !!cardsContainer, 
-            search: !!searchContainer, 
-            expandBtn: !!expandBtn 
-        });
         
         if (cardsContainer) {
             cardsContainer.style.maxHeight = '0';
             cardsContainer.style.opacity = '0';
             cardsContainer.style.overflow = 'hidden';
             cardsContainer.style.marginBottom = '0';
-            console.log('✅ Cards container collapsed');
         } else {
             console.warn('⚠️ Cards container not found:', cardsId);
         }
         
         if (searchContainer) {
             searchContainer.style.display = 'none';
-            console.log('✅ Search container hidden');
         } else {
             console.warn('⚠️ Search container not found:', searchId);
         }
         
         if (expandBtn) {
             expandBtn.classList.remove('hidden');
-            console.log('✅ Expand button shown');
         } else {
             console.warn('⚠️ Expand button not found:', expandBtnId);
         }
@@ -565,7 +550,6 @@
      */
     window.togglePin = async function(modelId, type, buttonElement) {
         try {
-            console.log('🔄 Toggle pin for model:', modelId);
             
             const isPinned = buttonElement.dataset.isPinned === 'true';
             const action = isPinned ? 'unpin' : 'pin';
@@ -717,7 +701,6 @@
      * Initialize
      */
     function init() {
-        console.log('🎨 Model Cards Handler initialized');
         
         // DON'T auto-load models - wait for type selection
         // loadImageModels();
@@ -779,7 +762,6 @@
         if (imageTypeSelect) {
             imageTypeSelect.addEventListener('change', function() {
                 const type = this.value;
-                console.log('🔄 Image type changed:', type);
                 
                 // Map type to category
                 const categoryMap = {
@@ -793,13 +775,10 @@
                 };
                 
                 const category = categoryMap[type];
-                console.log('📂 Category mapping:', { type, category });
 
                 if (category) {
-                    console.log('🔍 Loading models for category:', category);
                     loadImageModels(category);
                 } else {
-                    console.log('⚠️ No category found, loading all models');
                     loadImageModels();
                 }
                 
@@ -816,7 +795,6 @@
         if (videoTypeSelect) {
             videoTypeSelect.addEventListener('change', function() {
                 const type = this.value;
-                console.log('🔄 Video type changed:', type);
                 
                 // Map type to category
                 const categoryMap = {

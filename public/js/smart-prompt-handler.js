@@ -97,12 +97,10 @@
     
     async function loadNoPromptModelsFromDatabase() {
         try {
-            console.log('🔄 Loading no-prompt models from database...');
             const response = await fetch('/api/models/no-prompt');
             const data = await response.json();
             
             if (data.success && data.models) {
-                console.log(`✅ Loaded ${data.models.length} no-prompt models from database`);
                 
                 // Add database models to NO_PROMPT_MODELS if not already there
                 data.models.forEach(modelId => {
@@ -114,17 +112,13 @@
                             uploadPlaceholder: 'Upload file to process',
                             generateButtonText: 'Process'
                         };
-                        console.log('➕ Added model from database:', modelId);
                     }
                 });
                 
-                console.log('✅ Total no-prompt models:', Object.keys(NO_PROMPT_MODELS).length);
-                console.log('📋 No-prompt models:', Object.keys(NO_PROMPT_MODELS).join(', '));
                 
                 // ✅ Re-check current model after loading from database
                 setTimeout(() => {
                     if (currentModel) {
-                        console.log('🔄 Re-checking current model after database load:', currentModel);
                         updateUIForModel(currentModel, currentMode || 'image');
                     }
                 }, 200);
@@ -137,11 +131,9 @@
     function init() {
         // Prevent double initialization
         if (initializationComplete) {
-            console.log('⚠️ Smart Prompt Handler already initialized');
             return;
         }
         
-        console.log('🎯 Smart Prompt Handler initializing...');
         
         try {
             // Get prompt sections with error handling
@@ -158,7 +150,6 @@
             setupModeListeners();
             
             initializationComplete = true;
-            console.log('✅ Smart Prompt Handler initialized successfully');
             
             // Initial check after a brief delay to let other scripts initialize
             setTimeout(() => {
@@ -192,7 +183,6 @@
                 
                 currentMode = 'image';
                 currentModel = this.value;
-                console.log('📷 Image model selected:', currentModel);
                 debouncedUpdateUI(currentModel, 'image');
             }, { passive: true });
         }
@@ -210,7 +200,6 @@
                 
                 currentMode = 'video';
                 currentModel = this.value;
-                console.log('🎬 Video model selected:', currentModel);
                 debouncedUpdateUI(currentModel, 'video');
             }, { passive: true });
         }
@@ -221,7 +210,6 @@
             
             currentModel = e.detail.modelId;
             currentMode = e.detail.type || 'image';
-            console.log('🎯 Model selected from card:', currentModel, 'type:', currentMode);
             debouncedUpdateUI(currentModel, currentMode);
         }, { passive: true, once: false });
     }
@@ -236,7 +224,6 @@
                 const mode = this.getAttribute('data-mode');
                 if (mode === 'image' || mode === 'video') {
                     currentMode = mode;
-                    console.log('🔄 Mode switched to:', mode);
                     setTimeout(() => checkCurrentModel(), 200);
                 }
             }, { passive: true });
@@ -248,7 +235,6 @@
     function updateUIForModel(modelId, mode) {
         // Set processing flag to prevent concurrent calls
         if (isProcessing) {
-            console.log('⚠️ Already processing, skipping update');
             return;
         }
         
@@ -257,12 +243,10 @@
         const actualMode = activeTab ? activeTab.getAttribute('data-mode') : 'image';
         
         if (mode !== actualMode) {
-            console.log('⚠️ Mode mismatch! Requested:', mode, '| Actual:', actualMode, '| Skipping update');
             return;
         }
         
         isProcessing = true;
-        console.log('🔧 Updating UI for model:', modelId, 'mode:', mode);
         
         try {
             const modelConfig = NO_PROMPT_MODELS[modelId];
@@ -281,10 +265,6 @@
             
             // Check if model doesn't need prompt
             if (modelConfig && !modelConfig.requiresPrompt) {
-                console.log('🔍 Model config found for:', modelId);
-                console.log('   - requiresPrompt:', modelConfig.requiresPrompt);
-                console.log('   - requiresUpload:', modelConfig.requiresUpload);
-                console.log('   ✅ HIDING PROMPT SECTION');
                 
                 // Hide prompt section
                 hidePromptSection(promptSection, mode);
@@ -322,15 +302,9 @@
                 // Update generate button text
                 updateGenerateButton(modelConfig.generateButtonText || 'Generate');
                 
-                console.log('✅ Prompt hidden for no-prompt model:', modelId);
             } else {
                 if (modelConfig) {
-                    console.log('🔍 Model config found BUT requiresPrompt is TRUE');
-                    console.log('   - Model:', modelId);
-                    console.log('   - requiresPrompt:', modelConfig.requiresPrompt);
                 } else {
-                    console.log('⚠️ No config found for model:', modelId);
-                    console.log('   Available models:', Object.keys(NO_PROMPT_MODELS).slice(0, 5).join(', ') + '...');
                 }
                 // Show prompt section
                 showPromptSection(promptSection, mode);
@@ -353,7 +327,6 @@
                 // Reset generate button text
                 updateGenerateButton('Run');
                 
-                console.log('✅ Prompt shown for standard model:', modelId);
             }
         } catch (error) {
             console.error('❌ Error updating UI:', error);

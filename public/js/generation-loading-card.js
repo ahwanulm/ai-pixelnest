@@ -291,5 +291,4 @@ window.updateLoadingProgress = updateLoadingProgress;
 window.removeLoadingCard = removeLoadingCard;
 window.completeLoading = completeLoading;
 
-console.log('✅ Generation Loading Card handler loaded');
 

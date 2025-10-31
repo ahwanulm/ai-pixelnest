@@ -139,7 +139,6 @@ async function incrementView(sharedId) {
             body: JSON.stringify({ sharedId: parseInt(sharedId) })
         });
     } catch (error) {
-        console.log('Could not increment view count');
     }
 }
 
@@ -192,7 +191,6 @@ function openDetailModal(sharedId) {
         });
     }
     
-    console.log('📊 Extracted stats - Likes:', likes, 'Views:', views);
     
     // Get model info
     const modelBadge = card.querySelector('.bg-blue-500\\/20');
@@ -336,7 +334,6 @@ function openDetailModal(sharedId) {
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     
-    console.log('📱 Modal opened with z-index 10020');
     
     // Attach event listeners after modal is created
     setTimeout(() => {
@@ -350,10 +347,8 @@ function openDetailModal(sharedId) {
             closeBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 e.preventDefault();
-                console.log('❌ Close button clicked');
                 closeDetailModal();
             });
-            console.log('✅ Close button listener attached');
         }
         
         if (copyBtn) {
@@ -361,10 +356,8 @@ function openDetailModal(sharedId) {
                 e.stopPropagation();
                 e.preventDefault();
                 const promptText = this.getAttribute('data-prompt');
-                console.log('📋 Copying prompt:', promptText);
                 copyPrompt(promptText);
             });
-            console.log('✅ Copy button listener attached');
         }
         
         if (reportBtn) {
@@ -372,10 +365,8 @@ function openDetailModal(sharedId) {
                 e.stopPropagation();
                 e.preventDefault();
                 const sharedId = this.getAttribute('data-shared-id');
-                console.log('🚩 Reporting:', sharedId);
                 reportGeneration(sharedId);
             });
-            console.log('✅ Report button listener attached');
         }
         
         if (floatingLikeBtn) {
@@ -383,10 +374,8 @@ function openDetailModal(sharedId) {
                 e.stopPropagation();
                 e.preventDefault();
                 const sharedId = this.getAttribute('data-shared-id');
-                console.log('❤️ Like button clicked:', sharedId);
                 toggleLike(this, sharedId);
             });
-            console.log('✅ Floating like button listener attached');
         }
         
         if (floatingBookmarkBtn) {
@@ -394,17 +383,14 @@ function openDetailModal(sharedId) {
                 e.stopPropagation();
                 e.preventDefault();
                 const sharedId = this.getAttribute('data-shared-id');
-                console.log('🔖 Bookmark button clicked:', sharedId);
                 toggleBookmark(this, sharedId);
             });
-            console.log('✅ Floating bookmark button listener attached');
         }
     }, 50);
 }
 
 // Close detail modal
 function closeDetailModal() {
-    console.log('🚪 Closing detail modal...');
     
     const modal = document.getElementById('detail-modal');
     if (modal) {
@@ -423,7 +409,6 @@ function closeDetailModal() {
             modal.innerHTML = '';
         }, 300);
         
-        console.log('✅ Modal closed');
     }
 }
 
@@ -432,7 +417,6 @@ window.closeDetailModal = closeDetailModal;
 
 // Copy prompt to clipboard
 function copyPrompt(prompt) {
-    console.log('🔄 Attempting to copy prompt...');
     
     // Decode HTML entities if present
     const decodedPrompt = prompt.replace(/&quot;/g, '"')
@@ -441,7 +425,6 @@ function copyPrompt(prompt) {
     
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(decodedPrompt).then(() => {
-            console.log('✅ Prompt copied successfully');
             showNotification('✅ Prompt berhasil disalin!', 'success');
         }).catch((err) => {
             console.error('❌ Clipboard error:', err);
@@ -467,7 +450,6 @@ function fallbackCopyToClipboard(text) {
     try {
         const successful = document.execCommand('copy');
         if (successful) {
-            console.log('✅ Fallback copy successful');
             showNotification('✅ Prompt berhasil disalin!', 'success');
         } else {
             console.error('❌ Fallback copy failed');
@@ -515,7 +497,6 @@ async function reportGeneration(sharedId) {
 
 // Toggle Like
 async function toggleLike(button, sharedId) {
-    console.log('❤️ Toggling like for:', sharedId);
     
     try {
         const response = await fetch('/api/public-gallery/like', {
@@ -591,7 +572,6 @@ async function toggleLike(button, sharedId) {
                 showNotification('💔 Unliked', 'info');
             }
             
-            console.log('✅ Like toggled successfully, new count:', newLikes);
         } else {
             showNotification(data.message || 'Gagal like', 'error');
         }
@@ -603,7 +583,6 @@ async function toggleLike(button, sharedId) {
 
 // Toggle Bookmark
 async function toggleBookmark(button, sharedId) {
-    console.log('🔖 Toggling bookmark for:', sharedId);
     
     try {
         const response = await fetch('/api/public-gallery/bookmark', {
@@ -644,7 +623,6 @@ async function toggleBookmark(button, sharedId) {
                 showNotification('📝 Unbookmarked', 'info');
             }
             
-            console.log('✅ Bookmark toggled successfully');
         } else {
             showNotification(data.message || 'Gagal bookmark', 'error');
         }

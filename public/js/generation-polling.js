@@ -15,7 +15,6 @@ class GenerationPoller {
      * Start polling for a job
      */
     startPolling(jobId, onUpdate, onComplete, onError) {
-        console.log('🔄 Starting polling for job:', jobId);
         
         let retryCount = 0;
         
@@ -29,7 +28,6 @@ class GenerationPoller {
                 }
                 
                 const job = data.job;
-                console.log('📊 Job status:', job.status, `(${job.progress}%)`);
                 
                 // Update callback
                 if (onUpdate) {
@@ -38,7 +36,6 @@ class GenerationPoller {
                 
                 // Check if completed
                 if (job.status === 'completed') {
-                    console.log('✅ Generation completed!', job);
                     this.stopPolling(jobId);
                     if (onComplete) {
                         onComplete(job);
@@ -48,7 +45,6 @@ class GenerationPoller {
                 
                 // Check if failed
                 if (job.status === 'failed') {
-                    console.log('❌ Generation failed:', job.errorMessage);
                     this.stopPolling(jobId);
                     if (onError) {
                         onError(new Error(job.errorMessage || 'Generation failed'));
@@ -102,7 +98,6 @@ class GenerationPoller {
         if (this.activePolls.has(jobId)) {
             clearTimeout(this.activePolls.get(jobId));
             this.activePolls.delete(jobId);
-            console.log('⏹️ Stopped polling for job:', jobId);
         }
     }
     
@@ -112,7 +107,6 @@ class GenerationPoller {
     stopAll() {
         this.activePolls.forEach((timeoutId, jobId) => {
             clearTimeout(timeoutId);
-            console.log('⏹️ Stopped polling for job:', jobId);
         });
         this.activePolls.clear();
     }
@@ -140,7 +134,6 @@ class GenerationPoller {
             const data = await response.json();
             
             if (data.success && data.jobs.length > 0) {
-                console.log(`🔄 Resuming ${data.jobs.length} active job(s)`);
                 
                 data.jobs.forEach(job => {
                     // Don't restart if already polling
@@ -201,7 +194,6 @@ window.generationPoller = new GenerationPoller();
 
 // Auto-resume on page load
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('📡 Generation Polling System initialized');
     
     // Auto-resume active jobs if we have the necessary elements
     // This will be called from dashboard-generation.js

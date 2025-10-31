@@ -33,7 +33,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Load models from API with optional category filtering
     async function loadModels(imageCategory = null, videoCategory = null) {
         try {
-            console.log('🔄 models-loader.js: Loading models...', { imageCategory, videoCategory });
             
             // Build image models URL
             let imageUrl = '/api/models/dashboard?type=image&limit=100';
@@ -50,8 +49,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (!imageCategory) {
                     allImageModels = imageData.models; // Store all for later filtering
                 }
-                console.log('🖼️ Image models loaded:', imageModels.length, imageCategory ? `(filtered: ${imageCategory})` : '(all)');
-                console.log('Image model categories:', [...new Set(imageModels.map(m => m.category))]);
                 populateImageModels(imageModels);
             }
             
@@ -70,14 +67,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (!videoCategory) {
                     allVideoModels = videoData.models; // Store all for later filtering
                 }
-                console.log('🎬 Video models loaded:', videoModels.length, videoCategory ? `(filtered: ${videoCategory})` : '(all)');
-                console.log('Video model categories:', [...new Set(videoModels.map(m => m.category))]);
                 populateVideoModels(videoModels);
             }
             
             // Share models with dashboard-generation.js
             window.allLoadedModels = [...imageModels, ...videoModels];
-            console.log('📦 Total models shared:', window.allLoadedModels.length);
             
         } catch (error) {
             console.error('❌ Error loading models:', error);
@@ -90,22 +84,18 @@ document.addEventListener('DOMContentLoaded', async function() {
         const category = TYPE_CATEGORY_MAP[selectedType];
         
         if (!category) {
-            console.log('🔍 No category mapping for type:', selectedType, '- showing all image models');
             populateImageModels(allImageModels);
             return;
         }
         
-        console.log(`🔄 Filtering image models for type: ${selectedType} → category: ${category}`);
         
         try {
             const url = `/api/models/dashboard?type=image&category=${encodeURIComponent(category)}&limit=100`;
-            console.log(`🌐 API Request URL: ${url}`);
             const response = await fetch(url);
             const data = await response.json();
             
             if (data.success) {
                 imageModels = data.models;
-                console.log(`✅ Found ${imageModels.length} models for category: ${category}`);
                 populateImageModels(imageModels);
                 
                 // Update shared models
@@ -121,12 +111,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         const category = TYPE_CATEGORY_MAP[selectedType];
         
         if (!category) {
-            console.log('🔍 No category mapping for type:', selectedType, '- showing all video models');
             populateVideoModels(allVideoModels);
             return;
         }
         
-        console.log(`🔄 Filtering video models for type: ${selectedType} → category: ${category}`);
         
         try {
             const url = `/api/models/dashboard?type=video&category=${encodeURIComponent(category)}&limit=100`;
@@ -135,7 +123,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             
             if (data.success) {
                 videoModels = data.models;
-                console.log(`✅ Found ${videoModels.length} models for category: ${category}`);
                 populateVideoModels(videoModels);
                 
                 // Update shared models
@@ -181,18 +168,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             const currentMode = activeTab ? activeTab.getAttribute('data-mode') : 'image';
             
             if (currentMode !== 'image') {
-                console.log('⏭️ Skipping image model restore - not on image tab (current:', currentMode, ')');
                 return;
             }
             
             const savedModelId = localStorage.getItem('selected_image_model_id');
             if (savedModelId) {
-                console.log('🔄 Restoring saved image model:', savedModelId);
                 const savedOption = Array.from(select.options).find(opt => opt.dataset.dbId == savedModelId);
                 if (savedOption) {
                     select.value = savedOption.value;
                     select.dispatchEvent(new Event('change'));
-                    console.log('✅ Restored image model from localStorage');
                     return;
                 }
             }
@@ -210,7 +194,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         function checkAndRestore() {
             if (window.dashboardStateRestored) {
-                console.log('✅ Dashboard state detected as restored, proceeding with image model restore');
                 tryRestoreImageModel();
                 return;
             }
@@ -227,7 +210,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Start checking immediately
         setTimeout(checkAndRestore, 10);
         
-        console.log('✅ Image models loaded');
     }
     
     // Populate video models dropdown
@@ -269,18 +251,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             const currentMode = activeTab ? activeTab.getAttribute('data-mode') : 'image';
             
             if (currentMode !== 'video') {
-                console.log('⏭️ Skipping video model restore - not on video tab (current:', currentMode, ')');
                 return;
             }
             
             const savedModelId = localStorage.getItem('selected_video_model_id');
             if (savedModelId) {
-                console.log('🔄 Restoring saved video model:', savedModelId);
                 const savedOption = Array.from(select.options).find(opt => opt.dataset.dbId == savedModelId);
                 if (savedOption) {
                     select.value = savedOption.value;
                     select.dispatchEvent(new Event('change'));
-                    console.log('✅ Restored video model from localStorage');
                     return;
                 }
             }
@@ -298,7 +277,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         function checkAndRestore() {
             if (window.dashboardStateRestored) {
-                console.log('✅ Dashboard state detected as restored, proceeding with video model restore');
                 tryRestoreVideoModel();
                 return;
             }
@@ -315,7 +293,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Start checking immediately
         setTimeout(checkAndRestore, 10);
         
-        console.log('✅ Video models loaded');
     }
     
     // Update model info display
@@ -431,21 +408,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         let isFirstChange = true;
         
         imageModelSelect.addEventListener('change', function() {
-            console.log('🔔 Image dropdown changed!');
             const selectedOption = this.options[this.selectedIndex];
-            console.log('Selected option:', selectedOption);
             
             if (selectedOption && selectedOption.dataset.modelData) {
                 const model = JSON.parse(selectedOption.dataset.modelData);
-                console.log('🖼️ Image model changed:', model.name, `(${model.cost} credits)`);
-                console.log('Model ID:', model.id, 'Model_ID:', model.model_id);
                 
                 updateModelInfo('image', model);
                 
                 // Notify generation script with retry
                 const notifyGeneration = () => {
                     if (window.updateSelectedModel) {
-                        console.log('📤 Calling updateSelectedModel with ID:', model.id);
                         if (window.addModelIfMissing) {
                             window.addModelIfMissing(model);
                         }
@@ -465,7 +437,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         setTimeout(() => {
             const currentMode = document.querySelector('.creation-tab.active')?.getAttribute('data-mode');
             if (currentMode === 'image' && imageModelSelect.options.length > 0) {
-                console.log('🎯 Auto-selecting first image model for initial state');
                 imageModelSelect.dispatchEvent(new Event('change'));
             }
         }, 300);
@@ -475,21 +446,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     const videoModelSelect = document.getElementById('video-model-select');
     if (videoModelSelect) {
         videoModelSelect.addEventListener('change', function() {
-            console.log('🔔 Video dropdown changed!');
             const selectedOption = this.options[this.selectedIndex];
-            console.log('Selected option:', selectedOption);
             
             if (selectedOption && selectedOption.dataset.modelData) {
                 const model = JSON.parse(selectedOption.dataset.modelData);
-                console.log('🎬 Video model changed:', model.name, `(${model.cost} credits)`);
-                console.log('Model ID:', model.id, 'Model_ID:', model.model_id);
                 
                 updateModelInfo('video', model);
                 
                 // Notify generation script with retry
                 const notifyGeneration = () => {
                     if (window.updateSelectedModel) {
-                        console.log('📤 Calling updateSelectedModel with ID:', model.id);
                         if (window.addModelIfMissing) {
                             window.addModelIfMissing(model);
                         }
@@ -509,7 +475,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (imageTypeSelect) {
         imageTypeSelect.addEventListener('change', function() {
             const selectedType = this.value;
-            console.log('🎯 Image type changed to:', selectedType);
             
             // Clear search when type changes
             if (imageSearchInput) {
@@ -525,8 +490,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         function loadInitialImageModels() {
             const initialImageType = imageTypeSelect.value;
             if (initialImageType) {
-                console.log('🎯 Initial image type:', initialImageType);
-                console.log('🔄 Loading image models for type:', initialImageType);
                 reloadImageModels(initialImageType);
             } else {
                 console.warn('⚠️ No image type selected, loading all models');
@@ -552,7 +515,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (videoTypeSelect) {
         videoTypeSelect.addEventListener('change', function() {
             const selectedType = this.value;
-            console.log('🎯 Video type changed to:', selectedType);
             
             // Clear search when type changes
             if (videoSearchInput) {
@@ -568,8 +530,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         function loadInitialVideoModels() {
             const initialVideoType = videoTypeSelect.value;
             if (initialVideoType) {
-                console.log('🎯 Initial video type:', initialVideoType);
-                console.log('🔄 Loading video models for type:', initialVideoType);
                 reloadVideoModels(initialVideoType);
             } else {
                 console.warn('⚠️ No video type selected, loading all models');
@@ -619,6 +579,5 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Load models on page load
     await loadModels();
     
-    console.log('Models loader initialized');
 });
 

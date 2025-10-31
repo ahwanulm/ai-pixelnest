@@ -301,7 +301,4 @@ backToTopBtn.addEventListener('click', () => {
 // Console Welcome Message
 // ========================================
 
-console.log('%c PixelNest AI Automation ', 'background: #667eea; color: white; font-size: 20px; padding: 10px; border-radius: 5px;');
-console.log('%c Automate Smarter. Grow Faster. With AI. ', 'font-size: 14px; color: #667eea;');
-console.log('%c Built with Node.js + Express + EJS + PostgreSQL ', 'font-size: 12px; color: #94a3b8;');
 

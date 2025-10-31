@@ -144,17 +144,11 @@ function buildPreviewSection(card, metadata) {
 
 // Build prompt section
 function buildPromptSection(metadata) {
-    console.log('🔍 buildPromptSection - Full metadata:', metadata);
-    console.log('🔍 metadata.originalPrompt:', metadata.originalPrompt);
-    console.log('🔍 metadata.settings:', metadata.settings);
-    console.log('🔍 metadata.settings?.originalPrompt:', metadata.settings?.originalPrompt);
     
     const promptText = metadata.prompt || 'No prompt available';
     const originalPrompt = metadata.originalPrompt || metadata.settings?.originalPrompt || null;
     const wasEnhanced = originalPrompt && originalPrompt !== promptText && promptText !== 'No prompt available';
     
-    console.log('🔍 Final originalPrompt:', originalPrompt);
-    console.log('🔍 wasEnhanced:', wasEnhanced);
     
     let html = `<div class="mb-4">
             <div class="flex items-center justify-between mb-2">

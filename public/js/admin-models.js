@@ -53,7 +53,6 @@ function setupEventListeners() {
             : '(Auto: No prompt needed for image-to-3D)';
           label.appendChild(indicator);
 
-          console.log(`🎲 ${selectedCategory} category selected - auto-configured prompt_required: ${promptRequiredCheckbox.checked}`);
         }
       } else {
         // Remove indicator for non-3D categories
@@ -200,7 +199,6 @@ async function loadModels() {
   // ✅ FIX: Prevent reload when modal is open (user is editing)
   const modalEl = document.getElementById('model-modal');
   if (modalEl && !modalEl.classList.contains('hidden')) {
-    console.log('⏸️ Skipping reload - modal is open (preventing form reset)');
     return;
   }
   
@@ -216,11 +214,9 @@ async function loadModels() {
     });
     const data = await response.json();
     
-    console.log(`🔄 Loaded ${data.models?.length || 0} models from API`);
     
     if (data.success) {
       allModels = data.models;
-      console.log('📊 Models cost data:', allModels.slice(0, 5).map(m => ({id: m.id, name: m.name, cost: m.cost})));
       updateStats(data.stats);
       filterModels();
     } else {
@@ -693,11 +689,9 @@ async function handleSubmit(e) {
   if (category === 'Text-to-3D') {
     // Text-to-3D models ALWAYS need prompt
     promptRequired = true;
-    console.log(`🎲 Text-to-3D Model auto-configured: prompt_required = true`);
   } else if (category === 'Image-to-3D') {
     // Image-to-3D models NEVER need prompt (they use uploaded image)
     promptRequired = false;
-    console.log(`🎲 Image-to-3D Model auto-configured: prompt_required = false`);
   }
   
   const modelData = {
@@ -836,10 +830,8 @@ async function handleSubmit(e) {
         if (verification.verified) {
           successMessage += '\n\n✅ FAL.AI Verification: VERIFIED';
           successMessage += '\n💰 FAL Price: $' + verification.fal_price;
-          console.log('✅ Model verified with FAL.AI API');
         } else {
           successMessage += '\n\n⚠️ FAL.AI Verification: ' + verification.message;
-          console.log('⚠️ Model not verified:', verification.message);
         }
       }
       
@@ -1246,7 +1238,6 @@ function calculateCreditsFromFalPrice(falPriceUSD) {
   // Simple: Credits = Price × 10
   const credits = Math.max(0.1, Math.round(falPriceUSD * 10 * 10) / 10); // Round to 1 decimal
   
-  console.log(`💰 Price calculation: $${falPriceUSD} → ${credits} credits (×10)`);
   return credits;
 }
 
@@ -1324,13 +1315,11 @@ async function syncPricingFromFal() {
 // Load models from FAL.AI real-time API
 async function loadFalModels(query = '') {
   try {
-    console.log('🔄 loadFalModels called with query:', query, 'source:', currentModelSource);
     
     const loadingEl = document.getElementById('fal-loading');
     const countEl = document.getElementById('fal-search-count');
     const syncEl = document.getElementById('fal-last-sync');
     
-    console.log('📌 Elements found:', { loadingEl: !!loadingEl, countEl: !!countEl, syncEl: !!syncEl });
     
     if (loadingEl) loadingEl.style.display = 'block';
     if (countEl) countEl.textContent = '-';
@@ -1345,16 +1334,12 @@ async function loadFalModels(query = '') {
     params.set('limit', '200'); // Increased limit for all models
     params.set('source', currentModelSource); // Pass source parameter
 
-    console.log('🌐 Fetching from /admin/api/fal/browse?', params.toString());
     const response = await fetch(`/admin/api/fal/browse?${params}`);
     const data = await response.json();
     
-    console.log('📦 Received data:', data);
 
     if (data.success) {
       falModels = data.models;
-      console.log('✅ Loaded', falModels.length, 'models from API');
-      console.log('📋 Sample model:', falModels[0]);
       
       displayFalModels(falModels);
       
@@ -1479,8 +1464,6 @@ function filterFalModels(type) {
 function displayFalModels(models) {
   const grid = document.getElementById('fal-models-grid');
   
-  console.log('📊 displayFalModels called with', models.length, 'models');
-  console.log('🎯 Grid element:', grid);
   
   if (!grid) {
     console.error('❌ Grid element #fal-models-grid not found!');
@@ -1497,7 +1480,6 @@ function displayFalModels(models) {
     return;
   }
 
-  console.log('🔨 Rendering', models.length, 'model cards...');
   
   try {
     const cardsHTML = models.map((model, index) => {
@@ -1578,9 +1560,7 @@ function displayFalModels(models) {
       }
     }).join('');
     
-    console.log('✅ Cards HTML generated, length:', cardsHTML.length);
     grid.innerHTML = cardsHTML;
-    console.log('✅ Cards inserted into grid');
   } catch (renderError) {
     console.error('❌ Error in displayFalModels:', renderError);
     grid.innerHTML = `
@@ -1729,9 +1709,7 @@ async function verifyPricing() {
             
             // Show some examples of updates
             if (updateResult.updates && updateResult.updates.length > 0) {
-              console.log('🔄 Pricing Updates Applied:');
               updateResult.updates.forEach(update => {
-                console.log(`   ${update.name}: ${update.old} → ${update.new} credits`);
               });
             }
           } else {
@@ -1753,7 +1731,6 @@ async function verifyPricing() {
 
 // Edit credits for a model
 async function editCredits(modelId, currentCredits) {
-  console.log(`🎯 editCredits called with modelId: ${modelId}, currentCredits: ${currentCredits}`);
   
   // Ensure values are valid
   if (!modelId || modelId == 'undefined') {
@@ -1766,7 +1743,6 @@ async function editCredits(modelId, currentCredits) {
   const newCredits = prompt(`Edit credits for model (current: ${currentCost}):`, currentCost);
   
   if (!newCredits || newCredits === null || newCredits.trim() === '') {
-    console.log('❌ Edit cancelled or empty input');
     return;
   }
   
@@ -1776,7 +1752,6 @@ async function editCredits(modelId, currentCredits) {
     return;
   }
   
-  console.log(`🔄 Updating model ${modelId}: ${currentCost} → ${parsedCredits}`);
   
   try {
     const response = await fetch(`/admin/api/models/${modelId}`, {
@@ -1790,33 +1765,27 @@ async function editCredits(modelId, currentCredits) {
     }
     
     const data = await response.json();
-    console.log('📊 Update response:', data);
     
     if (data.success) {
-      console.log('✅ Database updated, new cost:', data.model?.cost);
       
       // Update the display immediately without waiting for full reload
       const costDisplay = document.getElementById(`cost-display-${modelId}`);
       if (costDisplay) {
         const newCost = parseFloat(data.model?.cost || parsedCredits).toFixed(1);
         costDisplay.textContent = newCost;
-        console.log(`✅ UI updated: cost-display-${modelId} → ${newCost}`);
       } else {
-        console.log(`❌ Element not found: cost-display-${modelId}`);
       }
       
       // Update the model in our local array
       const modelIndex = allModels.findIndex(m => m.id == modelId);
       if (modelIndex !== -1) {
         allModels[modelIndex].cost = data.model?.cost || parsedCredits;
-        console.log(`✅ Local array updated for model index ${modelIndex}`);
       }
       
       showToast(`Credits updated: ${currentCost} → ${parseFloat(data.model?.cost || parsedCredits).toFixed(1)}`, 'success');
       
       // Also reload models to ensure consistency (with a delay)
       setTimeout(() => {
-        console.log('🔄 Reloading models for consistency...');
         loadModels();
       }, 500);
     } else {
@@ -2119,7 +2088,6 @@ async function deleteSelectedModels() {
       
       if (response.ok) {
         deleted++;
-        console.log(`✅ Deleted: ${model?.name || modelId}`);
       } else if (response.status === 400 && data.is_custom === false) {
         // If still can't delete, deactivate instead
         const deactivateResponse = await fetch(`/admin/api/models/${modelId}`, {
@@ -2130,7 +2098,6 @@ async function deleteSelectedModels() {
         
         if (deactivateResponse.ok) {
           deactivated++;
-          console.log(`⚠️ Deactivated instead: ${model?.name || modelId}`);
         } else {
           failed++;
           failedModels.push(model?.name || `ID ${modelId}`);
@@ -2201,9 +2168,6 @@ async function syncSinglePrice(modelId, modelName) {
         model.cost = data.model.new_cost;
       }
       
-      console.log(`✅ Price synced: ${modelName}`);
-      console.log(`   FAL Price: $${data.model.fal_price.toFixed(3)}`);
-      console.log(`   Old: ${data.model.old_cost} → New: ${data.model.new_cost} credits`);
       
       // Reload after a short delay
       setTimeout(() => loadModels(), 500);
@@ -2259,7 +2223,6 @@ async function syncSelectedPrices() {
           old: data.model.old_cost,
           new: data.model.new_cost
         });
-        console.log(`✅ Synced: ${model?.name || modelId} - ${data.model.old_cost} → ${data.model.new_cost} credits`);
       } else {
         failed++;
         console.error(`❌ Failed: ${model?.name || modelId}`, data.message);
@@ -2280,9 +2243,7 @@ async function syncSelectedPrices() {
     
     // Show examples in console
     if (updates.length > 0) {
-      console.log('💰 Price Updates:');
       updates.slice(0, 10).forEach(update => {
-        console.log(`   ${update.name}: ${update.old} → ${update.new} credits`);
       });
     }
   } else {
@@ -3222,7 +3183,6 @@ window.closeSunoPricingModal = closeSunoPricingModal;
 window.saveSunoModelsWithPricing = saveSunoModelsWithPricing;
 
 // Debug: Log when functions are available
-console.log('🚀 admin-models.js loaded:', {
   editCredits: typeof window.editCredits,
   openBrowseModal: typeof window.openBrowseModal,
   syncFalModels: typeof window.syncFalModels,

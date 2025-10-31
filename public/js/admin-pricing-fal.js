@@ -835,7 +835,6 @@ const FAL_AI_MODELS = {
 
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 FAL.AI Pricing Data initialized');
   loadFalAIData();
   
   // Auto refresh every 10 minutes
@@ -845,7 +844,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==================== LOAD DATA ====================
 function loadFalAIData() {
   try {
-    console.log('📡 Loading FAL.AI pricing data...');
     
     // Convert our data structure to array format
     allModels = Object.entries(FAL_AI_MODELS).map(([model_id, data]) => ({
@@ -860,7 +858,6 @@ function loadFalAIData() {
     updateStats();
     updateLastUpdateTime();
     
-    console.log(`✅ Loaded ${allModels.length} FAL.AI models`);
     
   } catch (error) {
     console.error('❌ Error loading FAL.AI data:', error);
@@ -991,7 +988,6 @@ function filterModels(type) {
   });
   
   renderModels();
-  console.log(`🔍 Filtered to: ${type}`);
 }
 
 // ==================== REFRESH ====================
@@ -1048,4 +1044,3 @@ function showError(message) {
 window.filterModels = filterModels;
 window.refreshPricingData = refreshPricingData;
 
-console.log('✅ FAL.AI Pricing System Ready');

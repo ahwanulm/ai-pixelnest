@@ -296,7 +296,6 @@ const REAL_FAL_PRICES = {
 
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 Real-time FAL.AI Pricing initialized');
   loadPricingData();
   
   // Auto refresh every 5 minutes
@@ -306,7 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==================== LOAD DATA ====================
 async function loadPricingData() {
   try {
-    console.log('📡 Loading real-time pricing data...');
     
     // Convert our data structure to array format
     allModels = Object.entries(REAL_FAL_PRICES).map(([model_id, data]) => ({
@@ -321,7 +319,6 @@ async function loadPricingData() {
     updateStats();
     updateLastUpdateTime();
     
-    console.log(`✅ Loaded ${allModels.length} models`);
     
   } catch (error) {
     console.error('❌ Error loading pricing data:', error);
@@ -449,7 +446,6 @@ function filterModels(type) {
   });
   
   renderModels();
-  console.log(`🔍 Filtered to: ${type}`);
 }
 
 // ==================== REFRESH ====================
@@ -506,4 +502,3 @@ function showError(message) {
 window.filterModels = filterModels;
 window.refreshPricing = refreshPricing;
 
-console.log('✅ Real-time Pricing System Ready');

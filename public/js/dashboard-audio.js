@@ -4,7 +4,6 @@
 (function() {
     'use strict';
     
-    console.log('🎵 Dashboard Audio Handler Loaded');
     
     // Audio Type Configuration
     const AUDIO_TYPE_CONFIG = {
@@ -114,7 +113,6 @@
                 audioPrompt.classList.remove('ring-2', 'ring-blue-500/50');
             }, 500);
             
-            console.log('✨ Example prompt applied:', randomExample);
         });
     }
     
@@ -172,7 +170,6 @@
                     }
                 }
                 
-                console.log('🎸 Instrumental:', isInstrumental);
             });
         }
         
@@ -196,7 +193,6 @@
                     selectedGenre = null;
                 }
                 
-                console.log('🎼 Genre:', selectedGenre);
                 updatePromptFromAdvanced();
             });
         });
@@ -221,7 +217,6 @@
                     selectedMood = null;
                 }
                 
-                console.log('😊 Mood:', selectedMood);
                 updatePromptFromAdvanced();
             });
         });
@@ -238,7 +233,6 @@
                 this.classList.add('bg-blue-500/30', 'border-blue-500/50', 'active');
                 selectedVocalGender = this.getAttribute('data-gender') || 'auto';
                 const genderLabel = selectedVocalGender === 'm' ? 'Male' : selectedVocalGender === 'f' ? 'Female' : 'Auto';
-                console.log('👤 Vocal Gender:', selectedVocalGender, `(${genderLabel})`);
             });
         });
         
@@ -299,7 +293,6 @@
                     categoryBtns.forEach(b => b.classList.remove('bg-blue-500/30', 'border-blue-500'));
                     this.classList.add('bg-blue-500/30', 'border-blue-500');
                     selectedCategory = this.getAttribute('data-category');
-                    console.log('📂 Category selected:', selectedCategory);
                 });
             });
             
@@ -310,7 +303,6 @@
                     qualityBtns.forEach(b => b.classList.remove('bg-blue-500/30', 'border-blue-500'));
                     this.classList.add('bg-blue-500/30', 'border-blue-500');
                     selectedQuality = this.getAttribute('data-quality');
-                    console.log('🎚️  Quality selected:', selectedQuality);
                 });
             });
             
@@ -326,7 +318,6 @@
                         const displayText = selectedAmbience.charAt(0).toUpperCase() + selectedAmbience.slice(1);
                         ambienceDisplay.textContent = displayText;
                     }
-                    console.log('🌊 Ambience selected:', selectedAmbience);
                 });
             });
         }
@@ -412,12 +403,10 @@
         
         audioDurationDisplay.textContent = `${defaultVal} seconds`;
         
-        console.log(`✅ Duration range adjusted for ${type}:`, {min, max, default: defaultVal});
     }
     
     // Initialize
     async function init() {
-        console.log('🎵 Initializing Audio Handler...');
         setupAudioTypeDropdown();
         setupDurationSlider();
         setupPromptSave();
@@ -434,36 +423,30 @@
     
     // Restore state from localStorage (like Image/Video)
     function restoreState() {
-        console.log('📦 Restoring audio state from localStorage...');
         
         // Small delay to ensure DOM is fully ready
         setTimeout(() => {
             // Restore audio type
             const savedType = localStorage.getItem('dashboard_audio_type');
-            console.log('🔍 Saved audio type from localStorage:', savedType);
             
             if (savedType) {
                 const typeOption = document.querySelector(`.audio-type-option[data-type="${savedType}"]`);
-                console.log('🔍 Type option element found:', typeOption);
                 
                 if (typeOption) {
                     const desc = typeOption.getAttribute('data-desc');
                     const typeText = typeOption.querySelector('.text-white, .text-sm')?.textContent || savedType;
                     
-                    console.log('✅ Restoring audio type:', savedType, 'with desc:', desc);
                     selectAudioType(savedType, desc, typeOption);
                 } else {
                     console.warn('⚠️ Audio type option not found for:', savedType);
                 }
             } else {
-                console.log('ℹ️ No saved audio type found');
             }
             
             // Restore prompt/text
             const savedPrompt = localStorage.getItem('dashboard_audio_prompt');
             if (savedPrompt && audioPrompt) {
                 audioPrompt.value = savedPrompt;
-                console.log('✅ Audio prompt restored');
             }
             
             // Restore duration
@@ -473,13 +456,11 @@
                 if (audioDurationDisplay) {
                     audioDurationDisplay.textContent = `${savedDuration} seconds`;
                 }
-                console.log('✅ Audio duration restored:', savedDuration);
             }
             
             // Note: Selected model will be restored in displayModels() after models load
             const savedModelId = localStorage.getItem('selected_audio_model_id');
             if (savedModelId) {
-                console.log('📋 Audio model to restore:', savedModelId, '(will restore after type selection)');
             }
         }, 100); // Small delay to ensure DOM ready
     }
@@ -493,7 +474,6 @@
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(() => {
                     localStorage.setItem('dashboard_audio_prompt', this.value);
-                    console.log('💾 Audio prompt saved');
                 }, 500);
             });
             
@@ -501,7 +481,6 @@
             audioPrompt.addEventListener('keydown', function() {
                 if (this.dataset.autoGenerated) {
                     delete this.dataset.autoGenerated;
-                    console.log('✏️ User manual edit detected - auto-gen disabled');
                 }
             });
         }
@@ -642,17 +621,6 @@
                 lyrics: document.getElementById('audio-lyrics')?.value.trim() || null
             };
             
-            // Log advanced options
-            console.log('🎨 Advanced Music Options:', {
-                genre: advanced.genre,
-                mood: advanced.mood,
-                tempo: advanced.tempo,
-                make_instrumental: advanced.make_instrumental,
-                vocal_gender: advanced.vocal_gender || '(auto/not set)',
-                instruments: advanced.instruments,
-                lyrics: advanced.lyrics ? `(${advanced.lyrics.length} chars)` : null
-            });
-            
             // Only add advanced if at least one option is set
             if (advanced.genre || advanced.mood || advanced.tempo !== 120 || advanced.make_instrumental || advanced.vocal_gender || advanced.instruments || advanced.lyrics) {
                 data.advanced = advanced;
@@ -717,7 +685,6 @@
             }
         }
         
-        console.log('💰 Audio generation cost:', cost.toFixed(2), 'credits');
     }
     
     // Expose functions globally (for dashboard-generation.js)
@@ -816,7 +783,6 @@
                 if (instrumentsInput) instrumentsInput.value = '';
                 if (lyricsInput) lyricsInput.value = '';
                 
-                console.log('🔄 Music advanced options reset');
             }
         }
         
@@ -846,13 +812,11 @@
                 const ambienceDisplay = document.getElementById('audio-ambience-display');
                 if (ambienceDisplay) ambienceDisplay.textContent = 'None';
                 
-                console.log('🔄 Audio/SFX advanced options reset');
             }
         }
     }
     
     function selectAudioType(type, desc, element) {
-        console.log('🎵 Audio type selected:', type);
         
         selectedAudioType = type;
         
@@ -908,10 +872,8 @@
         
         // Save to localStorage
         localStorage.setItem('dashboard_audio_type', type);
-        console.log('💾 Audio type saved to localStorage:', type);
         
         // Load models for this type
-        console.log('📥 Filtering models for type:', type, '(Total models:', audioModels.length, ')');
         filterAndDisplayModels(type);
     }
     
@@ -920,7 +882,6 @@
         const config = AUDIO_TYPE_CONFIG[type];
         if (!config) return;
         
-        console.log('🎨 Applying conditional UI for:', type, config);
         
         // Update prompt label and placeholder
         const promptLabel = document.querySelector('label[for="audio-prompt"]');
@@ -929,14 +890,12 @@
             const isTTS = type === 'text-to-speech';
             promptLabel.className = 'control-label';
             promptLabel.innerHTML = `${labelText} ${isTTS ? '<span class="text-gray-500 text-xs ml-1">(Text to convert to speech)</span>' : ''}`;
-            console.log('✅ Prompt label updated to:', labelText);
         }
         
         if (audioPrompt) {
             audioPrompt.placeholder = config.placeholder;
             // Clear auto-generated flag when type changes
             delete audioPrompt.dataset.autoGenerated;
-            console.log('✅ Prompt placeholder updated');
             
             // Trigger character counter update with new limit
             audioPrompt.dispatchEvent(new Event('input'));
@@ -960,13 +919,11 @@
         if (advancedOptions) {
             if (type === 'text-to-music' || type === 'text-to-audio') {
                 advancedOptions.classList.remove('hidden');
-                console.log('✅ Advanced options SHOWN for', type);
                 
                 // Show appropriate sub-options
                 if (musicAdvancedOptions) {
                     if (type === 'text-to-music') {
                         musicAdvancedOptions.classList.remove('hidden');
-                        console.log('   🎵 Music advanced options visible');
                     } else {
                         musicAdvancedOptions.classList.add('hidden');
                     }
@@ -975,14 +932,12 @@
                 if (audioSfxAdvancedOptions) {
                     if (type === 'text-to-audio') {
                         audioSfxAdvancedOptions.classList.remove('hidden');
-                        console.log('   🔊 Audio/SFX advanced options visible');
                     } else {
                         audioSfxAdvancedOptions.classList.add('hidden');
                     }
                 }
             } else {
                 advancedOptions.classList.add('hidden');
-                console.log('🔇 Advanced options HIDDEN for', type);
             }
         }
         
@@ -993,10 +948,8 @@
                 durationContainer.style.display = 'block';
                 // Auto-adjust duration range
                 adjustDurationRange(type);
-                console.log('✅ Duration control SHOWN for', type);
             } else {
                 durationContainer.style.display = 'none';
-                console.log('✅ Duration control HIDDEN for', type, '(TTS mode)');
             }
         } else {
             console.warn('⚠️ Duration container not found!');
@@ -1006,14 +959,12 @@
     // Load Audio Models
     async function loadAudioModels() {
         try {
-            console.log('📥 Loading audio models...');
             
             const response = await fetch('/api/models/all?type=audio');
             const data = await response.json();
             
             if (data.success) {
                 audioModels = data.models;
-                console.log('✅ Loaded', audioModels.length, 'audio models');
                 
                 // If type is already selected, display models
                 if (selectedAudioType) {
@@ -1062,8 +1013,6 @@
             return categories.some(cat => modelCategoryLower === cat.toLowerCase());
         });
         
-        console.log('🔍 Filtered', filtered.length, 'models for type:', type);
-        console.log('   Available categories:', audioModels.map(m => m.category).filter((v, i, a) => a.indexOf(v) === i));
         
         if (filtered.length === 0) {
             audioModelCards.innerHTML = `
@@ -1150,12 +1099,10 @@
             // Try to find and select the saved model
             const savedCard = audioModelCards.querySelector(`[data-db-id="${savedModelId}"]`);
             if (savedCard) {
-                console.log('🔄 Restoring saved audio model:', savedModelId);
                 // Collapse immediately after restoring
                 selectAudioModel(savedCard, true); // ✅ Auto-collapse on restore
                 modelRestored = true;
             } else {
-                console.log('⚠️ Saved audio model not found, selecting first');
             }
         }
         
@@ -1190,7 +1137,6 @@
             pricing_type: card.getAttribute('data-pricing-type')
         };
         
-        console.log('✅ Selected audio model:', selectedAudioModel);
         
         // Get model data from card attributes for display
         const modelName = card.querySelector('.text-sm.font-semibold')?.textContent || 'Audio Model';
@@ -1201,7 +1147,6 @@
         try {
             localStorage.setItem('selected_audio_model_id', selectedAudioModel.db_id);
             localStorage.setItem('selected_audio_model', JSON.stringify(selectedAudioModel));
-            console.log('💾 Saved audio model to localStorage:', selectedAudioModel.model_id);
         } catch (e) {
             console.warn('Failed to save audio model to localStorage:', e);
         }
@@ -1210,20 +1155,16 @@
         updateAudioModelInfo(modelName, modelDesc, modelCategory, selectedAudioModel.cost, selectedAudioModel.pricing_type);
         
         // Collapse model cards after selection (SAME as Image/Video)
-        console.log('🔽 Should collapse?', shouldCollapse, 'Function exists?', !!window.collapseModelCards);
         
         if (shouldCollapse) {
             if (window.collapseModelCards) {
-                console.log('🔽 Collapsing audio model cards...');
                 setTimeout(() => {
                     window.collapseModelCards('audio');
-                    console.log('✅ Collapse function called for audio');
                 }, 100);
             } else {
                 console.warn('⚠️ window.collapseModelCards not found! Check model-cards-handler.js');
             }
         } else {
-            console.log('ℹ️ Skipping collapse (shouldCollapse = false)');
         }
         
         // Update cost calculation
@@ -1240,7 +1181,6 @@
             
             // Save to localStorage
             localStorage.setItem('dashboard_audio_duration', value);
-            console.log('💾 Audio duration saved:', value);
             
             updateAudioCost();
         });
@@ -1270,7 +1210,6 @@
         
         // Show model info card
         modelInfo.classList.remove('hidden');
-        console.log('✅ Audio model info displayed:', name);
     }
     
     // Update Cost Calculation
@@ -1285,7 +1224,6 @@
         if (selectedAudioModel.pricing_type === 'per_second') {
             const creditsPerSecond = cost; // Already calculated by admin
             cost = creditsPerSecond * duration;
-            console.log(`🎵 Audio per-second: ${creditsPerSecond.toFixed(2)} cr/s × ${duration}s = ${cost.toFixed(2)} cr`);
         }
         
         // Update main credit cost display

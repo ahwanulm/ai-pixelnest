@@ -39,7 +39,6 @@ class QueueClient {
         throw new Error(data.message || 'Failed to create job');
       }
 
-      console.log('✅ Job created:', data.jobId);
 
       return data.jobId;
 
@@ -58,7 +57,6 @@ class QueueClient {
       return;
     }
 
-    console.log('📡 Connecting to SSE...');
 
     this.eventSource = new EventSource('/api/sse/generation-updates');
 
@@ -66,14 +64,12 @@ class QueueClient {
     this.eventSource.addEventListener('message', (event) => {
       const data = JSON.parse(event.data);
       if (data.type === 'connected') {
-        console.log('✅ SSE connected');
       }
     });
 
     // ✨ Job progress updates (REAL-TIME)
     this.eventSource.addEventListener('job-progress', (event) => {
       const data = JSON.parse(event.data);
-      console.log('📊 Progress update via SSE:', data.jobId, `${data.progress}%`, data.status);
       
       if (onUpdate) {
         onUpdate(data);
@@ -83,7 +79,6 @@ class QueueClient {
     // Job completed
     this.eventSource.addEventListener('job-completed', (event) => {
       const data = JSON.parse(event.data);
-      console.log('✅ Job completed via SSE:', data.jobId);
       
       if (onComplete) {
         onComplete(data);
@@ -106,7 +101,6 @@ class QueueClient {
       
       // Auto-reconnect after 5 seconds
       setTimeout(() => {
-        console.log('🔄 Reconnecting SSE...');
         this.disconnectSSE();
         this.connectSSE(onUpdate, onComplete, onError);
       }, 5000);
@@ -120,7 +114,6 @@ class QueueClient {
     if (this.eventSource) {
       this.eventSource.close();
       this.eventSource = null;
-      console.log('📡 SSE disconnected');
     }
   }
 
@@ -134,12 +127,9 @@ class QueueClient {
       return;
     }
     
-    console.log(`🔄 Starting polling for job: ${jobId}`);
-    console.log(`📊 Active pollers: ${this.activePollers.size}`);
 
     const poll = async () => {
       try {
-        console.log(`🔍 Polling job: ${jobId}`);
         const response = await fetch(`/api/queue-generation/status/${jobId}`);
         const data = await response.json();
 
@@ -148,7 +138,6 @@ class QueueClient {
         }
 
         const job = data.job;
-        console.log(`📊 Job ${jobId}: ${job.status} - ${job.progress}%`);
 
         // Update callback
         if (onUpdate) {
@@ -157,7 +146,6 @@ class QueueClient {
 
         // Check if completed
         if (job.status === 'completed') {
-          console.log(`✅ Job completed: ${jobId}`);
           
           if (onComplete) {
             onComplete(job);
@@ -182,7 +170,6 @@ class QueueClient {
         // ✨ Continue polling (schedule next poll)
         const timerId = setTimeout(poll, this.pollingInterval);
         this.activePollers.set(jobId, timerId);
-        console.log(`⏰ Next poll for ${jobId} in ${this.pollingInterval}ms`);
 
       } catch (error) {
         console.error(`❌ Polling error for ${jobId}:`, error);
@@ -210,7 +197,6 @@ class QueueClient {
     if (timerId) {
       clearTimeout(timerId);
       this.activePollers.delete(jobId);
-      console.log(`⏹️  Stopped polling: ${jobId}`);
     }
   }
 
@@ -220,7 +206,6 @@ class QueueClient {
   stopAllPolling() {
     this.activePollers.forEach((timerId, jobId) => {
       clearTimeout(timerId);
-      console.log(`⏹️  Stopped polling: ${jobId}`);
     });
     this.activePollers.clear();
   }
@@ -260,7 +245,6 @@ class QueueClient {
         throw new Error(data.message || 'Failed to cancel job');
       }
 
-      console.log('❌ Job cancelled:', jobId);
 
       return true;
 
@@ -315,7 +299,6 @@ class QueueClient {
     try {
       const activeJobs = await this.getActiveJobs();
 
-      console.log(`📋 Found ${activeJobs.length} active jobs`);
 
       if (this.useSSE && activeJobs.length > 0) {
         // Connect SSE once for all jobs

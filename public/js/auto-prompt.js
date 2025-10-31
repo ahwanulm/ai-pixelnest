@@ -29,7 +29,6 @@
                 state.image.isActive = parsed.image || false;
                 state.video.isActive = parsed.video || false;
                 state.audio.isActive = parsed.audio || false;
-                console.log('✅ Auto prompt state loaded:', parsed);
             }
         } catch (error) {
             console.error('Failed to load auto prompt state:', error);
@@ -45,7 +44,6 @@
                 audio: state.audio.isActive
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-            console.log('💾 Auto prompt state saved:', toSave);
         } catch (error) {
             console.error('Failed to save auto prompt state:', error);
         }
@@ -54,7 +52,6 @@
     // ========== INITIALIZATION ==========
     
     async function init() {
-        console.log('🪄 Auto Prompt Enhancement initializing...');
         
         try {
             // Load saved state from localStorage FIRST
@@ -78,7 +75,6 @@
                 }
             });
             
-            console.log('✅ Auto Prompt Enhancement initialized');
         } catch (error) {
             console.error('❌ Auto Prompt Enhancement initialization failed:', error);
         }
@@ -90,7 +86,6 @@
             const checkbox = document.getElementById(`${mode}-auto-prompt-checkbox`);
             if (checkbox) {
                 checkbox.checked = state[mode].isActive;
-                console.log(`🔄 Applied state for ${mode}: ${state[mode].isActive}`);
             }
         });
     }
@@ -167,9 +162,7 @@
                     saveState();
                     
                     if (this.checked) {
-                        console.log(`✅ Auto prompt ENABLED for ${mode} (will enhance when you click Generate)`);
                     } else {
-                        console.log(`❌ Auto prompt DISABLED for ${mode}`);
                         // Clear cached prompts when disabled
                         state[mode].originalPrompt = '';
                         state[mode].enhancedPrompt = '';
@@ -235,7 +228,6 @@
             const toggle = document.getElementById('audio-auto-prompt-toggle');
             if (toggle) {
                 toggle.style.display = 'block';
-                console.log('✅ Audio auto prompt visible');
             }
         }, 100);
     }
@@ -259,11 +251,9 @@
         // Hide toggle for models that don't need prompts
         if (noPromptModels.includes(modelId)) {
             toggle.style.display = 'none';
-            console.log(`🔒 Auto prompt hidden for no-prompt model: ${modelId}`);
         } else {
             // Show toggle for models that need prompts
             toggle.style.display = 'block';
-            console.log(`✅ Auto prompt visible for mode: ${mode}`);
         }
         
         // Add warning badge if service not available
@@ -282,7 +272,6 @@
     
     async function enhancePromptForMode(mode) {
         if (isEnhancing) {
-            console.log('⚠️ Already enhancing a prompt');
             return;
         }
 
@@ -297,17 +286,14 @@
         
         // Don't enhance if empty or too short
         if (!originalPrompt || originalPrompt.length < 3) {
-            console.log('⚠️ Prompt too short or empty, skipping enhancement');
             return;
         }
 
         // ✨ CRITICAL: Save original prompt FIRST before any enhancement
         state[mode].originalPrompt = originalPrompt;
-        console.log('📝 Original prompt saved to state:', originalPrompt.substring(0, 50) + '...');
 
         // Don't enhance if already enhanced (check if we already have this exact original)
         if (state[mode].originalPrompt === originalPrompt && state[mode].enhancedPrompt) {
-            console.log('✅ Using cached enhanced prompt');
             textarea.value = state[mode].enhancedPrompt;
             return;
         }
@@ -358,11 +344,6 @@
                 state[mode].originalPrompt = originalPrompt;
             }
             state[mode].enhancedPrompt = data.enhancedPrompt || originalPrompt;
-            
-            console.log('✅ Enhancement complete:', {
-                original: state[mode].originalPrompt.substring(0, 50) + '...',
-                enhanced: state[mode].enhancedPrompt.substring(0, 50) + '...'
-            });
 
             // Animate the enhancement
             await animatePromptEnhancement(textarea, originalPrompt, data.enhancedPrompt);
@@ -494,7 +475,6 @@
         if (typeof showToast === 'function') {
             showToast(message, type);
         } else {
-            console.log(`[${type.toUpperCase()}] ${message}`);
         }
     }
 
@@ -559,7 +539,6 @@
         getEnhancedPrompt: (mode) => state[mode]?.enhancedPrompt || null,
         clearState: () => {
             localStorage.removeItem(STORAGE_KEY);
-            console.log('🗑️ Auto prompt state cleared');
         }
     };
 

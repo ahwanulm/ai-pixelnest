@@ -75,23 +75,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize with current active tab
     let currentMode = getCurrentMode();
-    console.log('🎯 Initial mode detected:', currentMode);
     
     // ✨ Initialize SSE connection for real-time progress updates
     if (window.queueClient && !window.queueClient.eventSource) {
-        console.log('📡 Initializing SSE connection for real-time progress...');
         window.queueClient.connectSSE(
             // onUpdate: Real-time progress updates
             (data) => {
-                console.log(`📊 SSE Progress: Job ${data.jobId} - ${data.progress}% - ${data.status}`);
                 
                 // Find loading card for this job
                 const loadingCard = document.querySelector(`[data-job-id="${data.jobId}"]`);
                 if (loadingCard && typeof updateLoadingProgress === 'function') {
-                    console.log(`   ✅ Updating loading card: ${data.progress}%`);
                     updateLoadingProgress(loadingCard, data.progress, data.status);
                 } else if (!loadingCard) {
-                    console.log(`   ⚠️  Loading card not found for job ${data.jobId}`);
                 }
             },
             // onComplete: Will be handled by individual pollJobStatus
@@ -108,7 +103,6 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         const restoredMode = getCurrentMode();
         if (restoredMode !== currentMode) {
-            console.log('🔄 Mode updated after state restoration:', currentMode, '→', restoredMode);
             currentMode = restoredMode;
         }
     }, 300); // Increased to 300ms to wait for all initializations
@@ -133,8 +127,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load available models from database
     async function loadAvailableModels(forceReload = false) {
         try {
-            console.log('🔄 dashboard-generation.js: Loading models from database...');
-            console.log('   Current mode:', currentMode);
             
             // ✨ FIX: Load models for BOTH image and video, not just current mode
             // This ensures models are available regardless of tab switches
@@ -188,13 +180,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Merge all types
             const allModels = [...(imageData.models || []), ...(videoData.models || []), ...(audioData.models || [])];
             
-            console.log('📥 API Response:', {
-                imageModels: imageData.models?.length || 0,
-                videoModels: videoData.models?.length || 0,
-                audioModels: audioData.models?.length || 0,
-                totalModels: allModels.length
-            });
-            
             const data = {
                 success: imageData.success && videoData.success && audioData.success,
                 models: allModels,
@@ -210,12 +195,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const serverPricingUpdate = data.last_pricing_update || 0;
                 
                 if (forceReload || lastPricingUpdate === 0) {
-                    console.log('🆕 First load or forced reload');
                     lastPricingUpdate = serverPricingUpdate;
                 } else if (serverPricingUpdate > lastPricingUpdate) {
-                    console.log('💰 PRICING UPDATE DETECTED!');
-                    console.log(`   Previous: ${new Date(lastPricingUpdate * 1000).toLocaleString()}`);
-                    console.log(`   Current:  ${new Date(serverPricingUpdate * 1000).toLocaleString()}`);
                     
                     // Show notification to user
                     showPricingUpdateNotification();
@@ -223,13 +204,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 availableModels = data.models;
-                console.log('✅ Loaded models with real pricing:', availableModels.length);
-                console.log('📊 Models by type:', {
-                    image: availableModels.filter(m => m.type === 'image').length,
-                    video: availableModels.filter(m => m.type === 'video').length,
-                    audio: availableModels.filter(m => m.type === 'audio').length
-                });
-                console.log('📋 All model IDs:', availableModels.map(m => ({id: m.id, name: m.name, type: m.type})));
                 
                 // ✅ RESTORE selected model from localStorage (if exists)
                 let restoredModel = null;
@@ -238,9 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (savedModelId) {
                         restoredModel = availableModels.find(m => m.id === parseInt(savedModelId) && m.type === currentMode);
                         if (restoredModel) {
-                            console.log('🔄 Restored selected model from localStorage:', restoredModel.name, `(ID: ${savedModelId})`);
                         } else {
-                            console.log('⚠️ Saved model not found in loaded models:', savedModelId);
                         }
                     }
                 } catch (e) {
@@ -254,43 +226,34 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Priority: restored > existing > default
                     if (restoredModel) {
                         selectedModel = restoredModel;
-                        console.log('🎯 Using restored model:', selectedModel.name);
                     } else if (selectedModel) {
                         // If we had a selected model before, try to keep it
                         const updatedModel = availableModels.find(m => m.id === selectedModel.id);
                         if (updatedModel) {
                             selectedModel = updatedModel;
-                            console.log('🔄 Updated selected model pricing:', selectedModel.name, `(cost: ${selectedModel.cost})`);
                         } else {
                             selectedModel = defaultModel;
-                            console.log('🎯 Using default model:', selectedModel.name);
                         }
                     } else {
                         selectedModel = defaultModel;
-                        console.log('🎯 Using default model:', selectedModel.name);
                     }
                     
-                    console.log('✅ Final selected model:', selectedModel.name, `(${selectedModel.type})`);
                 }
                 
                 // Sync with models-loader if it loaded models first
                 if (window.allLoadedModels && window.allLoadedModels.length > 0) {
-                    console.log('🔄 Syncing with models-loader.js models...');
                     // Merge models from both sources
                     const mergedIds = new Set(availableModels.map(m => m.id));
                     window.allLoadedModels.forEach(model => {
                         if (!mergedIds.has(model.id)) {
                             availableModels.push(model);
-                            console.log('➕ Added model from loader:', model.name, model.id);
                         }
                     });
-                console.log('✅ After sync, total models:', availableModels.length);
             }
             
             // ✅ ALWAYS recalculate cost after model restoration/selection
             // This ensures credits display correctly on page refresh
             if (selectedModel) {
-                console.log('💰 Recalculating credits for restored/selected model:', selectedModel.name);
                 calculateCreditCost();
             }
             }
@@ -362,9 +325,7 @@ document.addEventListener('DOMContentLoaded', function() {
             clearInterval(pricingCheckInterval);
         }
         
-        console.log('🔄 Starting automatic pricing sync check (every 30s)...');
         pricingCheckInterval = setInterval(async () => {
-            console.log('🔍 Checking for pricing updates...');
             await loadAvailableModels(false); // Don't force reload on check
         }, 30000); // Check every 30 seconds
     }
@@ -374,13 +335,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (pricingCheckInterval) {
             clearInterval(pricingCheckInterval);
             pricingCheckInterval = null;
-            console.log('⏹️ Stopped pricing sync check');
         }
     }
     
     // Expose reload function globally
     window.reloadModelPricing = function() {
-        console.log('🔄 Manual pricing reload triggered');
         return loadAvailableModels(true);
     };
 
@@ -389,7 +348,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const audioSection = document.querySelector('#video-mode > div:has(.audio-btn)');
         
         if (!audioSection) {
-            console.log('⚠️ Audio toggle section not found');
             return;
         }
         
@@ -403,7 +361,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (shouldShow) {
             audioSection.style.display = 'block';
-            console.log('✅ Audio toggle shown (multi-tier or audio model)');
             
             // Update hint based on model type
             const hint = document.getElementById('audio-cost-hint');
@@ -425,15 +382,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } else {
             audioSection.style.display = 'none';
-            console.log('🔇 Audio toggle hidden (simple pricing or non-video model)');
         }
     }
     
     // Credit Cost Calculator Function (with real model pricing)
     function calculateCreditCost() {
-        console.log('💰 Calculating credit cost...');
-        console.log('Current mode:', currentMode);
-        console.log('Selected model:', selectedModel ? selectedModel.name : 'None');
         
         // Update audio toggle visibility based on selected model
         updateAudioToggleVisibility();
@@ -449,7 +402,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (creditBreakdownEl) {
                 creditBreakdownEl.textContent = 'Select a model to see pricing';
             }
-            console.log('⚠️ No model selected, showing placeholder');
             return;
         }
         
@@ -479,7 +431,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 costMultiplier = 1.0; // Always use base cost from database
                 
-                console.log('🖼️ Image operation:', type, '- Using base cost from model');
             } else if (mode === 'video') {
                 const videoType = document.getElementById('video-type');
                 const type = videoType ? videoType.value : 'text-to-video';
@@ -502,12 +453,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     baseCost = parseFloat(selectedModel.cost) || 1;
                     costMultiplier = 1.0;
                     
-                    console.log('🎭 Multi-tier pricing (using stored cost):', {
-                        model: selectedModel.name,
-                        storedCost: baseCost.toFixed(2) + ' cr',
-                        note: 'Admin already calculated this with correct formula'
-                    });
-                    
                 } else {
                     // SIMPLE PRICING (original logic)
                     const modelMaxDuration = selectedModel.max_duration || 20;
@@ -524,15 +469,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Calculate actual cost for requested duration
                         baseCost = creditsPerSecond * requestedDuration;
                         costMultiplier = 1.0; // Already calculated exact cost
-                        
-                        console.log('📐 Per-second calculation:', {
-                            model: selectedModel.name,
-                            storedBaseCost: parseFloat(selectedModel.cost),
-                            maxDuration: modelMaxDuration + 's',
-                            creditsPerSecond: creditsPerSecond.toFixed(2),
-                            requestedDuration: requestedDuration + 's',
-                            calculatedCost: baseCost.toFixed(2)
-                        });
                     } else {
                         // FLAT RATE MODELS (e.g., MiniMax: $0.50 flat, Runway: $0.60 flat)
                         costMultiplier = 1.0;
@@ -541,17 +477,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     // No additional multipliers - price is already set in admin
                     // Image-to-video price should be configured in admin panel
                     costMultiplier = 1.0;
-                    
-                    console.log('🎬 Simple video pricing:', {
-                        model: selectedModel.name,
-                        pricingType: pricingType,
-                        baseCost: baseCost.toFixed(2),
-                        maxDuration: modelMaxDuration + 's',
-                        requestedDuration: requestedDuration + 's',
-                        videoType: type,
-                        costMultiplier: costMultiplier.toFixed(2),
-                        finalCost: (baseCost * costMultiplier).toFixed(2)
-                    });
                 }
             }
         } else {
@@ -572,20 +497,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const adjustedCost = baseCost * costMultiplier;
         const totalCost = adjustedCost * quantity;
         
-        console.log('💵 Cost breakdown:', {
-            baseCost: baseCost.toFixed(1),
-            multiplier: costMultiplier.toFixed(1),
-            adjustedCost: adjustedCost.toFixed(1),
-            quantity,
-            totalCost: totalCost.toFixed(1)
-        });
-        
         const creditCostEl = document.getElementById('credit-cost');
         const creditBreakdownEl = document.getElementById('credit-breakdown');
         
         if (creditCostEl) {
             creditCostEl.textContent = `${totalCost.toFixed(1)} ${totalCost === 1 ? 'Credit' : 'Credits'}`;
-            console.log('✅ Updated credit display:', totalCost.toFixed(1));
         } else {
             console.warn('⚠️ credit-cost element not found');
         }
@@ -626,17 +542,12 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addModelIfMissing = function(model) {
         const exists = availableModels.find(m => m.id === model.id);
         if (!exists) {
-            console.log('➕ Adding missing model to availableModels:', model.name, model.id);
             availableModels.push(model);
         }
     };
     
     // Update selected model (exposed globally for models-loader)
     window.updateSelectedModel = function(modelId) {
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('🔄 updateSelectedModel CALLED');
-        console.log('📥 Received modelId:', modelId, typeof modelId);
-        console.log('📦 Available models count:', availableModels.length);
         
         // Try multiple matching strategies
         let model = availableModels.find(m => {
@@ -647,52 +558,38 @@ document.addEventListener('DOMContentLoaded', function() {
                    String(m.id) === String(modelId);
             
             if (match) {
-                console.log('✅ MATCH FOUND:', m.name, 'via id:', m.id);
             }
             return match;
         });
         
         // If not found, check window.allLoadedModels
         if (!model && window.allLoadedModels) {
-            console.log('🔍 Model not in availableModels, checking allLoadedModels...');
             model = window.allLoadedModels.find(m => m.id === parseInt(modelId) || m.id === modelId);
             if (model) {
-                console.log('✅ Found in allLoadedModels:', model.name);
                 availableModels.push(model);
-                console.log('➕ Added to availableModels');
             }
         }
         
         if (model) {
             selectedModel = model;
-            console.log('✅ Selected model SET:', selectedModel.name);
-            console.log('💰 Model cost:', selectedModel.cost);
             
             // ✅ SAVE selected model to localStorage for persistence
             try {
                 localStorage.setItem(`selected_${currentMode}_model_id`, modelId);
                 localStorage.setItem(`selected_${currentMode}_model`, JSON.stringify(model));
-                console.log('💾 Saved selected model to localStorage');
             } catch (e) {
                 console.warn('Failed to save model to localStorage:', e);
             }
             
-            console.log('🔄 Calling calculateCreditCost...');
             calculateCreditCost();
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         } else {
             console.error('❌ MODEL NOT FOUND:', modelId);
-            console.log('Available model IDs in availableModels:');
             availableModels.slice(0, 10).forEach(m => {
-                console.log(`  - ID: ${m.id} | name: ${m.name}`);
             });
             if (window.allLoadedModels) {
-                console.log('Available model IDs in allLoadedModels:');
                 window.allLoadedModels.slice(0, 10).forEach(m => {
-                    console.log(`  - ID: ${m.id} | name: ${m.name}`);
                 });
             }
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         }
     }
 
@@ -706,7 +603,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const mode = this.getAttribute('data-mode');
             currentMode = mode;
-            console.log('🎯 Tab clicked - Mode switched to:', mode);
             
             creationTabs.forEach(t => t.classList.remove('active'));
             this.classList.add('active');
@@ -725,7 +621,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Clear selected model when switching mode
             // User needs to select a model in the new mode
             selectedModel = null;
-            console.log('🔄 Mode switched to:', mode, '- Cleared selection, waiting for user to choose model');
             
             // Show placeholder
             const creditCostEl = document.getElementById('credit-cost');
@@ -743,7 +638,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (generateBtn) {
                 const anyGenerating = Object.values(isGenerating).some(val => val === true);
                 if (anyGenerating) {
-                    console.log(`⏳ Generations running (${Object.keys(isGenerating).filter(k => isGenerating[k]).join(', ')}) - button shows generating`);
                 } else {
                     // Reset button to default state if nothing is generating
                     generateBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg><span>Run</span>';
@@ -755,7 +649,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const selectId = mode === 'image' ? 'image-model-select' : 'video-model-select';
                 const select = document.getElementById(selectId);
                 if (select && select.options.length > 0) {
-                    console.log('🎯 Auto-selecting first', mode, 'model after mode switch');
                     select.dispatchEvent(new Event('change'));
                 }
             }, 150);
@@ -796,7 +689,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // ✅ Enable multiple file selection for edit-multi
                 if (value === 'edit-multi' && imageUploadInput) {
                     imageUploadInput.setAttribute('multiple', 'multiple');
-                    console.log('✅ Multiple file selection enabled for edit-multi');
                 } else if (imageUploadInput) {
                     imageUploadInput.removeAttribute('multiple');
                 }
@@ -816,7 +708,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         imageAspectRatioAutoNote.classList.remove('hidden');
                     }
                     
-                    console.log('✅ Aspect ratio will be auto-detected from uploaded image');
                 }
             } else if (value === 'text-to-3d') {
                 // text-to-3d: hide upload, hide aspect ratio (3D doesn't use it)
@@ -836,7 +727,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         imageAspectRatioAutoNote.querySelector('span').textContent = 'Aspect ratio not applicable for 3D generation';
                     }
                     
-                    console.log('✅ Aspect ratio hidden for text-to-3d');
                 }
             } else {
                 imageUploadSection.classList.add('hidden');
@@ -940,18 +830,15 @@ document.addEventListener('DOMContentLoaded', function() {
         startFrameDropzone.addEventListener('click', function(e) {
             // Don't trigger if already selecting a file
             if (isSelectingFile) {
-                console.log('⏳ Already selecting file, ignoring click');
                 return;
             }
             
             isSelectingFile = true;
-            console.log('📂 Opening file dialog...');
             startFrameInput.click();
         });
         
         // Handle file selection
         startFrameInput.addEventListener('change', function() {
-            console.log('📥 File change event triggered');
             
             if (this.files && this.files.length > 0) {
                 const fileName = this.files[0].name;
@@ -966,19 +853,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     startFrameText.classList.remove('text-gray-500');
                 }
                 
-                console.log('✅ Start frame selected:', fileName);
             }
             
             // Reset flag after selection completes
             setTimeout(() => {
                 isSelectingFile = false;
-                console.log('🔓 Ready for next upload');
             }, 500);
         });
         
         // Also reset flag if user cancels (focus returns without file change)
         startFrameInput.addEventListener('cancel', function() {
-            console.log('❌ File selection cancelled');
             isSelectingFile = false;
         });
     }
@@ -995,18 +879,15 @@ document.addEventListener('DOMContentLoaded', function() {
         endFrameDropzone.addEventListener('click', function(e) {
             // Don't trigger if already selecting a file
             if (isSelectingFile) {
-                console.log('⏳ Already selecting file, ignoring click');
                 return;
             }
             
             isSelectingFile = true;
-            console.log('📂 Opening file dialog...');
             endFrameInput.click();
         });
         
         // Handle file selection
         endFrameInput.addEventListener('change', function() {
-            console.log('📥 File change event triggered');
             
             if (this.files && this.files.length > 0) {
                 const fileName = this.files[0].name;
@@ -1021,19 +902,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     endFrameText.classList.remove('text-gray-500');
                 }
                 
-                console.log('✅ End frame selected:', fileName);
             }
             
             // Reset flag after selection completes
             setTimeout(() => {
                 isSelectingFile = false;
-                console.log('🔓 Ready for next upload');
             }, 500);
         });
         
         // Also reset flag if user cancels
         endFrameInput.addEventListener('cancel', function() {
-            console.log('❌ File selection cancelled');
             isSelectingFile = false;
         });
     }
@@ -1099,8 +977,11 @@ document.addEventListener('DOMContentLoaded', function() {
         let cooldownTimer = null;
         
         generateBtn.addEventListener('click', async function() {
+            console.log('🎯 [GENERATION] Button clicked!');
+            
             // ✨ Check if button is in cooldown
             if (buttonCooldown) {
+                console.log('⏳ [GENERATION] Button in cooldown, aborting');
                 showNotification('⏳ Please wait before generating again', 'warning');
                 return;
             }
@@ -1110,18 +991,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const previousMode = currentMode;
             currentMode = mode; // Update state
             
-            // ✨ DEBUG: Log current state
-            console.log('🔍 Current state check:', {
-                mode: mode,
-                'isGenerating.image': isGenerating.image,
-                'isGenerating.video': isGenerating.video,
-                'isGenerating.audio': isGenerating.audio,
-                'isGenerating[mode]': isGenerating[mode]
-            });
+            console.log('🎯 [GENERATION] Mode:', mode);
             
             // ✨ Check if THIS mode is already generating (allows concurrent generations)
             if (isGenerating[mode]) {
-                console.log(`⚠️ ${mode} generation already in progress, skipping...`);
+                console.log('⚠️ [GENERATION] Mode already generating:', mode);
                 showNotification(`${mode.charAt(0).toUpperCase() + mode.slice(1)} generation already in progress`, 'warning');
                 return;
             }
@@ -1129,9 +1003,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // ✨ Check concurrent generation limit (Best practice: max 3 simultaneous)
             const activeGenerations = Object.values(isGenerating).filter(v => v === true).length;
             if (activeGenerations >= MAX_CONCURRENT_GENERATIONS) {
+                console.log('⚠️ [GENERATION] Max concurrent limit reached:', activeGenerations);
                 const activeTypes = Object.keys(isGenerating).filter(k => isGenerating[k]).join(', ');
-                console.log(`⚠️ Max concurrent generations reached (${activeGenerations}/${MAX_CONCURRENT_GENERATIONS})`);
-                console.log(`   Active: ${activeTypes}`);
                 showNotification(
                     `Maximum ${MAX_CONCURRENT_GENERATIONS} concurrent generations allowed. Please wait for one to finish.`, 
                     'warning'
@@ -1139,11 +1012,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // ✨ Soft refresh result container at start
-            console.log('🔄 Soft refreshing result container on generate start...');
-            if (typeof loadRecentGenerations === 'function') {
-                loadRecentGenerations();
-            }
+            console.log('✅ [GENERATION] Checks passed, proceeding...');
             
             // ✨ Start 10 second cooldown
             buttonCooldown = true;
@@ -1164,70 +1033,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         generateBtn.innerHTML = cooldownButtonHTML;
                     }
-                    console.log('✅ Button cooldown finished');
                 }
             };
             
             updateButtonCountdown();
-            console.log('⏰ 10 second cooldown started');
             
             if (mode !== previousMode) {
-                console.log('⚠️ Mode mismatch detected! Previous:', previousMode, '→ Current:', mode);
             }
             
-            console.log('🎯 Generate button clicked - Current mode:', mode);
+            console.log('🚀 [GENERATION] Starting generation for mode:', mode);
             
-            // ✨ SHOW LOADING CARD IMMEDIATELY (before any async operations!)
-            // ✨ Get fresh references (in case elements weren't ready initially)
-            const freshResultDisplay = document.getElementById('result-display');
-            const hasCreateLoadingCard = typeof createLoadingCard === 'function' || typeof window.createLoadingCard === 'function';
-            const createLoadingCardFn = typeof createLoadingCard === 'function' ? createLoadingCard : window.createLoadingCard;
-            
-            console.log('🔍 Loading card setup check:', {
-                resultDisplay: !!freshResultDisplay,
-                createLoadingCard: typeof createLoadingCard,
-                windowCreateLoadingCard: typeof window.createLoadingCard,
-                hasFunction: hasCreateLoadingCard
-            });
-            
+            // ✨ Initialize loading card variable (will be created later)
             let earlyLoadingCard = null;
-            
-            if (freshResultDisplay && hasCreateLoadingCard && createLoadingCardFn) {
-                freshResultDisplay.classList.remove('hidden');
-                freshResultDisplay.style.display = 'block'; // Force show
-                
-                try {
-                    earlyLoadingCard = createLoadingCardFn(mode);
-                    if (earlyLoadingCard) {
-                        earlyLoadingCard.setAttribute('data-generation-loading', 'true');
-                        earlyLoadingCard.setAttribute('data-temp-id', 'temp-loading'); // Temporary ID for early creation
-                        freshResultDisplay.insertBefore(earlyLoadingCard, freshResultDisplay.firstChild);
-                        console.log('✅ Loading card created IMMEDIATELY');
-                        
-                        // Scroll result into view
-                        if (window.innerWidth >= 1024) { // Desktop only
-                            freshResultDisplay.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                        }
-                    } else {
-                        console.error('❌ createLoadingCard returned null/undefined');
-                    }
-                } catch (error) {
-                    console.error('❌ Error creating loading card:', error);
-                }
-            } else {
-                console.error('❌ Cannot create loading card:', {
-                    resultDisplay: !!freshResultDisplay,
-                    hasCreateLoadingCard: hasCreateLoadingCard,
-                    createLoadingCardFn: !!createLoadingCardFn
-                });
-            }
             
             // Helper function to cleanup if validation fails
             const cleanupEarlyLoading = () => {
+                console.log('🧹 [LOADING CARD] Cleanup called, removing card...');
                 if (earlyLoadingCard) {
-                    console.log('🧹 Removing early loading card (validation failed)');
                     earlyLoadingCard.remove();
                     earlyLoadingCard = null;
+                    console.log('✅ [LOADING CARD] Card removed');
+                } else {
+                    console.log('⚠️ [LOADING CARD] No card to remove');
                 }
             };
             
@@ -1242,15 +1069,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // ⚠️ IMPORTANT: Get initial prompt for validation ONLY
             // The actual prompt will be read AFTER enhancement
             let initialPrompt = textarea ? textarea.value.trim() : '';
-            
-            // Debug logging
-            console.log('🔍 Generation validation:', {
-                mode: mode,
-                textareaId: textarea?.id,
-                textareaVisible: textarea ? window.getComputedStyle(textarea).display !== 'none' : false,
-                initialPromptLength: initialPrompt.length,
-                initialPromptValue: initialPrompt.substring(0, 50) + (initialPrompt.length > 50 ? '...' : '')
-            });
             
             // Get selected model
             const modelSelect = mode === 'image' 
@@ -1299,10 +1117,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 1. No-prompt models (like remove-bg, upscale, face-swap)
                 // 2. Edit types WITH upload (edit-image with image upload)
                 if (!isNoPromptModel && !isEditType && !initialPrompt) {
-                    console.warn('❌ Validation failed: No prompt entered');
-                    console.log('📝 Textarea element:', textarea);
-                    console.log('📝 Raw textarea value:', textarea?.value);
-                    console.log('📝 Mode:', mode);
+                    console.warn('❌ [VALIDATION] No prompt entered', {
+                        isNoPromptModel,
+                        isEditType,
+                        initialPrompt: initialPrompt || '(empty)'
+                    });
                     cleanupEarlyLoading();
                     showNotification('Please enter a prompt!', 'error');
                     return;
@@ -1340,8 +1159,11 @@ document.addEventListener('DOMContentLoaded', function() {
             let finalPrompt = initialPrompt || defaultPrompt;
             let originalPrompt = null;
             
-            if (window.AutoPrompt && window.AutoPrompt.isEnabled && window.AutoPrompt.isEnabled(mode)) {
-                console.log('✨ Auto-prompt is ENABLED, checking if enhancement needed...');
+            // ✨ Check if auto-prompt is enabled (will affect loading card timing)
+            const autoPromptEnabled = window.AutoPrompt && window.AutoPrompt.isEnabled && window.AutoPrompt.isEnabled(mode);
+            
+            if (autoPromptEnabled) {
+                console.log('🪄 [AUTO-PROMPT] Auto-prompt is enabled, enhancing...');
                 
                 // Check if we have cached enhanced prompt
                 const cachedOriginal = window.AutoPrompt.getOriginalPrompt(mode);
@@ -1349,56 +1171,137 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Case 1: We have cached enhancement and textarea matches it
                 if (cachedEnhanced && initialPrompt === cachedEnhanced && cachedOriginal) {
-                    console.log('✅ Using CACHED enhanced prompt');
                     finalPrompt = cachedEnhanced;
                     originalPrompt = cachedOriginal;
+                    console.log('✅ [AUTO-PROMPT] Using cached enhancement');
                 }
                 // Case 2: Textarea already contains enhanced prompt (different from cached)
                 else if (cachedOriginal && initialPrompt !== cachedOriginal && initialPrompt.length > cachedOriginal.length) {
-                    console.log('✅ Textarea already enhanced (manual or previous)');
                     finalPrompt = initialPrompt;
                     originalPrompt = cachedOriginal;
+                    console.log('✅ [AUTO-PROMPT] Using existing enhanced prompt');
                 }
                 // Case 3: Need to enhance NOW before generation
                 else if (initialPrompt && initialPrompt.length >= 3) {
-                    console.log('🔄 ENHANCING prompt before generation... (BLOCKING)');
-                    console.log('   Original prompt:', initialPrompt.substring(0, 80));
                     
                     // Save original BEFORE enhancement
                     originalPrompt = initialPrompt;
                     
                     try {
+                        console.log('⏳ [AUTO-PROMPT] Enhancing prompt...');
                         // ⚡ CRITICAL: Wait for enhancement to complete
                         await window.AutoPrompt.enhancePrompt(mode);
                         
                         // ⚡ CRITICAL: Re-read textarea AFTER enhancement
                         const enhancedValue = textarea ? textarea.value.trim() : initialPrompt;
                         
-                        console.log('   Enhanced prompt:', enhancedValue.substring(0, 80));
                         
                         // Verify enhancement actually happened
                         if (enhancedValue && enhancedValue !== initialPrompt && enhancedValue.length > initialPrompt.length) {
                             finalPrompt = enhancedValue;
-                            console.log('✅ ✅ ✅ Prompt enhanced SUCCESSFULLY!');
-                            console.log('   Length: ', initialPrompt.length, '→', enhancedValue.length, 'chars');
+                            console.log('✅ [AUTO-PROMPT] Enhancement completed successfully');
                         } else {
-                            console.warn('⚠️ Enhancement did not change prompt, using original');
+                            console.warn('⚠️ [AUTO-PROMPT] Enhancement did not change prompt, using original');
                             finalPrompt = initialPrompt;
                             originalPrompt = null; // Don't save if enhancement failed
                         }
                     } catch (error) {
-                        console.error('❌ Prompt enhancement ERROR:', error);
+                        console.error('❌ [AUTO-PROMPT] Enhancement ERROR:', error);
                         // Continue with original prompt if enhancement fails
                         finalPrompt = initialPrompt;
                         originalPrompt = null;
                     }
                 } else {
-                    console.log('⚠️ Prompt too short for enhancement (<3 chars), skipping');
                     finalPrompt = initialPrompt;
                 }
             } else {
-                console.log('ℹ️ Auto-prompt DISABLED, using original prompt');
                 finalPrompt = initialPrompt;
+            }
+            
+            // ✨✨✨ CREATE LOADING CARD AFTER AUTO-PROMPT ENHANCEMENT (if enabled)
+            // This ensures user sees enhancement complete before loading starts
+            console.log('🎨 [LOADING CARD] Creating loading card now (after auto-prompt)...');
+            
+            const freshResultContainer = document.getElementById('result-container');
+            const freshResultDisplay = document.getElementById('result-display');
+            const hasCreateLoadingCard = typeof createLoadingCard === 'function' || typeof window.createLoadingCard === 'function';
+            const createLoadingCardFn = typeof createLoadingCard === 'function' ? createLoadingCard : window.createLoadingCard;
+            
+            // ✨ Ensure result-container is visible
+            if (freshResultContainer) {
+                freshResultContainer.classList.remove('hidden');
+                freshResultContainer.style.display = 'block';
+            }
+            
+            // ✨ Ensure result-display is visible
+            if (freshResultDisplay) {
+                freshResultDisplay.classList.remove('hidden');
+                freshResultDisplay.style.display = 'block';
+            }
+            
+            // ✨ Create loading card
+            if (freshResultDisplay) {
+                if (hasCreateLoadingCard && createLoadingCardFn) {
+                    try {
+                        // Pass autoPromptActive option to show badge if auto-prompt was used
+                        const loadingCardOptions = {
+                            autoPromptActive: autoPromptEnabled && originalPrompt !== null
+                        };
+                        earlyLoadingCard = createLoadingCardFn(mode, loadingCardOptions);
+                        
+                        if (earlyLoadingCard) {
+                            earlyLoadingCard.setAttribute('data-generation-loading', 'true');
+                            earlyLoadingCard.setAttribute('data-temp-id', 'temp-loading');
+                            freshResultDisplay.insertBefore(earlyLoadingCard, freshResultDisplay.firstChild);
+                            
+                            console.log('✅ [LOADING CARD] Created and inserted!');
+                            
+                            // Scroll into view (desktop only)
+                            if (window.innerWidth >= 1024) {
+                                freshResultDisplay.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            }
+                        } else {
+                            console.error('❌ [LOADING CARD] createLoadingCard returned null/undefined');
+                        }
+                    } catch (error) {
+                        console.error('❌ [LOADING CARD] Error creating loading card:', error);
+                    }
+                } else {
+                    // ✨ FALLBACK: Create simple inline loading card
+                    console.warn('⚠️ [LOADING CARD] External function not available, using fallback...');
+                    try {
+                        earlyLoadingCard = document.createElement('div');
+                        earlyLoadingCard.className = 'loading-card bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 backdrop-blur-sm rounded-xl overflow-hidden border border-blue-500/50 p-6';
+                        earlyLoadingCard.setAttribute('data-generation-loading', 'true');
+                        earlyLoadingCard.setAttribute('data-temp-id', 'temp-loading');
+                        
+                        const typeText = mode === 'video' ? 'Video' : mode === 'audio' ? 'Audio' : 'Image';
+                        earlyLoadingCard.innerHTML = `
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-full border-4 border-blue-500/30 border-t-blue-500 animate-spin"></div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white">Generating ${typeText}</h3>
+                                    <p class="text-sm text-gray-400 loading-status">Initializing...</p>
+                                    <div class="w-64 h-2 bg-black/30 rounded-full mt-2 overflow-hidden">
+                                        <div class="loading-progress-bar h-full bg-gradient-to-r from-blue-500 to-pink-500 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        freshResultDisplay.insertBefore(earlyLoadingCard, freshResultDisplay.firstChild);
+                        console.log('✅ [LOADING CARD] Fallback card created!');
+                        
+                        // Scroll into view (desktop only)
+                        if (window.innerWidth >= 1024) {
+                            freshResultDisplay.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    } catch (fallbackError) {
+                        console.error('❌ [LOADING CARD] Fallback creation failed:', fallbackError);
+                    }
+                }
+            } else {
+                console.error('❌ [LOADING CARD] result-display element not found!');
             }
             
             // ✅ FINAL VALIDATION: Ensure we have a prompt
@@ -1406,9 +1309,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 finalPrompt = initialPrompt || 'Process image';
             }
             
-            console.log('📤 FINAL prompt for generation:', finalPrompt.substring(0, 100) + '...');
             if (originalPrompt) {
-                console.log('📝 ORIGINAL prompt saved:', originalPrompt.substring(0, 100) + '...');
             }
             
             // Prepare form data
@@ -1416,17 +1317,11 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('prompt', finalPrompt);
             formData.append('quantity', currentQuantity);
             
-            console.log('📤 📤 📤 SENDING TO SERVER:');
-            console.log('   prompt (finalPrompt):', finalPrompt.substring(0, 100) + '...');
-            console.log('   prompt length:', finalPrompt.length, 'chars');
             
             // Add original prompt if auto-prompt was used
             if (originalPrompt && originalPrompt !== finalPrompt) {
                 formData.append('originalPrompt', originalPrompt);
-                console.log('   originalPrompt:', originalPrompt.substring(0, 50) + '...');
-                console.log('   ✅ AUTO-PROMPT ACTIVE - Sending both prompts');
             } else {
-                console.log('   ℹ️  No auto-prompt (originalPrompt === finalPrompt or null)');
             }
             
             if (mode === 'image') {
@@ -1449,15 +1344,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             Array.from(imageUpload.files).forEach((file, index) => {
                                 formData.append('images', file); // Use 'images' (plural) for multi
                             });
-                            console.log(`📤 Uploading ${imageUpload.files.length} images for batch edit operation`);
                         } else {
                             // Single image upload
                             formData.append('startImage', imageUpload.files[0]);
-                            console.log('📤 Uploading image file for edit operation');
                         }
                     } else if (imageUrl) {
                         formData.append('startImageUrl', imageUrl);
-                        console.log('🔗 Using image URL for edit operation:', imageUrl);
                     } else {
                         cleanupEarlyLoading();
                         showNotification('Please upload an image or provide URL', 'error');
@@ -1513,10 +1405,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (startFrame.files.length > 0) {
                         formData.append('startImage', startFrame.files[0]);
-                        console.log('✅ Start frame (file) added to form data');
                     } else if (startUrl && startUrl.trim()) {
                         formData.append('startImageUrl', startUrl.trim());
-                        console.log('✅ Start frame (URL) added to form data');
                     }
                     
                     if (videoType === 'image-to-video-end') {
@@ -1525,10 +1415,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         if (endFrame.files.length > 0) {
                             formData.append('endImage', endFrame.files[0]);
-                            console.log('✅ End frame (file) added to form data');
                         } else if (endUrl && endUrl.trim()) {
                             formData.append('endImageUrl', endUrl.trim());
-                            console.log('✅ End frame (URL) added to form data');
                         }
                     }
                 }
@@ -1547,10 +1435,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Advanced options for music (genre, mood, tempo, instruments, lyrics)
                 if (audioData.advanced) {
                     formData.append('advanced', JSON.stringify(audioData.advanced));
-                    console.log('🎨 Advanced options included:', audioData.advanced);
                 }
                 
-                console.log('🎵 Audio generation data:', audioData);
             }
             
             // Show loading state for THIS mode
@@ -1571,13 +1457,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${counterBadge}
                     <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 74 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 0 1 4 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                 </div>
                 <span>Generating...</span>
             `;
             
-            console.log(`🚀 ${mode} generation started (${activeCount}/${MAX_CONCURRENT_GENERATIONS} active)`);
             // Note: Button is NOT disabled so user can generate in other modes simultaneously
             
             // Hide old loading state
@@ -1587,23 +1472,28 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Loading card already created at the top! Just ensure result display is visible
-            // ✨ Get fresh reference
+            // ✨ Get fresh references
+            const currentResultContainer = document.getElementById('result-container');
             const currentResultDisplay = document.getElementById('result-display');
+            
+            // ✨ Ensure result-container is visible (parent container)
+            if (currentResultContainer) {
+                currentResultContainer.classList.remove('hidden');
+                currentResultContainer.style.display = 'block';
+            }
+            
             if (currentResultDisplay) {
                 currentResultDisplay.classList.remove('hidden');
                 currentResultDisplay.style.display = 'block'; // Force show
                 
                 // Loading card already created immediately after button click ✅
-                console.log('ℹ️  Loading card already shown (created early)');
                 
                 // 📱 Auto-redirect to mobile processing view on mobile devices
                 if (window.innerWidth < 1024) {
-                    console.log(`📱 Mobile ${mode} generation detected - Opening results view...`);
                     // Use setTimeout to ensure DOM is ready
                     setTimeout(() => {
                         if (typeof window.openMobileResults === 'function') {
                             window.openMobileResults();
-                            console.log('✅ Mobile results view opened');
                         }
                     }, 100);
                 }
@@ -1613,7 +1503,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             try {
                 // ✨ NEW: Queue-based generation (non-blocking!)
-                console.log('🚀 Using queue-based generation system');
                 
                 // Add mode and settings to FormData for queue
                 formData.append('mode', mode);
@@ -1628,7 +1517,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // ✨ CRITICAL: Add originalPrompt to settings if it exists
                 if (formData.get('originalPrompt')) {
                     settingsObj.originalPrompt = formData.get('originalPrompt');
-                    console.log('✅ originalPrompt added to settings:', formData.get('originalPrompt').substring(0, 50) + '...');
                 }
                 
                 // Add video-specific settings
@@ -1656,7 +1544,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
                 
-                console.log('📦 Final settings object being sent:', settingsObj);
                 formData.append('settings', JSON.stringify(settingsObj));
                 
                 // Create job in queue (instant response!)
@@ -1673,28 +1560,36 @@ document.addEventListener('DOMContentLoaded', function() {
                     throw new Error(data.message || 'Failed to queue generation');
                 }
                 
-                console.log('✅ Job queued:', data.jobId);
                 
                 // ✨ CRITICAL: Link loading card to job ID BEFORE polling starts
                 // First try to find temp loading card, fallback to latest loading card
-                let loadingCard = document.querySelector('[data-temp-id="temp-loading"]');
+                let loadingCard = null;
+                
+                // Method 1: Find by temp ID (most reliable)
+                loadingCard = document.querySelector('[data-temp-id="temp-loading"]');
                 if (loadingCard) {
-                    console.log('✅ Found temp loading card (created early)');
                     loadingCard.removeAttribute('data-temp-id');
+                    loadingCard.setAttribute('data-job-id', data.jobId);
                 } else {
-                    // Fallback: Get latest loading card
-                    const loadingCards = document.querySelectorAll('[data-generation-loading="true"]');
-                    loadingCard = loadingCards[loadingCards.length - 1];
-                    console.log('ℹ️  Using latest loading card as fallback');
+                    // Method 2: Fallback - Get latest loading card without job ID
+                    const allLoadingCards = document.querySelectorAll('[data-generation-loading="true"]');
+                    for (let i = allLoadingCards.length - 1; i >= 0; i--) {
+                        const card = allLoadingCards[i];
+                        // Only use cards that don't already have a job ID
+                        if (!card.hasAttribute('data-job-id')) {
+                            loadingCard = card;
+                            loadingCard.setAttribute('data-job-id', data.jobId);
+                            break;
+                        }
+                    }
                 }
                 
-                if (loadingCard) {
-                    loadingCard.setAttribute('data-job-id', data.jobId);
-                    console.log(`✅ Linked loading card to job ${data.jobId}`);
-                    console.log('   Loading card element:', loadingCard);
-                    console.log('   data-job-id attribute:', loadingCard.getAttribute('data-job-id'));
-                } else {
-                    console.error('❌ No loading card found to link!');
+                if (!loadingCard) {
+                    console.error('❌ No loading card found to link!', {
+                        tempIdCard: !!document.querySelector('[data-temp-id="temp-loading"]'),
+                        totalLoadingCards: document.querySelectorAll('[data-generation-loading="true"]').length,
+                        jobId: data.jobId
+                    });
                 }
                 
                 // ✨ Start real-time tracking via SSE or polling
@@ -1703,29 +1598,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         data.jobId,
                         (job) => {
                             // onUpdate: Update progress
-                            console.log(`📊 Progress update for job ${data.jobId}: ${job.progress}%`);
                             // ✨ Fix: Find loading card by job ID (supports concurrent generations)
                             const loadingCard = document.querySelector(`[data-job-id="${data.jobId}"]`);
-                            console.log(`   Looking for card with data-job-id="${data.jobId}"`, loadingCard ? '✅ Found' : '❌ Not found');
                             if (loadingCard && typeof updateLoadingProgress === 'function') {
-                                console.log(`   Updating progress to ${job.progress}%`);
                                 updateLoadingProgress(loadingCard, job.progress);
                             } else if (!loadingCard) {
                                 console.error(`   ❌ Loading card not found for job ${data.jobId}`);
                                 // List all loading cards
                                 const allLoadingCards = document.querySelectorAll('[data-generation-loading="true"]');
-                                console.log(`   Found ${allLoadingCards.length} loading cards total:`);
                                 allLoadingCards.forEach((card, idx) => {
-                                    console.log(`     ${idx}: data-job-id="${card.getAttribute('data-job-id')}"`);
                                 });
                             }
                         },
                         (job) => {
                             // onComplete: Show result
-                            console.log('✅ Generation complete!', job);
                             
                             // ✨ CRITICAL: Reset isGenerating for this mode
-                            console.log(`🔓 Polling complete - Resetting isGenerating[${mode}] = false`);
                             isGenerating[mode] = false;
                             
                             // Don't call completeLoading here - let handleGenerationComplete do it
@@ -1782,40 +1670,33 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.error('❌ Generation failed:', error);
                             
                             // ✨ CRITICAL: Reset isGenerating for this mode
-                            console.log(`🔓 Polling error - Resetting isGenerating[${mode}] = false`);
                             isGenerating[mode] = false;
                             
                             // ✨ Show user-friendly error notification
                             const errorMsg = error.errorMessage || error.error || error.message || 'Generation failed';
-                            console.log(`📢 Showing error notification: ${errorMsg}`);
                             showNotification(errorMsg, 'error');
                             
                             // ✨ CRITICAL: Display failed job card FIRST, then remove loading card
                             // This prevents "blank screen" during the transition
-                            console.log('🔄 Displaying failed job card...');
                             const softRefreshSuccess = await softRefreshFailedJob(data.jobId, mode, errorMsg);
                             
                             // ✨ NOW remove loading card (after failed card is displayed)
                             const loadingCard = document.querySelector(`[data-job-id="${data.jobId}"]`);
                             if (loadingCard && typeof removeLoadingCard === 'function') {
-                                console.log('🗑️ Removing loading card (after failed card shown)');
                                 removeLoadingCard(loadingCard);
                             } else if (loadingCard) {
                                 // Manual removal if function not available
-                                console.log('🗑️ Manually removing loading card');
                                 loadingCard.remove();
                             }
                             
                             // Fallback to full refresh if soft refresh failed
                             if (!softRefreshSuccess) {
-                                console.log('⚠️ Soft refresh failed, falling back to full refresh...');
                                 if (typeof loadRecentGenerations === 'function') {
                                     loadRecentGenerations();
                                 } else {
                                     console.warn('⚠️ loadRecentGenerations not available, failed card may not show');
                                 }
                             } else {
-                                console.log('✅ ✅ ✅ Failed job card displayed successfully!');
                             }
                             
                             // Update button state
@@ -1860,7 +1741,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Show failed card (DON'T show empty state)
-                console.log('🔴 Displaying failed result card...');
                 
                 // Get current settings for failed metadata
                 const failedType = mode === 'image' 
@@ -1892,14 +1772,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // 📱 Sync failed result to mobile view
                 if (window.innerWidth < 1024 && typeof window.syncResultsToMobile === 'function') {
-                    console.log('📱 Syncing failed result to mobile view...');
                     setTimeout(() => {
                         window.syncResultsToMobile();
                     }, 100);
                 }
                 
                 // ✨ Soft refresh result container to show updated history
-                console.log('🔄 Soft refreshing result container after error...');
                 if (typeof loadRecentGenerations === 'function') {
                     setTimeout(() => {
                         loadRecentGenerations();
@@ -1909,16 +1787,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 showNotification(error.message || 'Failed to generate. Please try again.', 'error');
             } finally {
                 // ✨ CRITICAL: Reset loading state for THIS mode
-                console.log(`🔓 Resetting isGenerating[${mode}] = false`);
                 isGenerating[mode] = false;
-                
-                // ✨ DEBUG: Log state after reset
-                console.log('🔍 State after reset:', {
-                    mode: mode,
-                    'isGenerating.image': isGenerating.image,
-                    'isGenerating.video': isGenerating.video,
-                    'isGenerating.audio': isGenerating.audio
-                });
                 
                 // ✨ Update button state based on remaining active generations
                 const remainingActive = Object.values(isGenerating).filter(v => v === true).length;
@@ -1926,7 +1795,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (remainingActive === 0) {
                     // All done - reset to default
                     generateBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg><span>Run</span>';
-                    console.log('✅ All generations complete - button reset');
                 } else {
                     // Update counter badge
                     const counterBadge = remainingActive > 1 
@@ -1943,7 +1811,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <span>Generating...</span>
                     `;
-                    console.log(`⏳ ${remainingActive} generation(s) still running - updated counter badge`);
                 }
             }
         });
@@ -1978,7 +1845,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let actualCreditsCost = parseFloat(data.creditsUsed);
         
         // Log for debugging
-        console.log('💰 Credits from backend:', data.creditsUsed, 'Parsed:', actualCreditsCost);
         
         // If backend didn't send credits, this is an error - don't fallback
         if (isNaN(actualCreditsCost)) {
@@ -2029,7 +1895,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        console.log('📝 Final generationMetadata:', generationMetadata);
         
         // Display result
         displayResult(data, mode, generationMetadata);
@@ -2041,7 +1906,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 📱 Sync successful result to mobile view
         if (window.innerWidth < 1024 && typeof window.syncResultsToMobile === 'function') {
-            console.log('📱 Syncing successful result to mobile view...');
             setTimeout(() => {
                 window.syncResultsToMobile();
             }, 100);
@@ -2069,7 +1933,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // ✨ Soft refresh latest result card from server (updates existing new card)
     async function softRefreshLatestCard(mode) {
         try {
-            console.log(`🔄 Soft refreshing latest ${mode} card from server...`);
             
             // Fetch the latest generation from server (filter by mode if needed)
             const url = `/api/generate/history?limit=1${mode ? `&type=${mode}` : ''}`;
@@ -2077,12 +1940,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             
             if (!result.success || !result.data || result.data.length === 0) {
-                console.log('ℹ️ No data to refresh from server');
                 // Fallback: just remove data-new attribute
                 const newestCard = resultDisplay.querySelector('[data-new="true"]');
                 if (newestCard) {
                     newestCard.removeAttribute('data-new');
-                    console.log('✅ Removed data-new attribute from card');
                 }
                 return;
             }
@@ -2093,7 +1954,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const newestCard = resultDisplay.querySelector('[data-new="true"]');
             
             if (!newestCard) {
-                console.log('ℹ️ No new card found to refresh');
                 return;
             }
             
@@ -2134,12 +1994,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add originalPrompt to metadata if available in settings
             if (parsedSettings && parsedSettings.originalPrompt) {
                 completeMetadata.originalPrompt = parsedSettings.originalPrompt;
-                console.log('📝 softRefreshLatestCard - originalPrompt found in settings:', parsedSettings.originalPrompt.substring(0, 50) + '...');
             }
             
             // Update data-metadata with complete server data
             newestCard.setAttribute('data-metadata', JSON.stringify(completeMetadata));
-            console.log('📝 softRefreshLatestCard - Updated card metadata with server data');
             
             // Update card metadata if available
             if (latestGen.created_at) {
@@ -2173,11 +2031,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 newestCard.style.transform = '';
             }, 600);
             
-            console.log(`✅ ${mode || 'Card'} soft refreshed with ID: ${latestGen.id}`, {
-                serverUrl: serverUrl?.substring(0, 50) + '...',
-                cardUrl: cardUrl?.substring(0, 50) + '...'
-            });
-            
             // Update generations count
             if (typeof updateGenerationsCount === 'function') {
                 updateGenerationsCount();
@@ -2194,7 +2047,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const newestCard = resultDisplay.querySelector('[data-new="true"]');
             if (newestCard) {
                 newestCard.removeAttribute('data-new');
-                console.log('✅ Removed data-new attribute as fallback');
             }
         }
     }
@@ -2202,7 +2054,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // ✨ Soft refresh failed job (fetch and display as failed card)
     async function softRefreshFailedJob(jobId, mode, errorMessage) {
         try {
-            console.log(`🔄 Soft refreshing failed job ${jobId} from server...`);
             
             // ✨ CRITICAL: Fetch directly from job status endpoint with retry
             // This is more reliable than history endpoint during race conditions
@@ -2211,7 +2062,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             for (let attempt = 1; attempt <= maxRetries; attempt++) {
                 try {
-                    console.log(`   Attempt ${attempt}/${maxRetries}: Fetching job status...`);
                     
                     const statusResponse = await fetch(`/api/queue-generation/status/${jobId}`);
                     const statusData = await statusResponse.json();
@@ -2228,10 +2078,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             settings: statusData.job.settings || {},
                             created_at: statusData.job.createdAt
                         };
-                        console.log('✅ Job found via status endpoint');
                         break;
                     } else if (statusData.success && statusData.job) {
-                        console.log(`   Job status is: ${statusData.job.status}, waiting for 'failed'...`);
                     }
                 } catch (err) {
                     console.warn(`   Attempt ${attempt} failed:`, err.message);
@@ -2240,19 +2088,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Wait before retry (progressive backoff: 500ms, 1s, 1.5s)
                 if (attempt < maxRetries && !failedJob) {
                     const delay = attempt * 500;
-                    console.log(`   Waiting ${delay}ms before retry...`);
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
             }
             
             // Fallback to history endpoint if job not found via status
             if (!failedJob) {
-                console.log('⚠️ Job not found via status endpoint, trying history...');
                 const response = await fetch(`/api/generate/history?limit=10`);
                 const result = await response.json();
                 
                 if (!result.success || !result.data || result.data.length === 0) {
-                    console.log('ℹ️ No data to refresh from server, using fallback');
                     return false;
                 }
                 
@@ -2265,7 +2110,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (!failedJob) {
-                console.log('ℹ️ Failed job not found anywhere, showing generic error card');
                 // Create a generic failed card even if DB not updated yet
                 failedJob = {
                     id: `temp-${jobId}`,
@@ -2279,12 +2123,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
             }
             
-            console.log('📦 Found/Created failed job:', failedJob);
             
             // Check if already displayed to prevent duplicates
             const existingCard = resultDisplay.querySelector(`[data-generation-id="${failedJob.id}"]`);
             if (existingCard) {
-                console.log('ℹ️ Failed job already displayed, updating status...');
                 // Just update the status indicator
                 const statusBadge = existingCard.querySelector('[data-status]');
                 if (statusBadge) {
@@ -2326,7 +2168,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 resultDisplay.classList.remove('hidden');
                 resultDisplay.style.display = 'block';
                 resultDisplay.insertBefore(minimalCard, resultDisplay.firstChild);
-                console.log('✅ Minimal error card inserted as fallback');
                 return true;
             }
             
@@ -2340,7 +2181,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Prepend to top (newest first)
             resultDisplay.insertBefore(failedCard, resultDisplay.firstChild);
-            console.log('✅ Failed job card inserted');
             
             // Animate in
             setTimeout(() => {
@@ -2446,19 +2286,16 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             // ✅ FIX: Prevent concurrent soft refresh calls
             if (softRefreshInProgress) {
-                console.log('⏳ Soft refresh already in progress, skipping...');
                 return;
             }
             
             softRefreshInProgress = true;
-            console.log('🔄 Soft refreshing new result for mode:', mode);
             
             // Fetch the latest generations from server (limit=5 to catch multi-track Suno results)
             const response = await fetch('/api/generate/history?limit=5');
             const result = await response.json();
             
             if (!result.success || !result.data || result.data.length === 0) {
-                console.log('ℹ️ No data to display');
                 softRefreshInProgress = false;
                 return;
             }
@@ -2467,7 +2304,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // This ensures old placeholder cards are replaced with proper database-backed cards
             const placeholderCards = resultDisplay.querySelectorAll('[data-new="true"]');
             placeholderCards.forEach(card => {
-                console.log('🗑️ Removing placeholder card before refresh');
                 card.remove();
             });
             
@@ -2476,7 +2312,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Check by generation ID
                 const existingCardById = resultDisplay.querySelector(`[data-generation-id="${gen.id}"]`);
                 if (existingCardById) {
-                    console.log(`⏭️ Skipping generation ${gen.id} - already displayed by ID`);
                     return false;
                 }
                 
@@ -2487,19 +2322,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         // For audio cards, check audio source
                         const audioEl = card.querySelector('audio source');
                         if (audioEl && audioEl.src === gen.result_url) {
-                            console.log(`⏭️ Skipping generation ${gen.id} - already displayed by URL`);
                             return false;
                         }
                         // For video cards
                         const videoEl = card.querySelector('video source');
                         if (videoEl && videoEl.src === gen.result_url) {
-                            console.log(`⏭️ Skipping generation ${gen.id} - already displayed by URL`);
                             return false;
                         }
                         // For image cards
                         const imgEl = card.querySelector('img.result-image');
                         if (imgEl && imgEl.src === gen.result_url) {
-                            console.log(`⏭️ Skipping generation ${gen.id} - already displayed by URL`);
                             return false;
                         }
                     }
@@ -2509,12 +2341,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             if (newGenerations.length === 0) {
-                console.log('ℹ️ All generations already displayed');
                 softRefreshInProgress = false;
                 return;
             }
             
-            console.log(`📥 Found ${newGenerations.length} new generation(s) to display`);
             
             // Show result display
             if (resultDisplay) {
@@ -2624,7 +2454,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         audioDuration = latestGen.settings.duration;
                     }
                     
-                    console.log(`📀 Soft refresh: Creating audio card with ID ${latestGen.id}, track ${metadata.track_index || 1}/${metadata.total_tracks || 1}`);
                     newCard = createAudioCard({
                         url: latestGen.result_url,
                         duration: audioDuration,
@@ -2636,7 +2465,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (!verifyId) {
                         console.error('❌ WARNING: Soft refresh created audio card without generation ID!', latestGen);
                     } else {
-                        console.log(`✅ Soft refresh: Audio card has generation ID: ${verifyId}`);
                     }
                     
                     // Add animation
@@ -2652,7 +2480,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 50);
                 }
                 
-                console.log(`✅ New result displayed with soft refresh (${genIndex + 1}/${newGenerations.length})`);
                 }
             }); // End forEach
             
@@ -2674,7 +2501,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Display result function with scroll
     function displayResult(data, mode, generationMetadata = null) {
-        console.log('📊 displayResult called with mode:', mode, 'data:', data, 'metadata:', generationMetadata);
         
         if (!resultDisplay) {
             console.error('❌ resultDisplay not found!');
@@ -2713,11 +2539,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update counter and hide empty placeholder if needed
         updateGenerationsCount();
-        console.log('✅ Result display visible, current children:', resultDisplay.children.length);
         
         // Create new results (prepend to top - newest first)
         if (mode === 'image' && data.data.images) {
-            console.log(`🖼️ Creating ${data.data.images.length} image card(s)...`);
             data.data.images.forEach((image, index) => {
                 const imageCard = createImageCard(image, index, null, generationMetadata);
                 // Add fade-in animation
@@ -2727,7 +2551,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Prepend to top (newest first)
                 resultDisplay.insertBefore(imageCard, resultDisplay.firstChild);
-                console.log(`✅ Image card ${index + 1} inserted, total children:`, resultDisplay.children.length);
                 
                 // Animate in with completion pulse
                 setTimeout(() => {
@@ -2740,7 +2563,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 50 + (index * 100)); // Stagger animation
             });
         } else if (mode === 'video' && data.data.video) {
-            console.log('🎥 Creating video card...');
             const videoCard = createVideoCard(data.data.video, null, generationMetadata);
             // Add fade-in animation
             videoCard.style.opacity = '0';
@@ -2749,7 +2571,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Prepend to top (newest first)
             resultDisplay.insertBefore(videoCard, resultDisplay.firstChild);
-            console.log('✅ Video card inserted, total children:', resultDisplay.children.length);
             
             // Animate in with completion pulse
             setTimeout(() => {
@@ -2761,7 +2582,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 addCompletionPulse(videoCard);
             }, 50);
         } else if (mode === 'audio' && data.data.audio) {
-            console.log('🎵 Creating audio card...');
             const audioCard = createAudioCard(data.data.audio, null, generationMetadata);
             // Add fade-in animation
             audioCard.style.opacity = '0';
@@ -2770,7 +2590,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Prepend to top (newest first)
             resultDisplay.insertBefore(audioCard, resultDisplay.firstChild);
-            console.log('✅ Audio card inserted, total children:', resultDisplay.children.length);
             
             // Animate in with completion pulse
             setTimeout(() => {
@@ -2782,7 +2601,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 addCompletionPulse(audioCard);
             }, 50);
         } else if (mode === '3d' && (data.data.model || data.data['3d'])) {
-            console.log('🎨 Creating 3D model card...');
             const modelData = data.data.model || data.data['3d'];
             const modelCard = create3DCard(modelData, null, generationMetadata);
             // Add fade-in animation
@@ -2792,7 +2610,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Prepend to top (newest first)
             resultDisplay.insertBefore(modelCard, resultDisplay.firstChild);
-            console.log('✅ 3D model card inserted, total children:', resultDisplay.children.length);
             
             // Animate in with completion pulse
             setTimeout(() => {
@@ -2804,7 +2621,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 addCompletionPulse(modelCard);
             }, 50);
         } else if (mode === 'text' && (data.data.text || data.data.output)) {
-            console.log('📝 Creating text output card...');
             const textData = data.data.text || data.data.output || data.data;
             const textCard = createTextOutputCard(textData, null, generationMetadata);
             // Add fade-in animation
@@ -2814,7 +2630,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Prepend to top (newest first)
             resultDisplay.insertBefore(textCard, resultDisplay.firstChild);
-            console.log('✅ Text output card inserted, total children:', resultDisplay.children.length);
             
             // Animate in with completion pulse
             setTimeout(() => {
@@ -2827,7 +2642,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 50);
         }
         
-        console.log('🎉 displayResult complete! Total cards:', resultDisplay.children.length);
     }
     
     // ✨ Add completion pulse effect to newly created card
@@ -2953,7 +2767,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 // Remove from DOM
                 cardElement.remove();
-                console.log('✅ Generation deleted from database and DOM');
                 showNotification('Deleted successfully', 'success');
                 
                 // Update counter
@@ -3006,12 +2819,6 @@ document.addEventListener('DOMContentLoaded', function() {
             card.setAttribute('data-generation-id', generationId);
         }
         if (metadata) {
-            console.log('📝 createImageCard - metadata being stored:', {
-                hasOriginalPrompt: !!metadata.originalPrompt,
-                hasSettingsOriginalPrompt: !!metadata.settings?.originalPrompt,
-                originalPrompt: metadata.originalPrompt || metadata.settings?.originalPrompt,
-                prompt: metadata.prompt?.substring(0, 50)
-            });
             card.setAttribute('data-metadata', JSON.stringify(metadata));
         }
         
@@ -3325,14 +3132,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Display failed result
     function displayFailedResult(errorMessage, mode, failedMetadata = null) {
-        console.log('📌 displayFailedResult called with:', errorMessage, mode, 'metadata:', failedMetadata);
         
         if (!resultDisplay) {
             console.error('❌ resultDisplay element not found!');
             return;
         }
         
-        console.log('🔴 Showing failed card in result container...');
         
         // Explicitly show result display
         resultDisplay.classList.remove('hidden');
@@ -3340,11 +3145,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update counter
         updateGenerationsCount();
-        console.log('✅ Result display shown, current children:', resultDisplay.children.length);
         
         // Create failed card with metadata
         const failedCard = createFailedCard(errorMessage, mode, null, failedMetadata);
-        console.log('✅ Failed card created with metadata:', failedMetadata ? 'Yes' : 'No');
         
         // Set initial state for animation (same as success cards)
         failedCard.style.opacity = '0';
@@ -3353,14 +3156,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Prepend to top (newest first)
         resultDisplay.insertBefore(failedCard, resultDisplay.firstChild);
-        console.log('✅ Failed card inserted into DOM, total children:', resultDisplay.children.length);
         
         // Animate in (same timing as success cards)
         setTimeout(() => {
             failedCard.style.transition = 'all 0.4s ease-out';
             failedCard.style.opacity = '1';
             failedCard.style.transform = 'translateY(0)';
-            console.log('✅ Failed card animation started');
         }, 10);
         
         // Scroll to top to see new failed result
@@ -3371,7 +3172,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        console.log('🎉 Failed card displayed successfully! Total cards:', resultDisplay.children.length);
     }
     
     // Create video card
@@ -4256,7 +4056,6 @@ document.addEventListener('DOMContentLoaded', function() {
             mainCredits.textContent = formattedCredits;
         }
         
-        console.log('💰 Updated header credits display:', formattedCredits);
     }
     
     // ✨ Translate error messages to user-friendly Bahasa Indonesia
@@ -4364,7 +4163,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const credits = parseFloat(data.credits);
                 updateCreditsDisplay(credits);
                 
-                console.log('💰 User credits loaded:', credits.toFixed(1));
                 
                 // Warn if low credits
                 if (credits < 5) {
@@ -4724,12 +4522,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load recent generations on page load
     async function loadRecentGenerations() {
         try {
-            console.log('📥 Loading recent generations...');
             const response = await fetch('/api/generate/history?limit=10');
             const data = await response.json();
             
             if (data.success && data.data.length > 0) {
-                console.log(`✅ Found ${data.data.length} recent generation(s)`);
                 
                 // Show result display
                 if (resultDisplay) {
@@ -4740,11 +4536,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update counter
                 updateGenerationsCount();
                 
-                // ✅ FIX: Clear result display first to prevent duplicates on reload
-                // This is safe because we're loading fresh data from server
+                // ✅ FIX: Clear result display EXCEPT loading cards (preserve active generations)
                 if (resultDisplay) {
-                    console.log('🧹 Clearing existing cards before loading recent generations');
+                    // Preserve loading cards during refresh
+                    const loadingCards = resultDisplay.querySelectorAll('[data-generation-loading="true"]');
                     resultDisplay.innerHTML = '';
+                    
+                    // Re-insert loading cards at the top
+                    loadingCards.forEach(card => {
+                        resultDisplay.insertBefore(card, resultDisplay.firstChild);
+                    });
+                    
+                    console.log('🔄 [REFRESH] Preserved', loadingCards.length, 'loading cards');
                 }
                 
                 // Render each generation
@@ -4803,7 +4606,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                             
                             // ✅ CRITICAL: Always pass generation ID for audio cards
-                            console.log(`📀 Creating audio card with ID: ${gen.id}, track: ${metadata.track_index || 1}/${metadata.total_tracks || 1}`);
                             const audioCard = createAudioCard({
                                 url: gen.result_url,
                                 duration: audioDuration,
@@ -4815,7 +4617,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (!verifyId) {
                                 console.error('❌ WARNING: Audio card created without generation ID!', gen);
                             } else {
-                                console.log(`✅ Audio card created with generation ID: ${verifyId}`);
                             }
                             
                             resultDisplay.appendChild(audioCard);
@@ -4832,9 +4633,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
                 
-                console.log('✅ Loaded recent generations into result container');
             } else {
-                console.log('ℹ️ No recent generations found');
             }
         } catch (error) {
             console.error('❌ Error loading recent generations:', error);
@@ -4844,13 +4643,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize - Load models first (removed buggy initializeDefaultDuration and duplicate duration listener)
     // Default 5s sudah di-set di HTML dengan class "active"
     loadAvailableModels().then(() => {
-        console.log('✅ Models loaded for pricing calculation');
         
         // ✨ Re-verify mode after models loaded
         setTimeout(() => {
             const finalMode = getCurrentMode();
             if (finalMode !== currentMode) {
-                console.log('🔄 Mode re-verified after models load:', currentMode, '→', finalMode);
                 currentMode = finalMode;
             }
             
@@ -4879,25 +4676,21 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     async function resumeActiveGenerations() {
         try {
-            console.log('🔄 Checking for active generations to resume...');
             
             // Get active jobs from server
             const response = await fetch('/api/queue-generation/active');
             const data = await response.json();
             
             if (!data.success) {
-                console.log('ℹ️ No active generations to resume');
                 return;
             }
             
             const activeJobs = data.jobs || [];
             
             if (activeJobs.length === 0) {
-                console.log('ℹ️ No active generations found');
                 return;
             }
             
-            console.log(`📋 Found ${activeJobs.length} active generation(s), resuming...`);
             
             // Get result container
             const resultDisplay = document.getElementById('result-display');
@@ -4908,7 +4701,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // For each active job, create loading card and start polling
             activeJobs.forEach(job => {
-                console.log(`🔄 Resuming job: ${job.jobId} (${job.type}/${job.subType})`);
                 
                 // Create loading card
                 const loadingCard = createLoadingCard(job.type);
@@ -4924,14 +4716,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         job.jobId,
                         (updatedJob) => {
                             // onUpdate: Update progress
-                            console.log(`📊 Job ${job.jobId} progress: ${updatedJob.progress}%`);
                             if (typeof updateLoadingProgress === 'function') {
                                 updateLoadingProgress(loadingCard, updatedJob.progress);
                             }
                         },
                         (completedJob) => {
                             // onComplete: Show result
-                            console.log(`✅ Job ${job.jobId} completed!`);
                             
                             // Complete loading animation
                             if (typeof completeLoading === 'function') {
@@ -4962,7 +4752,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             loadingCard.remove();
                             
                             // ✨ CRITICAL: Soft refresh result container IMMEDIATELY to show failed job
-                            console.log('🔄 Soft refreshing result container to show failed job...');
                             
                             // Use soft refresh for efficiency (only fetches latest 5)
                             setTimeout(() => {
@@ -4971,7 +4760,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             // ✨ Show user-friendly error notification
                             const errorMsg = error.errorMessage || error.error || error.message || 'Generation failed';
-                            console.log(`📢 Showing error notification: ${errorMsg}`);
                             if (typeof showNotification === 'function') {
                                 showNotification(errorMsg, 'error');
                             }
@@ -4982,13 +4770,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.generationPoller.startPolling(
                         job.jobId,
                         (updatedJob) => {
-                            console.log(`📊 Job ${job.jobId} progress: ${updatedJob.progress}%`);
                             if (typeof updateLoadingProgress === 'function') {
                                 updateLoadingProgress(loadingCard, updatedJob.progress);
                             }
                         },
                         (completedJob) => {
-                            console.log(`✅ Job ${job.jobId} completed!`);
                             if (typeof completeLoading === 'function') {
                                 completeLoading(loadingCard);
                             }
@@ -5032,7 +4818,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // ✨ Cleanup SSE connection
         if (window.queueClient) {
-            console.log('🧹 Cleaning up SSE connection on page unload');
             window.queueClient.disconnectSSE();
         }
     });
@@ -5078,15 +4863,12 @@ async function handleDeleteCard(buttonElement) {
         if (isPlaceholder) {
             // It's a placeholder card, safe to just remove from DOM
             card.remove();
-            console.log('🗑️ Removed placeholder card from DOM (not in database yet)');
             if (typeof showNotification === 'function') {
                 showNotification('🗑️ Berhasil dihapus dari galeri', 'success');
             }
         } else {
             // ⚠️ This card should have a generation ID but doesn't - something is wrong
             console.error('❌ Cannot delete: Card is not a placeholder but has no generation ID');
-            console.log('Card element:', card);
-            console.log('Card attributes:', Array.from(card.attributes).map(a => `${a.name}="${a.value}"`));
             
             if (typeof showNotification === 'function') {
                 showNotification('⚠️ Error: Card rusak. Memuat ulang halaman untuk memperbaiki...', 'warning');
@@ -5116,7 +4898,6 @@ async function handleDeleteCard(buttonElement) {
             
             setTimeout(() => {
                 card.remove();
-                console.log('✅ Generation deleted from database and DOM');
             }, 300);
             
             // Show success notification (from dashboard-generation.js)

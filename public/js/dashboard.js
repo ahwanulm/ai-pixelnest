@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Get section
             const section = this.getAttribute('data-section');
-            console.log('Navigate to:', section);
             
             // Here you can add logic to show/hide different sections
         });
@@ -63,7 +62,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // CUSTOM DROPDOWN HANDLERS
     // ===================================
     
-    console.log('🎯 Initializing custom dropdown handlers...');
     
     // Image Type Custom Dropdown
     const imageTypeBtn = document.getElementById('image-type-btn');
@@ -71,22 +69,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const imageTypeSelect = document.getElementById('image-type');
     const imageTypeOptions = document.querySelectorAll('.image-type-option');
     
-    console.log('🔍 Image Type Elements:', {
-        imageTypeBtn: !!imageTypeBtn,
-        imageTypeDropdown: !!imageTypeDropdown,
-        imageTypeSelect: !!imageTypeSelect,
-        imageTypeOptions: imageTypeOptions.length
-    });
-    
     if (imageTypeBtn && imageTypeDropdown) {
-        console.log('✅ Image type dropdown elements found, attaching listeners...');
         
         // Toggle dropdown
         imageTypeBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             const isHidden = imageTypeDropdown.classList.contains('hidden');
             imageTypeDropdown.classList.toggle('hidden');
-            console.log('🔽 Image type dropdown toggled:', isHidden ? 'opened' : 'closed');
         });
         
         // Close dropdown when clicking outside
@@ -96,14 +85,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        console.log('✅ Image type dropdown click listener attached');
     } else {
         console.error('❌ Image type dropdown elements not found!');
     }
     
     // Handle option selection
     if (imageTypeOptions.length > 0) {
-        console.log(`✅ Attaching click handlers to ${imageTypeOptions.length} image type options...`);
         
         imageTypeOptions.forEach((option, index) => {
             option.addEventListener('click', function(e) {
@@ -111,7 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const type = this.getAttribute('data-type');
                 const desc = this.getAttribute('data-desc');
                 
-                console.log(`✅ Image type option ${index + 1} clicked:`, type);
                 
                 // Update hidden select
                 if (imageTypeSelect) {
@@ -151,11 +137,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Save to localStorage
                 localStorage.setItem('dashboard_image_type', type);
-                console.log('💾 Image type saved to localStorage:', type);
             });
         });
         
-        console.log('✅ All image type option handlers attached');
     } else {
         console.error('❌ No image type options found!');
     }
@@ -166,24 +150,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Restore state from localStorage
     function restoreState() {
-        console.log('🔧 restoreState() called');
         
         // Restore mode (Image/Video tab)
         const savedMode = localStorage.getItem('dashboard_mode');
-        console.log('📦 Saved mode:', savedMode);
         
         if (savedMode) {
             currentMode = savedMode;
             
             // Set active tab
             const tabs = document.querySelectorAll('.creation-tab');
-            console.log('🏷️ Found tabs:', tabs.length);
             
             tabs.forEach(tab => {
                 const tabMode = tab.getAttribute('data-mode');
                 if (tabMode === savedMode) {
                     tab.classList.add('active');
-                    console.log('✅ Activated tab:', tabMode);
                 } else {
                     tab.classList.remove('active');
                 }
@@ -191,11 +171,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Show correct mode content
             const modes = document.querySelectorAll('.creation-mode');
-            console.log('📄 Found modes:', modes.length);
             
             modes.forEach(mode => mode.classList.add('hidden'));
             const activeMode = document.getElementById(`${savedMode}-mode`);
-            console.log('🎯 Active mode element:', activeMode);
             
             if (activeMode) {
                 activeMode.classList.remove('hidden');
@@ -207,28 +185,23 @@ document.addEventListener('DOMContentLoaded', function() {
             if (activeTab) {
                 currentMode = activeTab.getAttribute('data-mode') || 'image';
                 localStorage.setItem('dashboard_mode', currentMode);
-                console.log('💾 Saved initial mode to localStorage:', currentMode);
             }
         }
         
         // Restore quantity
         const savedQuantity = localStorage.getItem('dashboard_quantity');
-        console.log('📦 Saved quantity:', savedQuantity);
         
         if (savedQuantity) {
             const quantitySelect = document.getElementById('quantity-select');
-            console.log('🔢 Quantity select element:', quantitySelect);
             
             if (quantitySelect) {
                 quantitySelect.value = savedQuantity;
                 currentQuantity = parseInt(savedQuantity);
-                console.log('✅ Quantity restored:', savedQuantity);
             }
         }
         
         // Restore image type
         const savedImageType = localStorage.getItem('dashboard_image_type');
-        console.log('📦 Saved image type:', savedImageType);
         
         if (savedImageType) {
             const imageTypeSelect = document.getElementById('image-type');
@@ -236,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const selectedTypeEl = document.getElementById('selected-image-type');
             const selectedDescEl = document.getElementById('selected-image-type-desc');
             
-            console.log('🖼️ Image type elements:', {imageTypeSelect, imageTypeBtn});
             
             if (imageTypeSelect && imageTypeBtn && selectedTypeEl) {
                 // Update hidden select
@@ -244,7 +216,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Find the option data
                 const imageTypeOption = document.querySelector(`.image-type-option[data-type="${savedImageType}"]`);
-                console.log('🎯 Image type option element:', imageTypeOption);
                 
                 if (imageTypeOption) {
                     // Directly update visual without click animation
@@ -282,9 +253,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (actualMode === 'image') {
                         // Trigger change event for model loading
                         imageTypeSelect.dispatchEvent(new Event('change'));
-                        console.log('✅ Image type restored (direct):', savedImageType);
                     } else {
-                        console.log('⏭️ Skipping image type change event - not on image tab');
                     }
                 } else {
                     // Fallback: just dispatch change (only if on image tab)
@@ -293,7 +262,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (actualMode === 'image') {
                         imageTypeSelect.dispatchEvent(new Event('change'));
-                        console.log('⚠️ Image type restored via change event:', savedImageType);
                     }
                 }
             }
@@ -301,7 +269,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Restore video type
         const savedVideoType = localStorage.getItem('dashboard_video_type');
-        console.log('📦 Saved video type:', savedVideoType);
         
         if (savedVideoType) {
             const videoTypeSelect = document.getElementById('video-type');
@@ -309,7 +276,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const selectedTypeEl = document.getElementById('selected-video-type');
             const selectedDescEl = document.getElementById('selected-video-type-desc');
             
-            console.log('🎬 Video type elements:', {videoTypeSelect, videoTypeBtn});
             
             if (videoTypeSelect && videoTypeBtn && selectedTypeEl) {
                 // Update hidden select
@@ -317,7 +283,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Find the option data
                 const videoTypeOption = document.querySelector(`.video-type-option[data-type="${savedVideoType}"]`);
-                console.log('🎯 Video type option element:', videoTypeOption);
                 
                 if (videoTypeOption) {
                     // Directly update visual without click animation
@@ -355,9 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (actualMode === 'video') {
                         // Trigger change event for model loading
                         videoTypeSelect.dispatchEvent(new Event('change'));
-                        console.log('✅ Video type restored (direct):', savedVideoType);
                     } else {
-                        console.log('⏭️ Skipping video type change event - not on video tab');
                     }
                 } else {
                     // Fallback: just dispatch change (only if on video tab)
@@ -366,7 +329,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (actualMode === 'video') {
                         videoTypeSelect.dispatchEvent(new Event('change'));
-                        console.log('⚠️ Video type restored via change event:', savedVideoType);
                     }
                 }
             }
@@ -374,7 +336,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Restore aspect ratio for image mode
         const savedImageAspectRatio = localStorage.getItem('dashboard_image_aspect_ratio');
-        console.log('📦 Saved image aspect ratio:', savedImageAspectRatio);
         
         if (savedImageAspectRatio) {
             const imageAspectBtns = document.querySelector('#image-mode')?.querySelectorAll('.aspect-btn');
@@ -386,13 +347,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         btn.classList.remove('active');
                     }
                 });
-                console.log('✅ Image aspect ratio restored:', savedImageAspectRatio);
             }
         }
         
         // Restore aspect ratio for video mode
         const savedVideoAspectRatio = localStorage.getItem('dashboard_video_aspect_ratio');
-        console.log('📦 Saved video aspect ratio:', savedVideoAspectRatio);
         
         if (savedVideoAspectRatio) {
             const videoAspectBtns = document.querySelector('#video-mode')?.querySelectorAll('.aspect-btn');
@@ -404,18 +363,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         btn.classList.remove('active');
                     }
                 });
-                console.log('✅ Video aspect ratio restored:', savedVideoAspectRatio);
             }
         }
         
-        console.log('✅ Dashboard state restore complete');
     }
     
     // Save state to localStorage
     function saveState() {
         localStorage.setItem('dashboard_mode', currentMode);
         localStorage.setItem('dashboard_quantity', currentQuantity);
-        console.log('💾 Dashboard state saved to localStorage');
     }
 
     // ✅ REMOVED: calculateCreditCost() is now handled by dashboard-generation.js
@@ -426,18 +382,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const creationTabs = document.querySelectorAll('.creation-tab');
     const creationModes = document.querySelectorAll('.creation-mode');
 
-    console.log('Found tabs:', creationTabs.length);
-    console.log('Found modes:', creationModes.length);
 
     creationTabs.forEach((tab, index) => {
-        console.log(`Tab ${index}:`, tab.getAttribute('data-mode'));
         
         tab.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             
             const mode = this.getAttribute('data-mode');
-            console.log('Tab clicked:', mode);
             
             currentMode = mode;
             saveState(); // ✅ Save to localStorage
@@ -456,7 +408,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Show selected mode
             const selectedMode = document.getElementById(`${mode}-mode`);
-            console.log('Selected mode element:', selectedMode);
             
             if (selectedMode) {
                 selectedMode.classList.remove('hidden');
@@ -468,13 +419,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (mode === 'image') {
                     const imageTypeSelect = document.getElementById('image-type');
                     if (imageTypeSelect && imageTypeSelect.value) {
-                        console.log('🔄 Triggering image model reload for type:', imageTypeSelect.value);
                         imageTypeSelect.dispatchEvent(new Event('change'));
                     }
                 } else if (mode === 'video') {
                     const videoTypeSelect = document.getElementById('video-type');
                     if (videoTypeSelect && videoTypeSelect.value) {
-                        console.log('🔄 Triggering video model reload for type:', videoTypeSelect.value);
                         videoTypeSelect.dispatchEvent(new Event('change'));
                     }
                 }
@@ -482,13 +431,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 // ✅ Force cost recalculation after tab switch
                 if (window.calculateCreditCost) {
                     setTimeout(() => {
-                        console.log('💰 Recalculating cost after tab switch...');
                         window.calculateCreditCost();
                     }, 150); // Wait for model selection to complete
                 }
             }, 100); // Small delay to ensure UI is updated
             
-            console.log('Switched to mode:', mode);
         });
     });
 
@@ -569,7 +516,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const aspectRatio = this.getAttribute('data-ratio');
             const storageKey = currentMode === 'image' ? 'dashboard_image_aspect_ratio' : 'dashboard_video_aspect_ratio';
             localStorage.setItem(storageKey, aspectRatio);
-            console.log(`💾 Saved ${currentMode} aspect ratio:`, aspectRatio);
         });
     });
 
@@ -587,7 +533,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // ✅ Pricing is handled by dashboard-generation.js
             
-            console.log('Quantity changed to:', currentQuantity);
         });
     }
 
@@ -635,7 +580,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         visibleText.classList.add('text-green-400', 'font-semibold');
                     }
                     
-                    console.log(`✅ ${this.files.length} files selected for edit-multi`);
                 } else {
                     // ✅ Single file mode - show filename with truncate (responsive)
                     const fileName = this.files[0].name;
@@ -709,7 +653,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Restore state from localStorage on page load
     // ✅ IMPORTANT: Wait for DOM elements to be ready before restoring
     function tryRestoreState() {
-        console.log('🔄 Attempting to restore dashboard state...');
         
         // ✅ Check if critical elements exist
         const tabs = document.querySelectorAll('.creation-tab');
@@ -721,19 +664,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         restoreState();
-        console.log('📊 Current state:', {
-            mode: currentMode,
-            quantity: currentQuantity,
-            imageType: localStorage.getItem('dashboard_image_type'),
-            videoType: localStorage.getItem('dashboard_video_type'),
-            imageAspectRatio: localStorage.getItem('dashboard_image_aspect_ratio'),
-            videoAspectRatio: localStorage.getItem('dashboard_video_aspect_ratio')
-        });
         
         // ✅ Signal that state restoration is complete
         window.dashboardStateRestored = true;
         window.dispatchEvent(new Event('dashboard-restored'));
-        console.log('✅ Dashboard state restoration complete!');
         return true; // Signal: success
     }
     
@@ -747,7 +681,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!success && retryCount < maxRetries) {
             retryCount++;
             const delay = Math.min(50 * retryCount, 200); // 50ms, 100ms, 150ms, 200ms max
-            console.log(`⏳ Retrying restoration in ${delay}ms (attempt ${retryCount}/${maxRetries})`);
             setTimeout(attemptRestore, delay);
         } else if (!success) {
             console.error('❌ Max retries reached! State restoration failed.');

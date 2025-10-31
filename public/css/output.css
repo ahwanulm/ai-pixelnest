@@ -3368,6 +3368,11 @@ h1, h2, h3, h4, h5, h6 {
   border-top-color: rgb(234 179 8 / var(--tw-border-opacity, 1));
 }
 
+.border-t-blue-500 {
+  --tw-border-opacity: 1;
+  border-top-color: rgb(59 130 246 / var(--tw-border-opacity, 1));
+}
+
 .bg-amber-500\/10 {
   background-color: rgb(245 158 11 / 0.1);
 }

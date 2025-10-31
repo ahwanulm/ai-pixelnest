@@ -258,7 +258,6 @@ async function handleUnshare() {
 
 // Update share button appearance
 function updateShareButton(generationId, isShared) {
-    console.log('🔄 Updating share button for generation:', generationId, 'isShared:', isShared);
     
     const card = document.querySelector(`[data-generation-id="${generationId}"]`);
     if (!card) {
@@ -276,7 +275,6 @@ function updateShareButton(generationId, isShared) {
     
     if (isShared) {
         // Change to unshare button (red X)
-        console.log('🔴 Setting button to UNSHARE mode (red X)');
         shareBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
         shareBtn.classList.add('bg-red-600/80', 'hover:bg-red-700');
         shareBtn.innerHTML = '<i class="fas fa-times"></i>';
@@ -291,11 +289,9 @@ function updateShareButton(generationId, isShared) {
         // Show shared badge
         if (sharedBadge) {
             sharedBadge.classList.remove('hidden');
-            console.log('✅ Shared badge shown');
         }
     } else {
         // Reset to share button
-        console.log('🟢 Setting button to SHARE mode (green)');
         shareBtn.classList.remove('bg-red-600/80', 'hover:bg-red-700');
         shareBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
         shareBtn.innerHTML = '<i class="fas fa-share-alt"></i>';
@@ -308,16 +304,13 @@ function updateShareButton(generationId, isShared) {
         // Hide shared badge
         if (sharedBadge) {
             sharedBadge.classList.add('hidden');
-            console.log('✅ Shared badge hidden');
         }
     }
     
-    console.log('✅ Button updated successfully');
 }
 
 // Handle unshare from card
 async function handleUnshareFromCard(generationId) {
-    console.log('🗑️ Unsharing generation:', generationId);
     
     try {
         const response = await fetch('/api/public-gallery/unshare', {
@@ -331,10 +324,8 @@ async function handleUnshareFromCard(generationId) {
         });
         
         const data = await response.json();
-        console.log('📥 Unshare response:', data);
         
         if (data.success) {
-            console.log('✅ Unshare successful, showing notification and updating button');
             showNotification('✅ Berhasil dibatalkan dari Galeri Publik', 'success');
             updateShareButton(generationId, false);
         } else {
@@ -391,7 +382,6 @@ async function checkGenerationSharedStatus(generationId) {
         }
     } catch (error) {
         // Silently fail - not critical
-        console.log('Could not check shared status for generation', generationId);
     }
 }
 

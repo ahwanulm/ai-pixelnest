@@ -13,7 +13,6 @@ let appliedPromo = null;
  * Initialize payment modal
  */
 function initPaymentModal() {
-    console.log('💳 Payment Modal initialized');
     loadCreditPrice();
 }
 
@@ -27,7 +26,6 @@ async function loadCreditPrice() {
         
         if (data.success) {
             creditPriceIDR = parseInt(data.price);  // ✅ Fixed: use 'price' instead of 'credit_price_idr'
-            console.log('💰 Credit price loaded:', creditPriceIDR);
             
             // Update quick select button prices
             updateQuickSelectPrices();
@@ -69,12 +67,10 @@ function formatPrice(price) {
  * Open top-up modal
  */
 async function openTopUpModal() {
-    console.log('🔍 Checking pending transactions...');
     
     // Check pending transactions first
     try {
         const response = await fetch('/api/payment/check-pending');
-        console.log('📡 Response status:', response.status);
         
         if (!response.ok) {
             console.error('❌ API error:', response.status, response.statusText);
@@ -82,17 +78,14 @@ async function openTopUpModal() {
         }
         
         const data = await response.json();
-        console.log('📊 Pending data:', data);
         
         if (!data.can_create_new) {
-            console.log('⛔ User blocked - showing warning');
             showPendingWarning(data);
             return;
         }
         
         // Show info if there are pending transactions (but less than 3)
         if (data.pending_count > 0) {
-            console.log('ℹ️ User has pending, showing info:', data.pending_count);
             showPendingInfo(data);
         }
     } catch (error) {
@@ -100,7 +93,6 @@ async function openTopUpModal() {
         // Continue to open modal even if check fails
     }
     
-    console.log('✅ Opening top-up modal');
     document.getElementById('topUpModal').classList.remove('hidden');
     document.getElementById('topUpModal').classList.add('flex');
     loadCreditPrice();
@@ -391,8 +383,6 @@ async function applyPromoCode() {
     const button = document.getElementById('applyPromoBtn');
     const code = input.value.trim().toUpperCase();
 
-    console.log('🎫 Applying promo code:', code);
-    console.log('💰 Selected credits:', selectedCreditsAmount);
 
     // Check if credits selected
     if (!selectedCreditsAmount || selectedCreditsAmount < 1) {
@@ -411,7 +401,6 @@ async function applyPromoCode() {
 
     try {
         const amount = selectedCreditsAmount * creditPriceIDR;
-        console.log('📤 Validating promo:', { code, amount, credits: selectedCreditsAmount });
 
         const response = await fetch('/api/payment/validate-promo', {
             method: 'POST',
@@ -420,7 +409,6 @@ async function applyPromoCode() {
         });
 
         const data = await response.json();
-        console.log('📥 Promo validation response:', data);
 
         if (data.success) {
             appliedPromo = data.promo;

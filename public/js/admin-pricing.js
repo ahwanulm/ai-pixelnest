@@ -231,7 +231,6 @@ function displayPrices(prices) {
   updatePricingSummary(prices);
   
   // Show summary
-  console.log(`📊 Pricing loaded: ${imageModels.length} image models, ${videoModels.length} video models`);
 }
 
 // Calculate test price
@@ -341,7 +340,6 @@ function calculateCreditsTyped(falPrice, modelType) {
 // Recalculate all model prices with new margin
 function recalculateAllPrices() {
   if (originalPrices.length === 0) {
-    console.log('⏳ Waiting for prices to load...');
     return;
   }
   
@@ -381,7 +379,6 @@ function recalculateAllPrices() {
   // Log update
   const imageMargin = parseFloat(document.getElementById('image_profit_margin')?.value) || 20;
   const videoMargin = parseFloat(document.getElementById('video_profit_margin')?.value) || 25;
-  console.log(`✅ Recalculated ${recalculatedPrices.length} models (Image: ${imageMargin.toFixed(1)}%, Video: ${videoMargin.toFixed(1)}%)`);
 }
 
 // Update pricing summary statistics
@@ -406,7 +403,6 @@ function updatePricingSummary(prices) {
   document.getElementById('video-count').textContent = videoModels.length;
   document.getElementById('avg-profit').textContent = `+${avgTotalProfit.toFixed(1)}%`;
   
-  console.log(`📊 Realtime Update: ${imageModels.length} image (avg +${avgImageProfit.toFixed(1)}%), ${videoModels.length} video (avg +${avgVideoProfit.toFixed(1)}%)`);
 }
 
 // Reset to defaults
@@ -458,7 +454,6 @@ function showToast(message, type = 'info') {
  * @param {boolean} dryRun - If true, preview changes without saving
  */
 async function syncFalPricing(dryRun = false) {
-  console.log(`🔄 syncFalPricing called with dryRun=${dryRun}`);
   
   const button = event.target.closest('button');
   if (!button) {
@@ -472,7 +467,6 @@ async function syncFalPricing(dryRun = false) {
   button.disabled = true;
   button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Syncing...';
   
-  console.log('📡 Sending sync request to /admin/api/pricing/sync...');
   
   try {
     const response = await fetch('/admin/api/pricing/sync', {
@@ -486,7 +480,6 @@ async function syncFalPricing(dryRun = false) {
       })
     });
     
-    console.log(`📥 Response status: ${response.status} ${response.statusText}`);
     
     if (!response.ok) {
       const errorText = await response.text();
@@ -495,12 +488,10 @@ async function syncFalPricing(dryRun = false) {
     }
     
     const data = await response.json();
-    console.log('📊 Sync response:', data);
     
     if (data.success) {
       const results = data.results;
       
-      console.log(`✅ Sync successful: ${results.updated} updated, ${results.unchanged} unchanged, ${results.errors} errors`);
       
       // Show results
       displaySyncResults(results, dryRun);
@@ -515,7 +506,6 @@ async function syncFalPricing(dryRun = false) {
       
       // If not dry run, reload prices
       if (!dryRun) {
-        console.log('🔄 Reloading page in 2 seconds...');
         setTimeout(() => {
           location.reload();
         }, 2000);
@@ -544,7 +534,6 @@ async function syncFalPricing(dryRun = false) {
   } finally {
     button.disabled = false;
     button.innerHTML = originalHtml;
-    console.log('🔄 Sync button re-enabled');
   }
 }
 
