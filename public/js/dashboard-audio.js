@@ -423,6 +423,7 @@
     
     // Restore state from localStorage (like Image/Video)
     function restoreState() {
+        console.log('🎵 Starting audio state restoration...');
         
         // Small delay to ensure DOM is fully ready
         setTimeout(() => {
@@ -430,6 +431,7 @@
             const savedType = localStorage.getItem('dashboard_audio_type');
             
             if (savedType) {
+                console.log(`🎵 Restoring audio type: ${savedType}`);
                 const typeOption = document.querySelector(`.audio-type-option[data-type="${savedType}"]`);
                 
                 if (typeOption) {
@@ -437,31 +439,44 @@
                     const typeText = typeOption.querySelector('.text-white, .text-sm')?.textContent || savedType;
                     
                     selectAudioType(savedType, desc, typeOption);
+                    console.log('✅ Audio type restored successfully');
                 } else {
                     console.warn('⚠️ Audio type option not found for:', savedType);
                 }
             } else {
+                console.log('ℹ️ No saved audio type found, using defaults');
             }
             
             // Restore prompt/text
             const savedPrompt = localStorage.getItem('dashboard_audio_prompt');
             if (savedPrompt && audioPrompt) {
+                console.log(`🎵 Restoring audio prompt: ${savedPrompt.substring(0, 50)}...`);
                 audioPrompt.value = savedPrompt;
+                
+                // Trigger character counter update
+                audioPrompt.dispatchEvent(new Event('input'));
             }
             
             // Restore duration
             const savedDuration = localStorage.getItem('dashboard_audio_duration');
             if (savedDuration && audioDuration) {
+                console.log(`🎵 Restoring audio duration: ${savedDuration}s`);
                 audioDuration.value = savedDuration;
                 if (audioDurationDisplay) {
                     audioDurationDisplay.textContent = `${savedDuration} seconds`;
                 }
+                
+                // Trigger duration update
+                audioDuration.dispatchEvent(new Event('input'));
             }
             
             // Note: Selected model will be restored in displayModels() after models load
             const savedModelId = localStorage.getItem('selected_audio_model_id');
             if (savedModelId) {
+                console.log(`🎵 Model to restore: ${savedModelId}`);
             }
+            
+            console.log('✅ Audio state restoration completed');
         }, 100); // Small delay to ensure DOM ready
     }
     
@@ -518,7 +533,10 @@
             
             // Update cost for TTS (per-character pricing)
             if (selectedAudioType === 'text-to-speech') {
-                updateAudioCost();
+                // Use the main updateAudioCost function
+                if (window.audioHandler && window.audioHandler.updateCost) {
+                    window.audioHandler.updateCost();
+                }
             }
         });
         
@@ -672,26 +690,19 @@
         return baseCost;
     }
     
-    // Update cost display in generate button
-    function updateAudioCost() {
-        const cost = calculateAudioCost();
-        
-        // Update button if exists
-        const generateBtn = document.getElementById('generateBtn');
-        if (generateBtn) {
-            const costDisplay = generateBtn.querySelector('.cost-display');
-            if (costDisplay) {
-                costDisplay.textContent = `${cost.toFixed(2)} credits`;
+    // Update cost display in generate button (Legacy - redirects to main updateAudioCost)
+    function updateAudioCostLegacy() {
+        // Redirect to the main updateAudioCost function to avoid conflicts
+        if (typeof updateAudioCost === 'function') {
+            updateAudioCost();
             }
-        }
-        
     }
     
     // Expose functions globally (for dashboard-generation.js)
     window.validateAudioInputs = validateAudioInputs;
     window.getAudioGenerationData = getAudioGenerationData;
     window.calculateAudioCost = calculateAudioCost;
-    window.updateAudioCost = updateAudioCost;
+    window.updateAudioCostLegacy = updateAudioCostLegacy; // Legacy support
     
     // Audio Type Dropdown
     function setupAudioTypeDropdown() {
@@ -1099,10 +1110,22 @@
             // Try to find and select the saved model
             const savedCard = audioModelCards.querySelector(`[data-db-id="${savedModelId}"]`);
             if (savedCard) {
+                console.log(`🎵 Restoring audio model from localStorage: ${savedModelId}`);
                 // Collapse immediately after restoring
                 selectAudioModel(savedCard, true); // ✅ Auto-collapse on restore
                 modelRestored = true;
+                
+                // ✅ PERSISTENCE FIX: Ensure cost calculation after restoration
+                setTimeout(() => {
+                    updateAudioCost();
+                    // Also update main dashboard cost
+                    if (window.calculateCreditCost) {
+                        window.calculateCreditCost();
+                    }
+                    console.log('🎵 Audio cost calculated after model restoration');
+                }, 100);
             } else {
+                console.warn('⚠️ Saved audio model not found:', savedModelId);
             }
         }
         
@@ -1110,8 +1133,18 @@
         if (!modelRestored) {
             const firstCard = audioModelCards.querySelector('.model-card');
             if (firstCard) {
+                console.log('🎵 Auto-selecting first audio model');
                 // Collapse immediately after first selection
                 selectAudioModel(firstCard, true); // ✅ Auto-collapse on first load
+                
+                // ✅ PERSISTENCE FIX: Ensure cost calculation after first selection
+                setTimeout(() => {
+                    updateAudioCost();
+                    // Also update main dashboard cost
+                    if (window.calculateCreditCost) {
+                        window.calculateCreditCost();
+                    }
+                }, 100);
             }
         }
     }
@@ -1167,8 +1200,15 @@
         } else {
         }
         
-        // Update cost calculation
+        // Update cost calculation (both local and main dashboard)
         updateAudioCost();
+        
+        // ✅ PERSISTENCE FIX: Update main dashboard cost calculation too
+        if (window.calculateCreditCost) {
+            setTimeout(() => {
+                window.calculateCreditCost();
+            }, 100);
+        }
     }
     
     // Duration Slider
@@ -1183,6 +1223,13 @@
             localStorage.setItem('dashboard_audio_duration', value);
             
             updateAudioCost();
+            
+            // ✅ PERSISTENCE FIX: Also update main dashboard cost calculation
+            if (window.calculateCreditCost) {
+                setTimeout(() => {
+                    window.calculateCreditCost();
+                }, 50);
+            }
         });
     }
     
@@ -1295,12 +1342,51 @@
         }
     }
     
+    // ✅ PERSISTENCE FIX: Add retry mechanism for audio restoration
+    function startAudioPersistenceRetryMechanism() {
+        let retryCount = 0;
+        const maxRetries = 5;
+        
+        function retryCheck() {
+            retryCount++;
+            
+            // Only retry for a limited time to prevent infinite loops
+            if (retryCount > maxRetries) {
+                console.log('🎵 Audio persistence retry mechanism stopped after max attempts');
+                return;
+            }
+            
+            // Check if we need to recalculate cost
+            const activeTab = document.querySelector('.creation-tab.active');
+            const currentMode = activeTab ? activeTab.getAttribute('data-mode') : null;
+            
+            if (currentMode === 'audio' && selectedAudioModel) {
+                // Check if cost display needs update
+                const creditCostElement = document.getElementById('credit-cost');
+                if (creditCostElement && creditCostElement.textContent.includes('0 Credits')) {
+                    console.log(`🎵 Retry ${retryCount}: Updating missing audio cost display`);
+                    updateAudioCost();
+                }
+            }
+            
+            // Continue checking every 3 seconds for the first minute after page load
+            if (retryCount < maxRetries) {
+                setTimeout(retryCheck, 3000);
+            }
+        }
+        
+        // Start retry mechanism after initial page load
+        setTimeout(retryCheck, 2000);
+    }
+    
     // Export for access from dashboard.js
     window.audioHandler = {
         getSelectedModel: () => selectedAudioModel,
         getSelectedType: () => selectedAudioType,
         getDuration: () => audioDuration ? parseInt(audioDuration.value) : 5,
-        updateCost: updateAudioCost
+        updateCost: updateAudioCost,
+        restoreState: restoreState,
+        calculateCost: calculateAudioCost
     };
     
     // Initialize on DOM ready
@@ -1308,10 +1394,14 @@
         document.addEventListener('DOMContentLoaded', () => {
             init();
             setupExpandButton();
+            // ✅ Start persistence retry mechanism
+            startAudioPersistenceRetryMechanism();
         });
     } else {
         init();
         setupExpandButton();
+        // ✅ Start persistence retry mechanism
+        startAudioPersistenceRetryMechanism();
     }
     
 })();

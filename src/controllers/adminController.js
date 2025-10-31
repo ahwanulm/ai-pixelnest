@@ -945,7 +945,37 @@ const adminController = {
         price_sd,
         price_hd,
         price_2k,
-        price_4k
+        price_4k,
+        // ✨ NEW PRICING TYPES - stored in metadata
+        // Per Image pricing
+        price_per_image,
+        // Per Token pricing
+        input_token_price,
+        output_token_price,
+        // Per Character pricing
+        price_per_character,
+        max_characters,
+        // Per 1K Characters pricing
+        price_per_1k_chars,
+        min_chars_bulk,
+        // Per Minute pricing
+        price_per_minute,
+        max_duration_minutes,
+        // Per Request pricing
+        price_per_request,
+        includes_retries,
+        // Per Duration pricing (tiered)
+        price_4s,
+        price_6s,
+        price_8s,
+        price_10s,
+        price_15s,
+        price_20s,
+        // Tiered Usage pricing
+        tier1_price,
+        tier2_price,
+        tier3_price,
+        tier_unit_type
       } = req.body;
 
       // Validate required fields
@@ -972,12 +1002,48 @@ const adminController = {
       // ===== PRICING VALIDATION (SMART SYSTEM) =====
       const { validatePricing } = require('../utils/pricingValidator');
       
+      // Build enhanced metadata for new pricing types
+      const enhancedMetadata = { ...(metadata || {}) };
+      
+      // Store new pricing fields in metadata based on pricing_structure
+      if (pricing_structure === 'per_image' && price_per_image) {
+        enhancedMetadata.price_per_image = parseFloat(price_per_image);
+      } else if (pricing_structure === 'per_token' && (input_token_price || output_token_price)) {
+        if (input_token_price) enhancedMetadata.input_token_price = parseFloat(input_token_price);
+        if (output_token_price) enhancedMetadata.output_token_price = parseFloat(output_token_price);
+      } else if (pricing_structure === 'per_character' && price_per_character) {
+        enhancedMetadata.price_per_character = parseFloat(price_per_character);
+        if (max_characters) enhancedMetadata.max_characters = parseInt(max_characters);
+      } else if (pricing_structure === 'per_1k_chars' && price_per_1k_chars) {
+        enhancedMetadata.price_per_1k_chars = parseFloat(price_per_1k_chars);
+        if (min_chars_bulk) enhancedMetadata.min_chars_bulk = parseInt(min_chars_bulk);
+      } else if (pricing_structure === 'per_minute' && price_per_minute) {
+        enhancedMetadata.price_per_minute = parseFloat(price_per_minute);
+        if (max_duration_minutes) enhancedMetadata.max_duration_minutes = parseInt(max_duration_minutes);
+      } else if (pricing_structure === 'per_request' && price_per_request) {
+        enhancedMetadata.price_per_request = parseFloat(price_per_request);
+        if (includes_retries !== undefined) enhancedMetadata.includes_retries = Boolean(includes_retries);
+      } else if (pricing_structure === 'per_duration' && (price_4s || price_6s || price_8s || price_10s || price_15s || price_20s)) {
+        if (price_4s) enhancedMetadata.price_4s = parseFloat(price_4s);
+        if (price_6s) enhancedMetadata.price_6s = parseFloat(price_6s);
+        if (price_8s) enhancedMetadata.price_8s = parseFloat(price_8s);
+        if (price_10s) enhancedMetadata.price_10s = parseFloat(price_10s);
+        if (price_15s) enhancedMetadata.price_15s = parseFloat(price_15s);
+        if (price_20s) enhancedMetadata.price_20s = parseFloat(price_20s);
+      } else if (pricing_structure === 'tiered_usage' && (tier1_price || tier2_price || tier3_price)) {
+        if (tier1_price) enhancedMetadata.tier1_price = parseFloat(tier1_price);
+        if (tier2_price) enhancedMetadata.tier2_price = parseFloat(tier2_price);
+        if (tier3_price) enhancedMetadata.tier3_price = parseFloat(tier3_price);
+        if (tier_unit_type) enhancedMetadata.tier_unit_type = tier_unit_type;
+      }
+      
       const validation = validatePricing({
         name: name,
         type: type,
         fal_price: cost,
         max_duration: max_duration,
-        pricing_type: req.body.pricing_type || 'flat'
+        pricing_type: req.body.pricing_type || 'flat',
+        metadata: enhancedMetadata
       });
       
       // Log warnings to console for admin awareness
@@ -1084,11 +1150,11 @@ const adminController = {
         falVerification.verified
       ];
       
-      // ✨ Add metadata if provided
-      if (metadata) {
+      // ✨ Add metadata if provided (including enhanced pricing metadata)
+      if (enhancedMetadata && Object.keys(enhancedMetadata).length > 0) {
         columns.push('metadata');
         // Ensure it's properly formatted as JSON
-        const metadataJson = typeof metadata === 'string' ? metadata : JSON.stringify(metadata);
+        const metadataJson = typeof enhancedMetadata === 'string' ? enhancedMetadata : JSON.stringify(enhancedMetadata);
         values.push(metadataJson);
       }
       
@@ -1108,7 +1174,7 @@ const adminController = {
         }
       }
       
-      // Add pricing structure specific fields
+      // Add pricing structure specific fields (database columns)
       if (pricing_structure === 'per_pixel') {
         columns.push('price_per_pixel', 'base_resolution', 'max_upscale_factor');
         values.push(price_per_pixel, base_resolution, max_upscale_factor);
@@ -1125,6 +1191,7 @@ const adminController = {
         columns.push('price_sd', 'price_hd', 'price_2k', 'price_4k');
         values.push(price_sd, price_hd, price_2k, price_4k);
       }
+      // Note: New pricing types (per_image, per_token, per_character, per_1k_chars, per_minute, per_request, per_duration, tiered_usage) are stored in metadata
       
       // Generate placeholders ($1, $2, $3, ...)
       const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
@@ -1246,7 +1313,37 @@ const adminController = {
         price_sd,
         price_hd,
         price_2k,
-        price_4k
+        price_4k,
+        // ✨ NEW PRICING TYPES - stored in metadata
+        // Per Image pricing
+        price_per_image,
+        // Per Token pricing
+        input_token_price,
+        output_token_price,
+        // Per Character pricing
+        price_per_character,
+        max_characters,
+        // Per 1K Characters pricing
+        price_per_1k_chars,
+        min_chars_bulk,
+        // Per Minute pricing
+        price_per_minute,
+        max_duration_minutes,
+        // Per Request pricing
+        price_per_request,
+        includes_retries,
+        // Per Duration pricing (tiered)
+        price_4s,
+        price_6s,
+        price_8s,
+        price_10s,
+        price_15s,
+        price_20s,
+        // Tiered Usage pricing
+        tier1_price,
+        tier2_price,
+        tier3_price,
+        tier_unit_type
       } = req.body;
 
       // Build dynamic update query
@@ -1453,11 +1550,46 @@ const adminController = {
         paramCount++;
       }
       
-      // ✨ Metadata (advanced configuration)
-      if (metadata !== undefined) {
+      // ✨ Build enhanced metadata for new pricing types
+      let enhancedMetadata = null;
+      if (metadata !== undefined || pricing_structure) {
+        enhancedMetadata = { ...(currentModel.metadata || {}), ...(metadata || {}) };
+        
+        // Store new pricing fields in metadata based on pricing_structure
+        if (pricing_structure === 'per_image' && price_per_image !== undefined) {
+          enhancedMetadata.price_per_image = price_per_image ? parseFloat(price_per_image) : null;
+        } else if (pricing_structure === 'per_token' && (input_token_price !== undefined || output_token_price !== undefined)) {
+          if (input_token_price !== undefined) enhancedMetadata.input_token_price = input_token_price ? parseFloat(input_token_price) : null;
+          if (output_token_price !== undefined) enhancedMetadata.output_token_price = output_token_price ? parseFloat(output_token_price) : null;
+        } else if (pricing_structure === 'per_character' && price_per_character !== undefined) {
+          enhancedMetadata.price_per_character = price_per_character ? parseFloat(price_per_character) : null;
+          if (max_characters !== undefined) enhancedMetadata.max_characters = max_characters ? parseInt(max_characters) : null;
+        } else if (pricing_structure === 'per_1k_chars' && price_per_1k_chars !== undefined) {
+          enhancedMetadata.price_per_1k_chars = price_per_1k_chars ? parseFloat(price_per_1k_chars) : null;
+          if (min_chars_bulk !== undefined) enhancedMetadata.min_chars_bulk = min_chars_bulk ? parseInt(min_chars_bulk) : null;
+        } else if (pricing_structure === 'per_minute' && price_per_minute !== undefined) {
+          enhancedMetadata.price_per_minute = price_per_minute ? parseFloat(price_per_minute) : null;
+          if (max_duration_minutes !== undefined) enhancedMetadata.max_duration_minutes = max_duration_minutes ? parseInt(max_duration_minutes) : null;
+        } else if (pricing_structure === 'per_request' && price_per_request !== undefined) {
+          enhancedMetadata.price_per_request = price_per_request ? parseFloat(price_per_request) : null;
+          if (includes_retries !== undefined) enhancedMetadata.includes_retries = Boolean(includes_retries);
+        } else if (pricing_structure === 'per_duration' && (price_4s !== undefined || price_6s !== undefined || price_8s !== undefined || price_10s !== undefined || price_15s !== undefined || price_20s !== undefined)) {
+          if (price_4s !== undefined) enhancedMetadata.price_4s = price_4s ? parseFloat(price_4s) : null;
+          if (price_6s !== undefined) enhancedMetadata.price_6s = price_6s ? parseFloat(price_6s) : null;
+          if (price_8s !== undefined) enhancedMetadata.price_8s = price_8s ? parseFloat(price_8s) : null;
+          if (price_10s !== undefined) enhancedMetadata.price_10s = price_10s ? parseFloat(price_10s) : null;
+          if (price_15s !== undefined) enhancedMetadata.price_15s = price_15s ? parseFloat(price_15s) : null;
+          if (price_20s !== undefined) enhancedMetadata.price_20s = price_20s ? parseFloat(price_20s) : null;
+        } else if (pricing_structure === 'tiered_usage' && (tier1_price !== undefined || tier2_price !== undefined || tier3_price !== undefined)) {
+          if (tier1_price !== undefined) enhancedMetadata.tier1_price = tier1_price ? parseFloat(tier1_price) : null;
+          if (tier2_price !== undefined) enhancedMetadata.tier2_price = tier2_price ? parseFloat(tier2_price) : null;
+          if (tier3_price !== undefined) enhancedMetadata.tier3_price = tier3_price ? parseFloat(tier3_price) : null;
+          if (tier_unit_type !== undefined) enhancedMetadata.tier_unit_type = tier_unit_type || null;
+        }
+        
+        // Update metadata in database
         fields.push(`metadata = $${paramCount}`);
-        // Ensure it's properly formatted as JSON
-        const metadataJson = metadata === null ? null : (typeof metadata === 'string' ? metadata : JSON.stringify(metadata));
+        const metadataJson = enhancedMetadata === null ? null : (typeof enhancedMetadata === 'string' ? enhancedMetadata : JSON.stringify(enhancedMetadata));
         values.push(metadataJson);
         paramCount++;
       }
@@ -2855,9 +2987,66 @@ const adminController = {
 
   // ============ PAYMENT TRANSACTIONS ============
   
+  // Check and update expired payment transactions
+  async checkAndUpdateExpiredPayments() {
+    try {
+      // First, find expired unpaid transactions
+      const findExpiredQuery = `
+        SELECT 
+          id, reference, user_id, amount, credits_amount, 
+          payment_method, expired_time, created_at
+        FROM payment_transactions 
+        WHERE status IN ('PENDING', 'UNPAID') 
+          AND expired_time < NOW()
+        ORDER BY expired_time ASC
+      `;
+      
+      const expiredResult = await pool.query(findExpiredQuery);
+      const expiredTransactions = expiredResult.rows;
+      
+      if (expiredTransactions.length > 0) {
+        // Update expired transactions to EXPIRED status
+        const updateQuery = `
+          UPDATE payment_transactions 
+          SET status = 'EXPIRED', updated_at = NOW() 
+          WHERE status IN ('PENDING', 'UNPAID') 
+            AND expired_time < NOW()
+        `;
+        
+        const updateResult = await pool.query(updateQuery);
+        
+        console.log(`✅ Updated ${updateResult.rowCount} expired payment transactions to EXPIRED status`);
+        
+        return {
+          success: true,
+          updatedCount: updateResult.rowCount,
+          expiredTransactions: expiredTransactions
+        };
+      }
+      
+      return {
+        success: true,
+        updatedCount: 0,
+        expiredTransactions: []
+      };
+      
+    } catch (error) {
+      console.error('❌ Error checking expired payments:', error);
+      return {
+        success: false,
+        error: error.message,
+        updatedCount: 0,
+        expiredTransactions: []
+      };
+    }
+  },
+  
   // Get all payment transactions
   async getPaymentTransactions(req, res) {
     try {
+      // First check and update any expired payments
+      const expiredCheck = await adminController.checkAndUpdateExpiredPayments();
+      
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 20;
       const status = req.query.status || null;
@@ -2926,6 +3115,7 @@ const adminController = {
         user: req.user,
         transactions: result.rows,
         stats,
+        expiredCheck: expiredCheck, // Pass expired check results to view
         pagination: {
           page,
           limit,
@@ -3000,6 +3190,37 @@ const adminController = {
       res.status(500).json({
         success: false,
         message: error.message || 'Failed to sync payment channels'
+      });
+    }
+  },
+
+  // Manual API endpoint to check and update expired payments
+  async updateExpiredPayments(req, res) {
+    try {
+      const result = await adminController.checkAndUpdateExpiredPayments();
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          message: result.updatedCount > 0 
+            ? `Successfully updated ${result.updatedCount} expired payment(s) to EXPIRED status`
+            : 'No expired payments found',
+          data: {
+            updatedCount: result.updatedCount,
+            expiredTransactions: result.expiredTransactions
+          }
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: `Error checking expired payments: ${result.error}`
+        });
+      }
+    } catch (error) {
+      console.error('Error in updateExpiredPayments API:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update expired payments'
       });
     }
   },

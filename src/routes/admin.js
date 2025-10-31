@@ -93,6 +93,7 @@ router.put('/api/pricing/models/:modelId', logAdminActivity('update_model_pricin
 router.get('/payment-transactions', adminController.getPaymentTransactions);
 router.get('/api/payment-transactions/:id', adminController.getPaymentTransactionDetail);
 router.post('/api/payment-channels/sync', logAdminActivity('sync_payment_channels'), adminController.syncPaymentChannels);
+router.post('/api/payment-transactions/update-expired', logAdminActivity('update_expired_payments'), adminController.updateExpiredPayments);
 
 // ============ CREDIT PRICE MANAGEMENT ============
 router.get('/api/credit-price', adminController.getCreditPrice);

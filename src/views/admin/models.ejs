@@ -650,11 +650,19 @@
               class="px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500"
             >
               <option value="simple">Simple (Flat/Per-Second)</option>
+              <option value="per_image">Per Image</option>
               <option value="per_pixel">Per-Pixel (Upscaling)</option>
               <option value="per_megapixel">Per-Megapixel (FLUX)</option>
+              <option value="per_token">Per Token (LLM)</option>
+              <option value="per_character">Per Character (TTS)</option>
+              <option value="per_1k_chars">Per 1K Characters</option>
+              <option value="per_minute">Per Minute (Audio)</option>
+              <option value="per_request">Per Request</option>
+              <option value="per_duration">Per Duration (Video)</option>
               <option value="multi_tier">Multi-Tier (Veo)</option>
               <option value="3d_modeling">3D Modeling</option>
               <option value="resolution_based">Resolution-Based</option>
+              <option value="tiered_usage">Tiered Usage</option>
             </select>
           </div>
 
@@ -663,11 +671,19 @@
             <p class="font-semibold text-cyan-300 mb-2">📘 Pricing Structure Guide:</p>
             <div class="space-y-1 text-gray-300">
               <p>• <span class="text-white">Simple:</span> Flat rate or per-second (video models)</p>
+              <p>• <span class="text-white">Per Image:</span> Flat rate per generated image (e.g., $0.05/image)</p>
               <p>• <span class="text-white">Per-Pixel:</span> Upscaling models (e.g., $0.0000023/pixel)</p>
               <p>• <span class="text-white">Per-Megapixel:</span> FLUX models (e.g., $0.055/MP)</p>
+              <p>• <span class="text-white">Per Token:</span> Language models (e.g., $0.004/1M input tokens)</p>
+              <p>• <span class="text-white">Per Character:</span> TTS models (e.g., $0.000015/char)</p>
+              <p>• <span class="text-white">Per 1K Chars:</span> Bulk TTS (e.g., $0.015/1K chars)</p>
+              <p>• <span class="text-white">Per Minute:</span> Long audio content (e.g., $0.15/min)</p>
+              <p>• <span class="text-white">Per Request:</span> Flat fee per API call (e.g., $0.002/request)</p>
+              <p>• <span class="text-white">Per Duration:</span> Different prices for different durations</p>
               <p>• <span class="text-white">Multi-Tier:</span> Different prices for audio/video type</p>
               <p>• <span class="text-white">3D Modeling:</span> Base price × quality multiplier</p>
               <p>• <span class="text-white">Resolution-Based:</span> Different price per resolution</p>
+              <p>• <span class="text-white">Tiered Usage:</span> Volume discounts (e.g., 1-100: $0.10, 101+: $0.08)</p>
             </div>
           </div>
 
@@ -875,6 +891,322 @@
               <div>
                 <label class="block text-xs text-gray-400 mb-1">Max Duration (seconds)</label>
                 <input type="number" id="multi-tier-duration" placeholder="8" oninput="autoCalculateCredits()" class="w-full px-2 py-1.5 bg-gray-800/50 border border-gray-700 rounded text-white text-sm">
+              </div>
+            </div>
+          </div>
+
+          <!-- Per Image Pricing -->
+          <div id="per-image-pricing-section" class="hidden p-4 bg-gradient-to-r from-orange-900/20 to-yellow-900/20 rounded-lg border border-orange-500/30">
+            <p class="text-xs font-semibold text-orange-300 mb-3">🖼️ Per Image Pricing</p>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Price per Image ($)</label>
+                <input 
+                  type="number" 
+                  id="price-per-image" 
+                  step="0.001"
+                  placeholder="0.05"
+                  oninput="autoCalculateCredits()"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-orange-500"
+                >
+                <p class="text-xs text-gray-500 mt-1">Flat rate per generated image</p>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Max Images per Request</label>
+                <input 
+                  type="number" 
+                  id="max-images-per-request" 
+                  placeholder="4"
+                  min="1" 
+                  max="10"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-orange-500"
+                >
+                <p class="text-xs text-gray-500 mt-1">Maximum batch size</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Per Token Pricing (LLM) -->
+          <div id="per-token-pricing-section" class="hidden p-4 bg-gradient-to-r from-teal-900/20 to-cyan-900/20 rounded-lg border border-teal-500/30">
+            <p class="text-xs font-semibold text-teal-300 mb-3">🤖 Per Token Pricing (Language Models)</p>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Input Token Price (per 1M)</label>
+                <input 
+                  type="number" 
+                  id="input-token-price" 
+                  step="0.0001"
+                  placeholder="0.004"
+                  oninput="autoCalculateCredits()"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-teal-500"
+                >
+                <p class="text-xs text-gray-500 mt-1">Price per 1M input tokens</p>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Output Token Price (per 1M)</label>
+                <input 
+                  type="number" 
+                  id="output-token-price" 
+                  step="0.0001"
+                  placeholder="0.033"
+                  oninput="autoCalculateCredits()"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-teal-500"
+                >
+                <p class="text-xs text-gray-500 mt-1">Price per 1M output tokens</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Per Character Pricing (TTS) -->
+          <div id="per-character-pricing-section" class="hidden p-4 bg-gradient-to-r from-pink-900/20 to-rose-900/20 rounded-lg border border-pink-500/30">
+            <p class="text-xs font-semibold text-pink-300 mb-3">📢 Per Character Pricing (Text-to-Speech)</p>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Price per Character ($)</label>
+                <input 
+                  type="number" 
+                  id="price-per-character" 
+                  step="0.000001"
+                  placeholder="0.000015"
+                  oninput="autoCalculateCredits()"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-pink-500"
+                >
+                <p class="text-xs text-gray-500 mt-1">Price per character including spaces</p>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Max Characters</label>
+                <input 
+                  type="number" 
+                  id="max-characters" 
+                  placeholder="5000"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-pink-500"
+                >
+                <p class="text-xs text-gray-500 mt-1">Maximum text length</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Per 1K Characters Pricing -->
+          <div id="per-1k-chars-pricing-section" class="hidden p-4 bg-gradient-to-r from-violet-900/20 to-purple-900/20 rounded-lg border border-violet-500/30">
+            <p class="text-xs font-semibold text-violet-300 mb-3">📝 Per 1K Characters Pricing (Bulk TTS)</p>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Price per 1K Characters ($)</label>
+                <input 
+                  type="number" 
+                  id="price-per-1k-chars" 
+                  step="0.001"
+                  placeholder="0.015"
+                  oninput="autoCalculateCredits()"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-violet-500"
+                >
+                <p class="text-xs text-gray-500 mt-1">Bulk pricing for large texts</p>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Min Characters for Bulk</label>
+                <input 
+                  type="number" 
+                  id="min-chars-bulk" 
+                  placeholder="1000"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-violet-500"
+                >
+                <p class="text-xs text-gray-500 mt-1">Minimum for bulk rate</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Per Minute Pricing (Audio) -->
+          <div id="per-minute-pricing-section" class="hidden p-4 bg-gradient-to-r from-emerald-900/20 to-green-900/20 rounded-lg border border-emerald-500/30">
+            <p class="text-xs font-semibold text-emerald-300 mb-3">⏱️ Per Minute Pricing (Long Audio)</p>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Price per Minute ($)</label>
+                <input 
+                  type="number" 
+                  id="price-per-minute" 
+                  step="0.01"
+                  placeholder="0.15"
+                  oninput="autoCalculateCredits()"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-emerald-500"
+                >
+                <p class="text-xs text-gray-500 mt-1">Price per minute of audio</p>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Max Duration (minutes)</label>
+                <input 
+                  type="number" 
+                  id="max-duration-minutes" 
+                  placeholder="10"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-emerald-500"
+                >
+                <p class="text-xs text-gray-500 mt-1">Maximum audio length</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Per Request Pricing -->
+          <div id="per-request-pricing-section" class="hidden p-4 bg-gradient-to-r from-slate-900/20 to-gray-900/20 rounded-lg border border-slate-500/30">
+            <p class="text-xs font-semibold text-slate-300 mb-3">🔄 Per Request Pricing (API Call)</p>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Price per Request ($)</label>
+                <input 
+                  type="number" 
+                  id="price-per-request" 
+                  step="0.0001"
+                  placeholder="0.002"
+                  oninput="autoCalculateCredits()"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-slate-500"
+                >
+                <p class="text-xs text-gray-500 mt-1">Flat fee per API call</p>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Includes Retries</label>
+                <select 
+                  id="includes-retries"
+                  class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-slate-500"
+                >
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Retry attempts included</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Per Duration Pricing (Video) -->
+          <div id="per-duration-pricing-section" class="hidden p-4 bg-gradient-to-r from-blue-900/20 to-indigo-900/20 rounded-lg border border-blue-500/30">
+            <p class="text-xs font-semibold text-blue-300 mb-3">⏳ Per Duration Pricing (Video with Tiers)</p>
+            <div class="space-y-3">
+              <div class="grid grid-cols-3 gap-2">
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">4s Price ($)</label>
+                  <input 
+                    type="number" 
+                    id="price-4s" 
+                    step="0.01"
+                    placeholder="0.30"
+                    oninput="autoCalculateCredits()"
+                    class="w-full px-2 py-1 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500"
+                  >
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">6s Price ($)</label>
+                  <input 
+                    type="number" 
+                    id="price-6s" 
+                    step="0.01"
+                    placeholder="0.45"
+                    oninput="autoCalculateCredits()"
+                    class="w-full px-2 py-1 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500"
+                  >
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">8s Price ($)</label>
+                  <input 
+                    type="number" 
+                    id="price-8s" 
+                    step="0.01"
+                    placeholder="0.60"
+                    oninput="autoCalculateCredits()"
+                    class="w-full px-2 py-1 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500"
+                  >
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">10s Price ($)</label>
+                  <input 
+                    type="number" 
+                    id="price-10s" 
+                    step="0.01"
+                    placeholder="0.75"
+                    oninput="autoCalculateCredits()"
+                    class="w-full px-2 py-1 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500"
+                  >
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">15s Price ($)</label>
+                  <input 
+                    type="number" 
+                    id="price-15s" 
+                    step="0.01"
+                    placeholder="1.00"
+                    oninput="autoCalculateCredits()"
+                    class="w-full px-2 py-1 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500"
+                  >
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">20s Price ($)</label>
+                  <input 
+                    type="number" 
+                    id="price-20s" 
+                    step="0.01"
+                    placeholder="1.25"
+                    oninput="autoCalculateCredits()"
+                    class="w-full px-2 py-1 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500"
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tiered Usage Pricing -->
+          <div id="tiered-usage-pricing-section" class="hidden p-4 bg-gradient-to-r from-amber-900/20 to-orange-900/20 rounded-lg border border-amber-500/30">
+            <p class="text-xs font-semibold text-amber-300 mb-3">🎯 Tiered Usage Pricing (Volume Discounts)</p>
+            <div class="space-y-3">
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">Tier 1 (1-100) Price ($)</label>
+                  <input 
+                    type="number" 
+                    id="tier1-price" 
+                    step="0.001"
+                    placeholder="0.10"
+                    oninput="autoCalculateCredits()"
+                    class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-amber-500"
+                  >
+                  <p class="text-xs text-gray-500 mt-1">Price for first 100 units</p>
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">Tier 2 (101-500) Price ($)</label>
+                  <input 
+                    type="number" 
+                    id="tier2-price" 
+                    step="0.001"
+                    placeholder="0.08"
+                    oninput="autoCalculateCredits()"
+                    class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-amber-500"
+                  >
+                  <p class="text-xs text-gray-500 mt-1">Price for 101-500 units</p>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">Tier 3 (501+) Price ($)</label>
+                  <input 
+                    type="number" 
+                    id="tier3-price" 
+                    step="0.001"
+                    placeholder="0.06"
+                    oninput="autoCalculateCredits()"
+                    class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white placeholder-gray-500 text-sm focus:outline-none focus:border-amber-500"
+                  >
+                  <p class="text-xs text-gray-500 mt-1">Price for 501+ units</p>
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">Unit Type</label>
+                  <select 
+                    id="tier-unit-type"
+                    class="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-amber-500"
+                  >
+                    <option value="images">Images</option>
+                    <option value="seconds">Seconds</option>
+                    <option value="requests">Requests</option>
+                    <option value="characters">Characters</option>
+                  </select>
+                  <p class="text-xs text-gray-500 mt-1">What unit is being priced</p>
+                </div>
               </div>
             </div>
           </div>

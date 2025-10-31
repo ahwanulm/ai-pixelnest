@@ -584,76 +584,103 @@ async function generateImage(modelId, prompt, settings, uploadedFiles, jobId) {
 
   // ✅ CRITICAL: Handle multiple images for edit-multi (batch processing)
   // ✅ Handle multiple images for batch processing (FAL.AI compatible)
-  // FAL.AI processes one image_url per request, so we make multiple requests
   if (uploadedFiles && uploadedFiles.multiImages && uploadedFiles.multiImages.length > 0) {
     console.log(`🎨 Batch Processing: ${uploadedFiles.multiImages.length} images`);
-    console.log(`   FAL.AI Strategy: One request per image (sequential processing)`);
     
-    const results = [];
-    const totalImages = uploadedFiles.multiImages.length;
+    // ✅ Determine if model supports multi-image in single request
+    const supportsMultiImageBatch = model_id.includes('nano-banana') || 
+                                    model_id.includes('Nano Banana') ||
+                                    model_id.endsWith('/edit') ||
+                                    model_id.includes('multi-edit');
     
-    for (let i = 0; i < totalImages; i++) {
-      const imageFile = uploadedFiles.multiImages[i];
-      console.log(`   [${i + 1}/${totalImages}] Processing: ${imageFile.filename}`);
+    if (supportsMultiImageBatch) {
+      console.log(`   🔄 Strategy: Single request with all images (image_urls array)`);
       
-      try {
-        // ✅ Convert image to Data URI (FAL.AI accepts data URIs)
-        const imageDataUri = await convertImageToDataUri(imageFile.fullPath);
+      // ✅ Convert ALL images to Data URIs
+      const imageDataUris = [];
+      const totalImages = uploadedFiles.multiImages.length;
+      
+      for (let i = 0; i < totalImages; i++) {
+        const imageFile = uploadedFiles.multiImages[i];
+        console.log(`   📸 Converting [${i + 1}/${totalImages}]: ${imageFile.filename}`);
         
-        // ✅ FIX: Check if model requires image_urls (array) or image_url (string)
-        const requiresImageUrlsArray = model_id.includes('gpt-image') || 
-                                       model_id.includes('mini/edit') ||
-                                       model_id.includes('image-editor');
-        
-        console.log(`   🔍 Model ID: ${model_id}`);
-        console.log(`   🔍 Requires image_urls array? ${requiresImageUrlsArray}`);
-        console.log(`   🔍 Settings before modification:`, Object.keys(settings));
-        
-        // ✅ Create settings with correct image parameter format
-        const batchSettings = { 
-          ...settings
-        };
-        
-        if (requiresImageUrlsArray) {
-          batchSettings.image_urls = [imageDataUri];
-          console.log(`   ✅ Using image_urls array format for ${model_id}`);
-          console.log(`   ✅ image_urls length: ${batchSettings.image_urls.length}`);
-        } else {
-          batchSettings.image_url = imageDataUri;
-          console.log(`   ✅ Using image_url string format for ${model_id}`);
+        try {
+          const imageDataUri = await convertImageToDataUri(imageFile.fullPath);
+          imageDataUris.push(imageDataUri);
+        } catch (err) {
+          console.error(`   ❌ Failed to convert ${imageFile.filename}:`, err.message);
+          throw new Error(`Failed to convert image: ${imageFile.filename}`);
         }
-        
-        console.log(`   🔍 Final settings keys:`, Object.keys(batchSettings));
-        
-        // ✅ Process this image with FAL.AI (one request per image)
-        const result = await falAiService.generateImage(model_id, prompt, batchSettings);
-        results.push(result);
-        
-        // Update progress incrementally
-        const progress = 30 + ((i + 1) / totalImages) * 40; // 30-70%
-        await updateJobStatus(jobId, 'processing', Math.round(progress));
-        
-        console.log(`   ✅ [${i + 1}/${totalImages}] Processed successfully`);
-      } catch (err) {
-        console.error(`   ❌ [${i + 1}/${totalImages}] Failed:`, err.message);
-        // Continue with other images even if one fails (partial success)
       }
+      
+      // ✅ Create settings with ALL images in one array
+      const batchSettings = { 
+        ...settings,
+        image_urls: imageDataUris
+      };
+      
+      console.log(`   ✅ Sending ${imageDataUris.length} images in single request`);
+      console.log(`   🔍 Model ID: ${model_id}`);
+      console.log(`   🔍 image_urls array length: ${batchSettings.image_urls.length}`);
+      
+      // ✅ Process ALL images with FAL.AI (single request)
+      const result = await falAiService.generateImage(model_id, prompt, batchSettings);
+      
+      console.log(`✅ Multi-image batch complete: ${imageDataUris.length} images processed`);
+      await updateJobStatus(jobId, 'processing', 70);
+      return result;
+      
+    } else {
+      console.log(`   🔄 Strategy: Sequential processing (one request per image)`);
+      
+      const results = [];
+      const totalImages = uploadedFiles.multiImages.length;
+      
+      for (let i = 0; i < totalImages; i++) {
+        const imageFile = uploadedFiles.multiImages[i];
+        console.log(`   [${i + 1}/${totalImages}] Processing: ${imageFile.filename}`);
+        
+        try {
+          // ✅ Convert image to Data URI (FAL.AI accepts data URIs)
+          const imageDataUri = await convertImageToDataUri(imageFile.fullPath);
+          
+          // ✅ Create settings with single image
+          const batchSettings = { 
+            ...settings,
+            image_url: imageDataUri  // Single image for sequential models
+          };
+          
+          console.log(`   🔍 Using image_url (single) for ${model_id}`);
+          
+          // ✅ Process this image with FAL.AI (one request per image)
+          const result = await falAiService.generateImage(model_id, prompt, batchSettings);
+          results.push(result);
+          
+          // Update progress incrementally
+          const progress = 30 + ((i + 1) / totalImages) * 40; // 30-70%
+          await updateJobStatus(jobId, 'processing', Math.round(progress));
+          
+          console.log(`   ✅ [${i + 1}/${totalImages}] Processed successfully`);
+        } catch (err) {
+          console.error(`   ❌ [${i + 1}/${totalImages}] Failed:`, err.message);
+          // Continue with other images even if one fails (partial success)
+        }
+      }
+      
+      if (results.length === 0) {
+        throw new Error('Failed to process any images in batch. All requests failed.');
+      }
+      
+      // ✅ Combine all results into single response
+      const combinedResult = {
+        images: results.flatMap(r => r.images || [])
+      };
+      
+      console.log(`✅ Sequential batch complete: ${results.length}/${totalImages} images processed`);
+      console.log(`   Total output images: ${combinedResult.images.length}`);
+      await updateJobStatus(jobId, 'processing', 70);
+      return combinedResult;
     }
-    
-    if (results.length === 0) {
-      throw new Error('Failed to process any images in batch. All requests failed.');
-    }
-    
-    // ✅ Combine all results into single response
-    // User will see all generated images in one result
-    const combinedResult = {
-      images: results.flatMap(r => r.images || [])
-    };
-    
-    console.log(`✅ Batch complete: ${results.length}/${totalImages} images processed successfully`);
-    console.log(`   Total output images: ${combinedResult.images.length}`);
-    await updateJobStatus(jobId, 'processing', 70);
-    return combinedResult;
   }
   
   // ✅ CRITICAL: Handle single uploaded image for edit/inpainting operations
@@ -667,10 +694,12 @@ async function generateImage(modelId, prompt, settings, uploadedFiles, jobId) {
         const imageDataUri = await convertImageToDataUri(imagePath);
         
         // ✅ FIX: Check if model requires image_urls (array) or image_url (string)
-        // Models like gpt-image-1-mini/edit use image_urls (plural)
+        // Models like gpt-image-1-mini/edit, Nano Banana/edit use image_urls (plural)
         const requiresImageUrlsArray = model_id.includes('gpt-image') || 
                                        model_id.includes('mini/edit') ||
-                                       model_id.includes('image-editor');
+                                       model_id.includes('image-editor') ||
+                                       model_id.endsWith('/edit') ||
+                                       model_id.includes('Nano Banana');
         
         if (requiresImageUrlsArray) {
           enhancedSettings.image_urls = [imageDataUri];
@@ -686,7 +715,9 @@ async function generateImage(modelId, prompt, settings, uploadedFiles, jobId) {
         
         const requiresImageUrlsArray = model_id.includes('gpt-image') || 
                                        model_id.includes('mini/edit') ||
-                                       model_id.includes('image-editor');
+                                       model_id.includes('image-editor') ||
+                                       model_id.endsWith('/edit') ||
+                                       model_id.includes('Nano Banana');
         
         if (requiresImageUrlsArray) {
           enhancedSettings.image_urls = [fallbackUrl];

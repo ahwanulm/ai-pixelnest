@@ -576,10 +576,28 @@ function editModel(id) {
     }
   }
   
-  // Determine pricing structure from model data
+  // Determine pricing structure from model data (check both direct fields and metadata)
   let pricingStructure = 'simple';
+  const metadata = model.metadata ? (typeof model.metadata === 'string' ? JSON.parse(model.metadata) : model.metadata) : {};
   
-  if (model.has_multi_tier_pricing || model.price_text_to_video_no_audio) {
+  // Check new pricing types stored in metadata first
+  if (model.price_per_image !== undefined || metadata.price_per_image !== undefined) {
+    pricingStructure = 'per_image';
+  } else if (model.input_token_price !== undefined || model.output_token_price !== undefined || metadata.input_token_price !== undefined || metadata.output_token_price !== undefined) {
+    pricingStructure = 'per_token';
+  } else if (model.price_per_character !== undefined || metadata.price_per_character !== undefined) {
+    pricingStructure = 'per_character';
+  } else if (model.price_per_1k_chars !== undefined || metadata.price_per_1k_chars !== undefined) {
+    pricingStructure = 'per_1k_chars';
+  } else if (model.price_per_minute !== undefined || metadata.price_per_minute !== undefined) {
+    pricingStructure = 'per_minute';
+  } else if (model.price_per_request !== undefined || metadata.price_per_request !== undefined) {
+    pricingStructure = 'per_request';
+  } else if (model.price_4s !== undefined || model.price_6s !== undefined || model.price_8s !== undefined || metadata.price_4s !== undefined || metadata.price_6s !== undefined || metadata.price_8s !== undefined) {
+    pricingStructure = 'per_duration';
+  } else if (model.tier1_price !== undefined || model.tier2_price !== undefined || model.tier3_price !== undefined || metadata.tier1_price !== undefined || metadata.tier2_price !== undefined || metadata.tier3_price !== undefined) {
+    pricingStructure = 'tiered_usage';
+  } else if (model.has_multi_tier_pricing || model.price_text_to_video_no_audio) {
     pricingStructure = 'multi_tier';
   } else if (model.price_per_pixel) {
     pricingStructure = 'per_pixel';
@@ -650,6 +668,81 @@ function editModel(id) {
     }
     if (document.getElementById('3d-quality-multiplier')) {
       document.getElementById('3d-quality-multiplier').value = model.quality_multiplier || 1;
+    }
+  } else if (pricingStructure === 'per_image') {
+    if (document.getElementById('price-per-image')) {
+      document.getElementById('price-per-image').value = model.price_per_image || metadata.price_per_image || '';
+    }
+    if (document.getElementById('max-images-per-request')) {
+      document.getElementById('max-images-per-request').value = model.max_images_per_request || metadata.max_images_per_request || 1;
+    }
+  } else if (pricingStructure === 'per_token') {
+    if (document.getElementById('input-token-price')) {
+      document.getElementById('input-token-price').value = model.input_token_price || metadata.input_token_price || '';
+    }
+    if (document.getElementById('output-token-price')) {
+      document.getElementById('output-token-price').value = model.output_token_price || metadata.output_token_price || '';
+    }
+  } else if (pricingStructure === 'per_character') {
+    if (document.getElementById('price-per-character')) {
+      document.getElementById('price-per-character').value = model.price_per_character || metadata.price_per_character || '';
+    }
+    if (document.getElementById('max-characters')) {
+      document.getElementById('max-characters').value = model.max_characters || metadata.max_characters || 5000;
+    }
+  } else if (pricingStructure === 'per_1k_chars') {
+    if (document.getElementById('price-per-1k-chars')) {
+      document.getElementById('price-per-1k-chars').value = model.price_per_1k_chars || metadata.price_per_1k_chars || '';
+    }
+    if (document.getElementById('min-chars-bulk')) {
+      document.getElementById('min-chars-bulk').value = model.min_chars_bulk || metadata.min_chars_bulk || 1000;
+    }
+  } else if (pricingStructure === 'per_minute') {
+    if (document.getElementById('price-per-minute')) {
+      document.getElementById('price-per-minute').value = model.price_per_minute || metadata.price_per_minute || '';
+    }
+    if (document.getElementById('max-duration-minutes')) {
+      document.getElementById('max-duration-minutes').value = model.max_duration_minutes || metadata.max_duration_minutes || 10;
+    }
+  } else if (pricingStructure === 'per_request') {
+    if (document.getElementById('price-per-request')) {
+      document.getElementById('price-per-request').value = model.price_per_request || metadata.price_per_request || '';
+    }
+    if (document.getElementById('includes-retries')) {
+      const includesRetries = model.includes_retries !== undefined ? model.includes_retries : metadata.includes_retries;
+      document.getElementById('includes-retries').value = includesRetries ? 'yes' : 'no';
+    }
+  } else if (pricingStructure === 'per_duration') {
+    if (document.getElementById('price-4s')) {
+      document.getElementById('price-4s').value = model.price_4s || metadata.price_4s || '';
+    }
+    if (document.getElementById('price-6s')) {
+      document.getElementById('price-6s').value = model.price_6s || metadata.price_6s || '';
+    }
+    if (document.getElementById('price-8s')) {
+      document.getElementById('price-8s').value = model.price_8s || metadata.price_8s || '';
+    }
+    if (document.getElementById('price-10s')) {
+      document.getElementById('price-10s').value = model.price_10s || metadata.price_10s || '';
+    }
+    if (document.getElementById('price-15s')) {
+      document.getElementById('price-15s').value = model.price_15s || metadata.price_15s || '';
+    }
+    if (document.getElementById('price-20s')) {
+      document.getElementById('price-20s').value = model.price_20s || metadata.price_20s || '';
+    }
+  } else if (pricingStructure === 'tiered_usage') {
+    if (document.getElementById('tier1-price')) {
+      document.getElementById('tier1-price').value = model.tier1_price || metadata.tier1_price || '';
+    }
+    if (document.getElementById('tier2-price')) {
+      document.getElementById('tier2-price').value = model.tier2_price || metadata.tier2_price || '';
+    }
+    if (document.getElementById('tier3-price')) {
+      document.getElementById('tier3-price').value = model.tier3_price || metadata.tier3_price || '';
+    }
+    if (document.getElementById('tier-unit-type')) {
+      document.getElementById('tier-unit-type').value = model.tier_unit_type || metadata.tier_unit_type || 'images';
     }
   } else if (pricingStructure === 'resolution_based') {
     if (document.getElementById('price-sd')) {
@@ -865,6 +958,44 @@ async function handleSubmit(e) {
     modelData.base_3d_price = parseFloat(document.getElementById('3d-base-price').value) || 0;
     modelData.quality_multiplier = parseFloat(document.getElementById('3d-quality-multiplier').value) || 1;
     modelData.pricing_type = '3d_modeling';
+  } else if (structureType === 'per_image') {
+    modelData.price_per_image = parseFloat(document.getElementById('price-per-image').value) || 0;
+    modelData.max_images_per_request = parseInt(document.getElementById('max-images-per-request').value) || 1;
+    modelData.pricing_type = 'per_image';
+  } else if (structureType === 'per_token') {
+    modelData.input_token_price = parseFloat(document.getElementById('input-token-price').value) || 0;
+    modelData.output_token_price = parseFloat(document.getElementById('output-token-price').value) || 0;
+    modelData.pricing_type = 'per_token';
+  } else if (structureType === 'per_character') {
+    modelData.price_per_character = parseFloat(document.getElementById('price-per-character').value) || 0;
+    modelData.max_characters = parseInt(document.getElementById('max-characters').value) || 5000;
+    modelData.pricing_type = 'per_character';
+  } else if (structureType === 'per_1k_chars') {
+    modelData.price_per_1k_chars = parseFloat(document.getElementById('price-per-1k-chars').value) || 0;
+    modelData.min_chars_bulk = parseInt(document.getElementById('min-chars-bulk').value) || 1000;
+    modelData.pricing_type = 'per_1k_chars';
+  } else if (structureType === 'per_minute') {
+    modelData.price_per_minute = parseFloat(document.getElementById('price-per-minute').value) || 0;
+    modelData.max_duration_minutes = parseInt(document.getElementById('max-duration-minutes').value) || 10;
+    modelData.pricing_type = 'per_minute';
+  } else if (structureType === 'per_request') {
+    modelData.price_per_request = parseFloat(document.getElementById('price-per-request').value) || 0;
+    modelData.includes_retries = document.getElementById('includes-retries').value === 'yes';
+    modelData.pricing_type = 'per_request';
+  } else if (structureType === 'per_duration') {
+    modelData.price_4s = parseFloat(document.getElementById('price-4s').value) || 0;
+    modelData.price_6s = parseFloat(document.getElementById('price-6s').value) || 0;
+    modelData.price_8s = parseFloat(document.getElementById('price-8s').value) || 0;
+    modelData.price_10s = parseFloat(document.getElementById('price-10s').value) || 0;
+    modelData.price_15s = parseFloat(document.getElementById('price-15s').value) || 0;
+    modelData.price_20s = parseFloat(document.getElementById('price-20s').value) || 0;
+    modelData.pricing_type = 'per_duration';
+  } else if (structureType === 'tiered_usage') {
+    modelData.tier1_price = parseFloat(document.getElementById('tier1-price').value) || 0;
+    modelData.tier2_price = parseFloat(document.getElementById('tier2-price').value) || 0;
+    modelData.tier3_price = parseFloat(document.getElementById('tier3-price').value) || 0;
+    modelData.tier_unit_type = document.getElementById('tier-unit-type').value || 'images';
+    modelData.pricing_type = 'tiered_usage';
   } else if (structureType === 'resolution_based') {
     modelData.price_sd = parseFloat(document.getElementById('price-sd').value) || 0;
     modelData.price_hd = parseFloat(document.getElementById('price-hd').value) || 0;
@@ -1005,25 +1136,49 @@ function switchPricingStructure() {
   
   // Hide all sections first
   document.getElementById('simple-pricing-section')?.classList.add('hidden');
+  document.getElementById('per-image-pricing-section')?.classList.add('hidden');
   document.getElementById('per-pixel-pricing-section')?.classList.add('hidden');
   document.getElementById('per-megapixel-pricing-section')?.classList.add('hidden');
+  document.getElementById('per-token-pricing-section')?.classList.add('hidden');
+  document.getElementById('per-character-pricing-section')?.classList.add('hidden');
+  document.getElementById('per-1k-chars-pricing-section')?.classList.add('hidden');
+  document.getElementById('per-minute-pricing-section')?.classList.add('hidden');
+  document.getElementById('per-request-pricing-section')?.classList.add('hidden');
+  document.getElementById('per-duration-pricing-section')?.classList.add('hidden');
   document.getElementById('multi-tier-pricing-section')?.classList.add('hidden');
   document.getElementById('3d-modeling-pricing-section')?.classList.add('hidden');
   document.getElementById('resolution-based-pricing-section')?.classList.add('hidden');
+  document.getElementById('tiered-usage-pricing-section')?.classList.add('hidden');
   
   // Show selected section
   if (structureType === 'simple') {
     document.getElementById('simple-pricing-section')?.classList.remove('hidden');
+  } else if (structureType === 'per_image') {
+    document.getElementById('per-image-pricing-section')?.classList.remove('hidden');
   } else if (structureType === 'per_pixel') {
     document.getElementById('per-pixel-pricing-section')?.classList.remove('hidden');
   } else if (structureType === 'per_megapixel') {
     document.getElementById('per-megapixel-pricing-section')?.classList.remove('hidden');
+  } else if (structureType === 'per_token') {
+    document.getElementById('per-token-pricing-section')?.classList.remove('hidden');
+  } else if (structureType === 'per_character') {
+    document.getElementById('per-character-pricing-section')?.classList.remove('hidden');
+  } else if (structureType === 'per_1k_chars') {
+    document.getElementById('per-1k-chars-pricing-section')?.classList.remove('hidden');
+  } else if (structureType === 'per_minute') {
+    document.getElementById('per-minute-pricing-section')?.classList.remove('hidden');
+  } else if (structureType === 'per_request') {
+    document.getElementById('per-request-pricing-section')?.classList.remove('hidden');
+  } else if (structureType === 'per_duration') {
+    document.getElementById('per-duration-pricing-section')?.classList.remove('hidden');
   } else if (structureType === 'multi_tier') {
     document.getElementById('multi-tier-pricing-section')?.classList.remove('hidden');
   } else if (structureType === '3d_modeling') {
     document.getElementById('3d-modeling-pricing-section')?.classList.remove('hidden');
   } else if (structureType === 'resolution_based') {
     document.getElementById('resolution-based-pricing-section')?.classList.remove('hidden');
+  } else if (structureType === 'tiered_usage') {
+    document.getElementById('tiered-usage-pricing-section')?.classList.remove('hidden');
   }
   
   autoCalculateCredits();
@@ -1169,6 +1324,221 @@ function autoCalculateCredits() {
     html += `</div>`;
     previewDiv.innerHTML = html;
     document.getElementById('model-cost').value = Math.max(...allPrices);
+  }
+  
+  // PER IMAGE PRICING
+  else if (structureType === 'per_image') {
+    const pricePerImage = parseFloat(document.getElementById('price-per-image')?.value) || 0;
+    const maxImagesPerRequest = parseInt(document.getElementById('max-images-per-request')?.value) || 1;
+    
+    if (!pricePerImage || pricePerImage <= 0) {
+      previewDiv.innerHTML = '<p class="text-gray-500">Enter price per image...</p>';
+      document.getElementById('model-cost').value = 1;
+      return;
+    }
+    
+    const credits = Math.max(0.1, Math.round(pricePerImage * 10 * 10) / 10); // ×10 formula
+    
+    const html = `
+      <p class="text-xs text-orange-300 font-semibold">🖼️ Per Image</p>
+      <p class="text-sm mt-1">$${pricePerImage.toFixed(3)}/image = <span class="text-yellow-400 font-bold">${credits} cr</span></p>
+      <p class="text-xs text-gray-400 mt-1">Max ${maxImagesPerRequest} images per request</p>
+    `;
+    previewDiv.innerHTML = html;
+    document.getElementById('model-cost').value = credits;
+  }
+  
+  // PER TOKEN PRICING (LLM)
+  else if (structureType === 'per_token') {
+    const inputTokenPrice = parseFloat(document.getElementById('input-token-price')?.value) || 0;
+    const outputTokenPrice = parseFloat(document.getElementById('output-token-price')?.value) || 0;
+    
+    if (!inputTokenPrice && !outputTokenPrice) {
+      previewDiv.innerHTML = '<p class="text-gray-500">Enter token prices...</p>';
+      document.getElementById('model-cost').value = 1;
+      return;
+    }
+    
+    // Calculate credits for 1K tokens (commonly used for LLM pricing)
+    const inputCreditsFor1K = inputTokenPrice > 0 ? Math.max(0.01, Math.round((inputTokenPrice / 1000) * 10 * 10) / 10) : 0;
+    const outputCreditsFor1K = outputTokenPrice > 0 ? Math.max(0.01, Math.round((outputTokenPrice / 1000) * 10 * 10) / 10) : 0;
+    
+    const html = `
+      <p class="text-xs text-teal-300 font-semibold">🤖 Per Token (LLM)</p>
+      <div class="text-sm mt-1 space-y-1">
+        ${inputTokenPrice > 0 ? `<p>Input: $${inputTokenPrice.toFixed(4)}/1M = <span class="text-yellow-400 font-bold">${inputCreditsFor1K} cr/1K</span></p>` : ''}
+        ${outputTokenPrice > 0 ? `<p>Output: $${outputTokenPrice.toFixed(4)}/1M = <span class="text-yellow-400 font-bold">${outputCreditsFor1K} cr/1K</span></p>` : ''}
+      </div>
+    `;
+    previewDiv.innerHTML = html;
+    // Store average token price as base cost
+    document.getElementById('model-cost').value = Math.max(inputCreditsFor1K, outputCreditsFor1K) || 1;
+  }
+  
+  // PER CHARACTER PRICING (TTS)
+  else if (structureType === 'per_character') {
+    const pricePerChar = parseFloat(document.getElementById('price-per-character')?.value) || 0;
+    const maxCharacters = parseInt(document.getElementById('max-characters')?.value) || 1000;
+    
+    if (!pricePerChar || pricePerChar <= 0) {
+      previewDiv.innerHTML = '<p class="text-gray-500">Enter price per character...</p>';
+      document.getElementById('model-cost').value = 1;
+      return;
+    }
+    
+    // Calculate credits for 100 characters (reasonable TTS length)
+    const creditsFor100Chars = Math.max(0.01, Math.round(pricePerChar * 100 * 10 * 10) / 10);
+    
+    const html = `
+      <p class="text-xs text-pink-300 font-semibold">📢 Per Character (TTS)</p>
+      <p class="text-sm mt-1">$${pricePerChar.toFixed(6)}/char = <span class="text-yellow-400 font-bold">${creditsFor100Chars} cr</span> per 100 chars</p>
+      <p class="text-xs text-gray-400 mt-1">Max ${maxCharacters} characters</p>
+    `;
+    previewDiv.innerHTML = html;
+    document.getElementById('model-cost').value = creditsFor100Chars;
+  }
+  
+  // PER 1K CHARACTERS PRICING
+  else if (structureType === 'per_1k_chars') {
+    const pricePer1KChars = parseFloat(document.getElementById('price-per-1k-chars')?.value) || 0;
+    const minCharsBulk = parseInt(document.getElementById('min-chars-bulk')?.value) || 1000;
+    
+    if (!pricePer1KChars || pricePer1KChars <= 0) {
+      previewDiv.innerHTML = '<p class="text-gray-500">Enter price per 1K characters...</p>';
+      document.getElementById('model-cost').value = 1;
+      return;
+    }
+    
+    const credits = Math.max(0.1, Math.round(pricePer1KChars * 10 * 10) / 10); // ×10 formula
+    
+    const html = `
+      <p class="text-xs text-violet-300 font-semibold">📝 Per 1K Characters (Bulk TTS)</p>
+      <p class="text-sm mt-1">$${pricePer1KChars.toFixed(3)}/1K chars = <span class="text-yellow-400 font-bold">${credits} cr</span></p>
+      <p class="text-xs text-gray-400 mt-1">Min ${minCharsBulk} chars for bulk rate</p>
+    `;
+    previewDiv.innerHTML = html;
+    document.getElementById('model-cost').value = credits;
+  }
+  
+  // PER MINUTE PRICING (AUDIO)
+  else if (structureType === 'per_minute') {
+    const pricePerMinute = parseFloat(document.getElementById('price-per-minute')?.value) || 0;
+    const maxDurationMinutes = parseInt(document.getElementById('max-duration-minutes')?.value) || 5;
+    
+    if (!pricePerMinute || pricePerMinute <= 0) {
+      previewDiv.innerHTML = '<p class="text-gray-500">Enter price per minute...</p>';
+      document.getElementById('model-cost').value = 1;
+      return;
+    }
+    
+    const credits = Math.max(0.1, Math.round(pricePerMinute * 10 * 10) / 10); // ×10 formula
+    
+    const html = `
+      <p class="text-xs text-emerald-300 font-semibold">⏱️ Per Minute (Long Audio)</p>
+      <p class="text-sm mt-1">$${pricePerMinute.toFixed(2)}/min = <span class="text-yellow-400 font-bold">${credits} cr/min</span></p>
+      <p class="text-xs text-gray-400 mt-1">Max ${maxDurationMinutes} minutes • Example: ${maxDurationMinutes}min = ${(credits * maxDurationMinutes).toFixed(1)} cr</p>
+    `;
+    previewDiv.innerHTML = html;
+    document.getElementById('model-cost').value = credits;
+  }
+  
+  // PER REQUEST PRICING
+  else if (structureType === 'per_request') {
+    const pricePerRequest = parseFloat(document.getElementById('price-per-request')?.value) || 0;
+    const includesRetries = document.getElementById('includes-retries')?.value === 'yes';
+    
+    if (!pricePerRequest || pricePerRequest <= 0) {
+      previewDiv.innerHTML = '<p class="text-gray-500">Enter price per request...</p>';
+      document.getElementById('model-cost').value = 1;
+      return;
+    }
+    
+    const credits = Math.max(0.01, Math.round(pricePerRequest * 10 * 10) / 10); // ×10 formula
+    
+    const html = `
+      <p class="text-xs text-slate-300 font-semibold">🔄 Per Request (API Call)</p>
+      <p class="text-sm mt-1">$${pricePerRequest.toFixed(4)}/request = <span class="text-yellow-400 font-bold">${credits} cr</span></p>
+      <p class="text-xs text-gray-400 mt-1">${includesRetries ? 'Includes retries' : 'Retries charged separately'}</p>
+    `;
+    previewDiv.innerHTML = html;
+    document.getElementById('model-cost').value = credits;
+  }
+  
+  // PER DURATION PRICING (VIDEO TIERS)
+  else if (structureType === 'per_duration') {
+    const price4s = parseFloat(document.getElementById('price-4s')?.value) || 0;
+    const price6s = parseFloat(document.getElementById('price-6s')?.value) || 0;
+    const price8s = parseFloat(document.getElementById('price-8s')?.value) || 0;
+    const price10s = parseFloat(document.getElementById('price-10s')?.value) || 0;
+    const price15s = parseFloat(document.getElementById('price-15s')?.value) || 0;
+    const price20s = parseFloat(document.getElementById('price-20s')?.value) || 0;
+    
+    const prices = [
+      { duration: 4, price: price4s },
+      { duration: 6, price: price6s },
+      { duration: 8, price: price8s },
+      { duration: 10, price: price10s },
+      { duration: 15, price: price15s },
+      { duration: 20, price: price20s }
+    ].filter(p => p.price > 0);
+    
+    if (prices.length === 0) {
+      previewDiv.innerHTML = '<p class="text-gray-500">Enter at least one duration price...</p>';
+      document.getElementById('model-cost').value = 1;
+      return;
+    }
+    
+    let html = `<p class="text-xs text-blue-300 font-semibold">⏳ Per Duration (Video Tiers)</p><div class="text-sm mt-1 space-y-1">`;
+    const allCredits = [];
+    
+    prices.forEach(({ duration, price }) => {
+      const credits = Math.max(0.1, Math.round(price * 10 * 10) / 10); // ×10 formula
+      html += `<p>${duration}s: $${price.toFixed(2)} = <span class="text-yellow-400 font-bold">${credits} cr</span></p>`;
+      allCredits.push(credits);
+    });
+    
+    html += `</div>`;
+    previewDiv.innerHTML = html;
+    // Use highest price as base cost for complex pricing
+    document.getElementById('model-cost').value = Math.max(...allCredits);
+  }
+  
+  // TIERED USAGE PRICING
+  else if (structureType === 'tiered_usage') {
+    const tier1Price = parseFloat(document.getElementById('tier1-price')?.value) || 0;
+    const tier2Price = parseFloat(document.getElementById('tier2-price')?.value) || 0;
+    const tier3Price = parseFloat(document.getElementById('tier3-price')?.value) || 0;
+    const unitType = document.getElementById('tier-unit-type')?.value || 'images';
+    
+    if (!tier1Price && !tier2Price && !tier3Price) {
+      previewDiv.innerHTML = '<p class="text-gray-500">Enter tier prices...</p>';
+      document.getElementById('model-cost').value = 1;
+      return;
+    }
+    
+    let html = `<p class="text-xs text-amber-300 font-semibold">🎯 Tiered Usage (Volume Discounts)</p><div class="text-sm mt-1 space-y-1">`;
+    const allCredits = [];
+    
+    if (tier1Price > 0) {
+      const credits = Math.max(0.1, Math.round(tier1Price * 10 * 10) / 10);
+      html += `<p>Tier 1 (1-100): $${tier1Price.toFixed(3)} = <span class="text-yellow-400 font-bold">${credits} cr</span>/${unitType}</p>`;
+      allCredits.push(credits);
+    }
+    if (tier2Price > 0) {
+      const credits = Math.max(0.1, Math.round(tier2Price * 10 * 10) / 10);
+      html += `<p>Tier 2 (101-500): $${tier2Price.toFixed(3)} = <span class="text-yellow-400 font-bold">${credits} cr</span>/${unitType}</p>`;
+      allCredits.push(credits);
+    }
+    if (tier3Price > 0) {
+      const credits = Math.max(0.1, Math.round(tier3Price * 10 * 10) / 10);
+      html += `<p>Tier 3 (501+): $${tier3Price.toFixed(3)} = <span class="text-yellow-400 font-bold">${credits} cr</span>/${unitType}</p>`;
+      allCredits.push(credits);
+    }
+    
+    html += `</div>`;
+    previewDiv.innerHTML = html;
+    // Use tier 1 price as base cost
+    document.getElementById('model-cost').value = allCredits[0] || 1;
   }
   
   // 3D MODELING PRICING

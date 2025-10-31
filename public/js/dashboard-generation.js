@@ -58,6 +58,100 @@ function setupImageUploadMode(imageType, uploadMode, maxImages) {
 }
 
 /**
+ * ✅ PERSISTENCE FIX: Re-setup upload mode after model loads
+ * This ensures multiple image UI is restored properly after page reload
+ */
+function refreshImageUploadMode() {
+    const imageType = document.getElementById('image-type');
+    const imageUploadSection = document.getElementById('image-upload-section');
+    
+    if (!imageType || !imageUploadSection || imageUploadSection.classList.contains('hidden')) {
+        return; // Not in image upload mode
+    }
+    
+    const currentImageType = imageType.value;
+    
+    // Only setup for edit operations that support image upload
+    if (currentImageType === 'edit-image' || currentImageType === 'edit-multi' || 
+        currentImageType === 'upscale' || currentImageType === 'remove-bg' || 
+        currentImageType === 'image-to-3d') {
+        
+        // Check if current model supports multiple images
+        const currentSelectedModel = window.getSelectedModel ? window.getSelectedModel() : null;
+        
+        // Safety check - if no model available yet, skip refresh
+        if (!currentSelectedModel) {
+            console.log('🔄 No selected model available yet, skipping upload mode refresh');
+            return;
+        }
+        
+        const supportsMultiImage = !!(currentSelectedModel && currentSelectedModel.metadata && currentSelectedModel.metadata.supports_multi_image);
+        
+        // Get configuration from model metadata
+        const maxImages = supportsMultiImage ? (parseInt(currentSelectedModel.metadata.max_images) || 3) : 1;
+        const uploadMode = supportsMultiImage ? (currentSelectedModel.metadata.multi_image_upload_mode || 'dynamic') : 'single';
+        
+        console.log(`🔄 Refreshing upload mode after model load: ${supportsMultiImage ? 'MULTIPLE' : 'SINGLE'} mode`);
+        
+        // Re-setup upload UI with correct model metadata
+        setupImageUploadMode(currentImageType, uploadMode, maxImages);
+    }
+}
+
+/**
+ * ✅ PERSISTENCE RETRY: Continuously check and fix upload mode if needed
+ * This handles edge cases where initial restoration fails
+ */
+function startPersistenceRetryMechanism() {
+    let retryCount = 0;
+    const maxRetries = 10;
+    
+    function retryCheck() {
+        retryCount++;
+        
+        // Only retry for a limited time to prevent infinite loops
+        if (retryCount > maxRetries) {
+            console.log('🔄 Persistence retry mechanism stopped after max attempts');
+            return;
+        }
+        
+        // Check if we're in image mode and upload section is visible
+        const activeTab = document.querySelector('.creation-tab.active');
+        const currentMode = activeTab ? activeTab.getAttribute('data-mode') : null;
+        
+        if (currentMode === 'image') {
+            const imageUploadSection = document.getElementById('image-upload-section');
+            const addImageBtn = document.getElementById('add-image-field-btn');
+            
+            // If upload section is visible but selectedModel exists and supports multi-image,
+            // but add button is hidden, we need to refresh
+            const currentSelectedModel = window.getSelectedModel ? window.getSelectedModel() : null;
+            if (imageUploadSection && !imageUploadSection.classList.contains('hidden') && currentSelectedModel) {
+                const supportsMultiImage = !!(currentSelectedModel.metadata && currentSelectedModel.metadata.supports_multi_image);
+                const isAddButtonHidden = addImageBtn && addImageBtn.classList.contains('hidden');
+                
+                if (supportsMultiImage && isAddButtonHidden) {
+                    console.log(`🔄 Retry ${retryCount}: Fixing missing multiple image UI`);
+                    if (window.refreshImageUploadMode) {
+                        window.refreshImageUploadMode();
+                    } else if (typeof refreshImageUploadMode === 'function') {
+                        refreshImageUploadMode();
+                    }
+                }
+            }
+        }
+        
+        // Continue checking every 2 seconds for the first minute after page load
+        if (retryCount < maxRetries) {
+            setTimeout(retryCheck, 2000);
+        }
+    }
+    
+    // Start retry mechanism after initial page load
+    setTimeout(retryCheck, 3000);
+}
+
+/**
  * Add a new dynamic upload field
  */
 function addDynamicUploadField() {
@@ -468,6 +562,16 @@ document.addEventListener('DOMContentLoaded', function() {
             // This ensures credits display correctly on page refresh
             if (selectedModel) {
                 calculateCreditCost();
+                
+                // ✅ PERSISTENCE FIX: Refresh image upload mode after model loads
+                // This ensures multiple image UI is restored properly
+                setTimeout(() => {
+                    if (window.refreshImageUploadMode) {
+                        window.refreshImageUploadMode();
+                    } else if (typeof refreshImageUploadMode === 'function') {
+                        refreshImageUploadMode();
+                    }
+                }, 100);
             }
             }
         } catch (error) {
@@ -667,28 +771,102 @@ document.addEventListener('DOMContentLoaded', function() {
                     costMultiplier = 1.0;
                     
                 } else {
-                    // SIMPLE PRICING (original logic)
+                    // COMPREHENSIVE PRICING SUPPORT (14 pricing types)
                     const modelMaxDuration = selectedModel.max_duration || 20;
                     const pricingType = selectedModel.pricing_type || 'flat';
                     
-                    // SMART PRICING: Per-second vs Flat rate
+                    // Handle all pricing types from admin panel
                     if (pricingType === 'per_second') {
                         // PER-SECOND MODELS (e.g., Sora 2: $0.24/s, Kling: $0.28/s)
-                        // baseCost is stored as credits PER SECOND in DB
-                        // We just multiply by requested duration
-                        
-                        const creditsPerSecond = baseCost; // Already per-second rate from DB
-                        
-                        // Calculate actual cost for requested duration
+                        const creditsPerSecond = baseCost;
                         baseCost = creditsPerSecond * requestedDuration;
-                        costMultiplier = 1.0; // Already calculated exact cost
+                        costMultiplier = 1.0;
+                        
+                    } else if (pricingType === 'per_image') {
+                        // PER-IMAGE MODELS (e.g., DALLE-3: $0.04/image)
+                        // baseCost already set correctly in admin panel
+                        costMultiplier = 1.0;
+                        
+                    } else if (pricingType === 'per_token') {
+                        // PER-TOKEN MODELS (LLM - e.g., GPT-4)
+                        // For now, use base cost as stored from admin
+                        // TODO: Could add dynamic token estimation in future
+                        costMultiplier = 1.0;
+                        
+                    } else if (pricingType === 'per_character') {
+                        // PER-CHARACTER MODELS (TTS)
+                        const promptLength = initialPrompt?.length || 100; // Default 100 chars
+                        baseCost = (baseCost / 100) * promptLength; // Admin stores per-100-chars rate
+                        costMultiplier = 1.0;
+                        
+                    } else if (pricingType === 'per_1k_chars') {
+                        // PER-1K-CHARS MODELS (Bulk TTS)
+                        const promptLength = initialPrompt?.length || 1000; // Default 1K chars
+                        baseCost = baseCost * Math.max(1, Math.ceil(promptLength / 1000));
+                        costMultiplier = 1.0;
+                        
+                    } else if (pricingType === 'per_minute') {
+                        // PER-MINUTE MODELS (Long Audio)
+                        const durationMinutes = Math.ceil(requestedDuration / 60);
+                        baseCost = baseCost * durationMinutes;
+                        costMultiplier = 1.0;
+                        
+                    } else if (pricingType === 'per_request') {
+                        // PER-REQUEST MODELS (API Call based)
+                        // baseCost already set correctly for single request
+                        costMultiplier = 1.0;
+                        
+                    } else if (pricingType === 'per_duration') {
+                        // PER-DURATION MODELS (Video with tiers - e.g., Veo 3.1)
+                        // Admin panel should store appropriate cost based on duration tier
+                        costMultiplier = 1.0;
+                        
+                    } else if (pricingType === 'tiered_usage') {
+                        // TIERED USAGE MODELS (Volume discounts)
+                        // Use tier 1 pricing for individual generations
+                        // Volume discounts would be applied at billing level
+                        costMultiplier = 1.0;
+                        
+                    } else if (pricingType === 'per_pixel') {
+                        // PER-PIXEL MODELS (Upscaling)
+                        // Admin panel already calculated pixel-based cost
+                        costMultiplier = 1.0;
+                        
+                    } else if (pricingType === 'per_megapixel') {
+                        // PER-MEGAPIXEL MODELS (FLUX)
+                        // Admin panel already calculated megapixel-based cost  
+                        costMultiplier = 1.0;
+                        
+                    } else if (pricingType === '3d_modeling') {
+                        // 3D MODELING PRICING
+                        // Admin panel already calculated base × quality multiplier
+                        costMultiplier = 1.0;
+                        
+                    } else if (pricingType === 'resolution_based') {
+                        // RESOLUTION-BASED PRICING
+                        // Admin panel already set resolution-specific cost
+                        costMultiplier = 1.0;
+                        
                     } else {
-                        // FLAT RATE MODELS (e.g., MiniMax: $0.50 flat, Runway: $0.60 flat)
+                        // FLAT RATE MODELS (default/fallback)
                         costMultiplier = 1.0;
                     }
                     
-                    // No additional multipliers - price is already set in admin
-                    // Image-to-video price should be configured in admin panel
+                    console.log(`💰 Cost calculation - Pricing Type: ${pricingType}, Base Cost: ${baseCost}, Multiplier: ${costMultiplier}`);
+                }
+            } else if (mode === 'audio') {
+                // ===== AUDIO MODE =====
+                // Use audio handler for cost calculation if available
+                if (window.audioHandler && window.audioHandler.calculateCost) {
+                    const audioCost = window.audioHandler.calculateCost();
+                    baseCost = audioCost || 1.0;
+                    costMultiplier = 1.0; // Audio handler already calculates final cost
+                    
+                    console.log(`🎵 Using audio cost calculation: ${baseCost} credits`);
+                } else {
+                    // Fallback if audio handler not available
+                    console.warn('⚠️ Audio handler not available, using basic cost');
+                    baseCost = parseFloat(selectedModel.cost) || 2.0;
                     costMultiplier = 1.0;
                 }
             }
@@ -795,6 +973,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             calculateCreditCost();
+            
+            // ✅ PERSISTENCE FIX: Refresh upload mode when model changes
+            // This ensures multiple image UI updates when different model is selected
+            if (currentMode === 'image') {
+                // Use timeout to ensure DOM is ready and function is available
+                setTimeout(() => {
+                    if (window.refreshImageUploadMode) {
+                        window.refreshImageUploadMode();
+                    } else if (typeof refreshImageUploadMode === 'function') {
+                        refreshImageUploadMode();
+                    }
+                }, 100);
+            }
         } else {
             console.error('❌ MODEL NOT FOUND:', modelId);
             availableModels.slice(0, 10).forEach(m => {
@@ -5089,6 +5280,10 @@ document.addEventListener('DOMContentLoaded', function() {
     window.getAvailableModels = () => availableModels;
     window.getSelectedModel = () => selectedModel;
     window.calculateCreditCost = calculateCreditCost; // Expose for external triggers
+    window.refreshImageUploadMode = refreshImageUploadMode; // Expose for external use
+    
+    // ✅ Start persistence retry mechanism to handle edge cases
+    startPersistenceRetryMechanism();
 });
 
 // Download file function (global)

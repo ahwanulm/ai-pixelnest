@@ -85,8 +85,32 @@
                 // Per-second pricing: show credits per second
                 const baseCost = parseFloat(model.cost_credits || model.cost || 0.5);
                 cost = baseCost.toFixed(1);
+            } else if (model.pricing_type === 'per_image') {
+                // Per-image pricing: show cost per image
+                cost = parseFloat(model.cost_credits || model.cost || 0.5).toFixed(1);
+            } else if (model.pricing_type === 'per_token') {
+                // Per-token pricing: show base rate
+                cost = parseFloat(model.cost_credits || model.cost || 1.0).toFixed(1);
+            } else if (model.pricing_type === 'per_character') {
+                // Per-character pricing: show per 100 chars
+                cost = parseFloat(model.cost_credits || model.cost || 0.1).toFixed(2);
+            } else if (model.pricing_type === 'per_1k_chars') {
+                // Per 1K chars pricing
+                cost = parseFloat(model.cost_credits || model.cost || 0.5).toFixed(1);
+            } else if (model.pricing_type === 'per_minute') {
+                // Per-minute pricing
+                cost = parseFloat(model.cost_credits || model.cost || 1.5).toFixed(1);
+            } else if (model.pricing_type === 'per_request') {
+                // Per-request pricing
+                cost = parseFloat(model.cost_credits || model.cost || 0.1).toFixed(2);
+            } else if (model.pricing_type === 'per_duration') {
+                // Per-duration pricing (video tiers)
+                cost = parseFloat(model.cost_credits || model.cost || 2.0).toFixed(1);
+            } else if (model.pricing_type === 'tiered_usage') {
+                // Tiered usage pricing (show tier 1)
+                cost = parseFloat(model.cost_credits || model.cost || 1.0).toFixed(1);
             } else {
-                // Flat rate: show full cost
+                // Flat rate and other pricing types
                 cost = parseFloat(model.cost_credits || model.cost || 0.5).toFixed(1);
             }
         } else {
@@ -126,7 +150,7 @@
                                 </span>
                                 <span class="text-xs px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 font-semibold flex items-center gap-1">
                                     <i class="fas fa-coins text-xs"></i>
-                                    <span>${model.pricing_type === 'per_second' ? cost + ' cr/s' : (model.has_multi_tier_pricing ? 'from ' + cost : cost)}</span>
+                                    <span>${getPricingDisplayText(model, cost)}</span>
                                 </span>
                             </div>
                         </div>
@@ -838,6 +862,46 @@
         }
     }
     
+    // Helper function to get appropriate pricing display text
+    function getPricingDisplayText(model, cost) {
+        if (model.has_multi_tier_pricing) {
+            return `from ${cost}`;
+        }
+        
+        const pricingType = model.pricing_type || 'flat';
+        
+        switch (pricingType) {
+            case 'per_second':
+                return `${cost} cr/s`;
+            case 'per_image':
+                return `${cost} cr/img`;
+            case 'per_token':
+                return `${cost} cr/1K`;
+            case 'per_character':
+                return `${cost} cr/100c`;
+            case 'per_1k_chars':
+                return `${cost} cr/1Kc`;
+            case 'per_minute':
+                return `${cost} cr/min`;
+            case 'per_request':
+                return `${cost} cr/req`;
+            case 'per_duration':
+                return `from ${cost}`;
+            case 'tiered_usage':
+                return `${cost}+ cr`;
+            case 'per_pixel':
+                return `${cost} cr/px`;
+            case 'per_megapixel':
+                return `${cost} cr/MP`;
+            case '3d_modeling':
+                return `${cost} cr`;
+            case 'resolution_based':
+                return `from ${cost}`;
+            default:
+                return `${cost} cr`;
+        }
+    }
+
     // Export functions
     window.modelCardsHandler = {
         loadImageModels,
