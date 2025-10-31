@@ -122,5 +122,21 @@ router.post('/api/jobs/bulk-delete', logAdminActivity('bulk_delete_jobs'), admin
 router.post('/api/jobs/cleanup', logAdminActivity('run_cleanup'), adminJobsController.runCleanup);
 router.get('/api/jobs/statistics', adminJobsController.getStatistics);
 
+// ============ BLOG MANAGEMENT ============
+const adminBlogController = require('../controllers/adminBlogController');
+// View routes
+router.get('/blog', adminBlogController.getBlogManagementPage);
+router.get('/blog/generate', adminBlogController.getAIGeneratorPage);
+router.get('/blog/edit/:id', adminBlogController.getEditPage);
+// API routes
+router.post('/api/blog/generate', logAdminActivity('generate_blog_article'), adminBlogController.generateArticle);
+router.get('/api/blog', adminBlogController.getAllPosts);
+router.get('/api/blog/:id', adminBlogController.getPost);
+router.post('/api/blog', logAdminActivity('create_blog_post'), adminBlogController.createPost);
+router.put('/api/blog/:id', logAdminActivity('update_blog_post'), adminBlogController.updatePost);
+router.delete('/api/blog/:id', logAdminActivity('delete_blog_post'), adminBlogController.deletePost);
+router.patch('/api/blog/:id/publish', logAdminActivity('toggle_blog_publish'), adminBlogController.togglePublish);
+router.post('/api/blog/upload-image', logAdminActivity('upload_blog_image'), adminBlogController.uploadImage);
+
 module.exports = router;
 

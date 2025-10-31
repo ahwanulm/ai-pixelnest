@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="/js/theme-manager.js"></script>
+  <%- include('../partials/admin-styles') %>
+  <style>
+    .ai-card {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.05));
+      border: 2px solid rgba(139, 92, 246, 0.3);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+    .form-label {
+      display: block;
+      color: #e5e7eb;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      font-size: 14px;
+      cursor: default;
+      user-select: none;
+    }
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(30, 27, 75, 0.6);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 8px;
+      color: white;
+      font-size: 14px;
+      transition: all 0.3s;
+      cursor: pointer;
+      position: relative;
+      z-index: 1;
+    }
+    .form-input, .form-textarea {
+      cursor: text;
+    }
+    .form-select {
+      cursor: pointer;
+      appearance: auto;
+      -webkit-appearance: menulist;
+      -moz-appearance: menulist;
+      background-image: none;
+    }
+    .form-select option {
+      background: #1e1b4b;
+      color: white;
+      padding: 8px;
+    }
+    .form-input:hover, .form-textarea:hover, .form-select:hover {
+      border-color: rgba(139, 92, 246, 0.5);
+      background: rgba(30, 27, 75, 0.8);
+    }
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      outline: none;
+      border-color: rgba(139, 92, 246, 0.8);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+      background: rgba(30, 27, 75, 0.9);
+    }
+    .form-textarea {
+      min-height: 150px;
+      resize: vertical;
+    }
+    .image-upload-area {
+      border: 2px dashed rgba(139, 92, 246, 0.3);
+      border-radius: 12px;
+      padding: 3rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: rgba(30, 27, 75, 0.4);
+    }
+    .image-upload-area:hover {
+      border-color: rgba(139, 92, 246, 0.6);
+      background: rgba(30, 27, 75, 0.6);
+    }
+    .image-preview {
+      max-width: 100%;
+      max-height: 300px;
+      border-radius: 12px;
+      margin-top: 1rem;
+    }
+    .btn-generate {
+      background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+      color: white;
+      padding: 14px 32px;
+      border-radius: 10px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-generate:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+    }
+    .btn-generate:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+    .preview-section {
+      background: rgba(30, 27, 75, 0.6);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-top: 2rem;
+    }
+    .content-preview {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      color: #1f2937;
+      min-height: 200px;
+    }
+    .content-preview h2 {
+      color: #1f2937;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .content-preview h3 {
+      color: #374151;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-top: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+    .content-preview p {
+      margin-bottom: 1rem;
+      line-height: 1.75;
+    }
+    .content-preview ul, .content-preview ol {
+      margin-bottom: 1rem;
+      padding-left: 2rem;
+    }
+    .content-preview li {
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+
+    <div class="flex-1 ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: title }) %>
+
+      <main class="p-8 flex-1">
+        <!-- Header -->
+        <div class="glass-strong rounded-xl p-6 mb-6">
+          <div class="flex justify-between items-center flex-wrap gap-4">
+            <div>
+              <h2 class="text-2xl font-bold text-white mb-2">
+                <i class="fas fa-wand-magic-sparkles text-violet-400"></i> 
+                <% if (editPost) { %>
+                  Edit Blog Article
+                <% } else { %>
+                  AI Blog Generator
+                <% } %>
+              </h2>
+              <p class="text-gray-400">
+                <% if (editPost) { %>
+                  Edit your blog article or regenerate with AI
+                <% } else { %>
+                  Generate SEO-optimized blog articles using AI (Groq)
+                <% } %>
+              </p>
+            </div>
+            <a href="/admin/blog" class="btn-secondary">
+              <i class="fas fa-arrow-left"></i> Back to Blog Management
+            </a>
+          </div>
+        </div>
+
+        <% if (!isGroqAvailable) { %>
+          <div class="glass-strong rounded-xl p-6 mb-6 border-l-4 border-yellow-500">
+            <div class="flex items-start gap-4">
+              <i class="fas fa-exclamation-triangle text-yellow-400 text-2xl mt-1"></i>
+              <div>
+                <h3 class="text-lg font-bold text-white mb-2">Groq API Not Configured</h3>
+                <p class="text-gray-400 mb-3">
+                  The AI blog generation feature requires Groq API to be configured. 
+                  Please set up your Groq API key in Admin → API Configs to use this feature.
+                </p>
+                <a href="/admin/api-configs" class="btn-primary">
+                  <i class="fas fa-cog"></i> Configure Groq API
+                </a>
+              </div>
+            </div>
+          </div>
+        <% } %>
+
+        <!-- AI Generation Form -->
+        <div class="ai-card">
+          <div class="flex items-center gap-3 mb-6">
+            <span class="ai-badge">
+              <i class="fas fa-robot"></i>
+              AI-Powered
+            </span>
+            <h3 class="text-xl font-bold text-white">Article Generation Settings</h3>
+          </div>
+
+          <form id="aiGenerationForm">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Topic/Prompt -->
+              <div class="form-group md:col-span-2">
+                <label class="form-label">
+                  <i class="fas fa-lightbulb text-yellow-400"></i> Topic / Article Prompt *
+                </label>
+                <textarea 
+                  id="topic" 
+                  name="topic" 
+                  class="form-textarea" 
+                  placeholder="Example: How to optimize images for SEO in 2024&#10;&#10;Describe what you want the article to be about. The AI will generate a comprehensive, SEO-optimized article based on your prompt."
+                  required
+                ><%= editPost ? editPost.title : '' %></textarea>
+                <p class="text-sm text-gray-500 mt-2">
+                  <i class="fas fa-info-circle"></i> Be specific! The more details you provide, the better the AI-generated content will be.
+                </p>
+              </div>
+
+              <!-- SEO Keywords -->
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fas fa-key text-blue-400"></i> SEO Keywords
+                </label>
+                <input 
+                  type="text" 
+                  id="keywords" 
+                  name="keywords" 
+                  class="form-input" 
+                  placeholder="SEO, image optimization, web performance"
+                  value="<%= editPost ? editPost.tags : '' %>"
+                >
+                <p class="text-sm text-gray-500 mt-2">Comma-separated keywords for SEO optimization</p>
+              </div>
+
+              <!-- Category -->
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fas fa-folder text-green-400"></i> Category
+                </label>
+                <select id="category" name="category" class="form-select">
+                  <option value="Technology">Technology & AI</option>
+                  <option value="Tutorial">Tutorial & Guides</option>
+                  <option value="Strategy">Strategy & Tips</option>
+                  <option value="Insights">Facts & Insights</option>
+                  <option value="Trends">Trends & Predictions</option>
+                  <option value="Case Study">Case Study</option>
+                  <option value="Tips">Tips & Tricks</option>
+                </select>
+              </div>
+
+              <!-- Tone -->
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fas fa-comment text-purple-400"></i> Writing Tone
+                </label>
+                <select id="tone" name="tone" class="form-select">
+                  <option value="professional">Professional</option>
+                  <option value="casual">Casual & Friendly</option>
+                  <option value="technical">Technical</option>
+                  <option value="conversational">Conversational</option>
+                  <option value="formal">Formal</option>
+                </select>
+              </div>
+
+              <!-- Word Count -->
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fas fa-align-left text-pink-400"></i> Target Word Count
+                </label>
+                <select id="wordCount" name="wordCount" class="form-select">
+                  <option value="1000">1000 words (Short)</option>
+                  <option value="1500" selected>1500 words (Medium)</option>
+                  <option value="2000">2000 words (Long)</option>
+                  <option value="2500">2500 words (In-depth)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Generate Button -->
+            <div class="mt-6 flex gap-4">
+              <button 
+                type="submit" 
+                id="generateBtn" 
+                class="btn-generate"
+                <%= !isGroqAvailable ? 'disabled' : '' %>
+              >
+                <i class="fas fa-wand-magic-sparkles"></i>
+                <span id="generateBtnText">Generate Article with AI</span>
+              </button>
+              
+              <button 
+                type="button" 
+                id="clearBtn" 
+                class="btn-secondary"
+                onclick="clearForm()"
+              >
+                <i class="fas fa-eraser"></i> Clear
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Article Editor -->
+        <div class="glass-strong rounded-xl p-6 mb-6">
+          <h3 class="text-xl font-bold text-white mb-6">
+            <i class="fas fa-edit text-blue-400"></i> Article Editor
+          </h3>
+
+          <form id="articleForm">
+            <input type="hidden" id="postId" value="<%= editPost ? editPost.id : '' %>">
+            
+            <!-- Title -->
+            <div class="form-group">
+              <label class="form-label">Article Title *</label>
+              <input 
+                type="text" 
+                id="title" 
+                name="title" 
+                class="form-input" 
+                placeholder="Enter article title"
+                value="<%= editPost ? editPost.title : '' %>"
+                required
+              >
+            </div>
+
+            <!-- Excerpt -->
+            <div class="form-group">
+              <label class="form-label">Excerpt / Meta Description</label>
+              <textarea 
+                id="excerpt" 
+                name="excerpt" 
+                class="form-textarea" 
+                style="min-height: 100px;"
+                placeholder="Brief description for SEO (150-160 characters recommended)"
+              ><%= editPost ? editPost.excerpt : '' %></textarea>
+              <p class="text-sm text-gray-500 mt-2">
+                <span id="excerptCount">0</span> characters
+              </p>
+            </div>
+
+            <!-- Content -->
+            <div class="form-group">
+              <label class="form-label">Article Content (HTML) *</label>
+              <textarea 
+                id="content" 
+                name="content" 
+                class="form-textarea" 
+                style="min-height: 400px;"
+                placeholder="Article content with HTML formatting"
+                required
+              ><%= editPost ? editPost.content : '' %></textarea>
+              <p class="text-sm text-gray-500 mt-2">
+                <span id="wordCount">0</span> words | You can use HTML tags: &lt;h2&gt;, &lt;h3&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;strong&gt;, &lt;em&gt;
+              </p>
+            </div>
+
+            <!-- Image Upload -->
+            <div class="form-group">
+              <label class="form-label">Featured Image</label>
+              
+              <!-- Tabs -->
+              <div class="flex gap-2 mb-4">
+                <button type="button" onclick="showImageTab('upload')" id="uploadTab" class="btn-secondary">
+                  <i class="fas fa-upload"></i> Upload Image
+                </button>
+                <button type="button" onclick="showImageTab('url')" id="urlTab" class="btn-secondary">
+                  <i class="fas fa-link"></i> Image URL
+                </button>
+              </div>
+
+              <!-- Upload Tab -->
+              <div id="uploadSection" style="display: none;">
+                <div class="image-upload-area" onclick="document.getElementById('imageFile').click()">
+                  <i class="fas fa-cloud-upload-alt text-5xl text-violet-400 mb-4"></i>
+                  <p class="text-lg text-white mb-2">Click to upload or drag and drop</p>
+                  <p class="text-sm text-gray-400">PNG, JPG, GIF, WEBP (Max 5MB)</p>
+                  <input 
+                    type="file" 
+                    id="imageFile" 
+                    accept="image/*" 
+                    style="display: none;"
+                    onchange="handleImageUpload(event)"
+                  >
+                </div>
+              </div>
+
+              <!-- URL Tab -->
+              <div id="urlSection" style="display: none;">
+                <input 
+                  type="url" 
+                  id="image_url" 
+                  name="image_url" 
+                  class="form-input" 
+                  placeholder="https://example.com/image.jpg"
+                  value="<%= editPost ? editPost.image_url : '' %>"
+                >
+              </div>
+
+              <!-- Image Preview -->
+              <div id="imagePreviewContainer" style="display: none; margin-top: 1rem;">
+                <img id="imagePreview" src="" alt="Preview" class="image-preview">
+                <button type="button" onclick="removeImage()" class="btn-secondary mt-2">
+                  <i class="fas fa-times"></i> Remove Image
+                </button>
+              </div>
+            </div>
+
+            <!-- Additional Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="form-group">
+                <label class="form-label">Author</label>
+                <input 
+                  type="text" 
+                  id="author" 
+                  name="author" 
+                  class="form-input" 
+                  placeholder="Author name"
+                  value="<%= editPost ? editPost.author : '' %>"
+                >
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Category</label>
+                <select id="article_category" name="category" class="form-select">
+                  <option value="Technology" <%= editPost && editPost.category === 'Technology' ? 'selected' : '' %>>Technology & AI</option>
+                  <option value="Tutorial" <%= editPost && editPost.category === 'Tutorial' ? 'selected' : '' %>>Tutorial & Guides</option>
+                  <option value="Strategy" <%= editPost && editPost.category === 'Strategy' ? 'selected' : '' %>>Strategy & Tips</option>
+                  <option value="Insights" <%= editPost && editPost.category === 'Insights' ? 'selected' : '' %>>Facts & Insights</option>
+                  <option value="Trends" <%= editPost && editPost.category === 'Trends' ? 'selected' : '' %>>Trends & Predictions</option>
+                  <option value="Case Study" <%= editPost && editPost.category === 'Case Study' ? 'selected' : '' %>>Case Study</option>
+                  <option value="Tips" <%= editPost && editPost.category === 'Tips' ? 'selected' : '' %>>Tips & Tricks</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Tags</label>
+                <input 
+                  type="text" 
+                  id="tags" 
+                  name="tags" 
+                  class="form-input" 
+                  placeholder="tag1, tag2, tag3"
+                  value="<%= editPost ? editPost.tags : '' %>"
+                >
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Publish Status</label>
+                <select id="is_published" name="is_published" class="form-select">
+                  <option value="false" <%= editPost && !editPost.is_published ? 'selected' : '' %>>Draft</option>
+                  <option value="true" <%= editPost && editPost.is_published ? 'selected' : '' %>>Published</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-4 mt-6">
+              <button type="submit" class="btn-primary">
+                <i class="fas fa-save"></i>
+                <% if (editPost) { %>
+                  Update Article
+                <% } else { %>
+                  Save Article
+                <% } %>
+              </button>
+              
+              <button type="button" onclick="previewArticle()" class="btn-secondary">
+                <i class="fas fa-eye"></i> Preview
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Preview Section -->
+        <div id="previewSection" class="preview-section" style="display: none;">
+          <h3 class="text-xl font-bold text-white mb-4">
+            <i class="fas fa-eye text-blue-400"></i> Article Preview
+          </h3>
+          <div class="content-preview" id="previewContent">
+            <!-- Preview will be rendered here -->
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <%- include('../partials/admin-scripts') %>
+  
+  <script>
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Blog Generator initialized');
+      
+      // Show URL tab by default
+      showImageTab('url');
+      
+      // Count excerpt characters
+      const excerptInput = document.getElementById('excerpt');
+      if (excerptInput) {
+        excerptInput.addEventListener('input', updateExcerptCount);
+        updateExcerptCount();
+      }
+      
+      // Count words in content
+      const contentInput = document.getElementById('content');
+      if (contentInput) {
+        contentInput.addEventListener('input', updateWordCount);
+        updateWordCount();
+      }
+
+      <% if (editPost && editPost.image_url) { %>
+        showImagePreview('<%= editPost.image_url %>');
+      <% } %>
+
+      // Ensure all form elements are enabled and clickable
+      const formElements = document.querySelectorAll('.form-input, .form-textarea, .form-select');
+      formElements.forEach(element => {
+        element.disabled = false;
+        element.style.pointerEvents = 'auto';
+      });
+      
+      console.log('All form elements enabled and ready');
+    });
+
+    // Image tab switching
+    function showImageTab(tab) {
+      const uploadSection = document.getElementById('uploadSection');
+      const urlSection = document.getElementById('urlSection');
+      const uploadTab = document.getElementById('uploadTab');
+      const urlTab = document.getElementById('urlTab');
+
+      if (tab === 'upload') {
+        uploadSection.style.display = 'block';
+        urlSection.style.display = 'none';
+        uploadTab.classList.add('active');
+        urlTab.classList.remove('active');
+      } else {
+        uploadSection.style.display = 'none';
+        urlSection.style.display = 'block';
+        uploadTab.classList.remove('active');
+        urlTab.classList.add('active');
+      }
+    }
+
+    // Handle image upload
+    async function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // Show loading
+      showNotification('Uploading image...', 'info');
+
+      const formData = new FormData();
+      formData.append('image', file);
+
+      try {
+        const response = await fetch('/admin/api/blog/upload-image', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          document.getElementById('image_url').value = data.imageUrl;
+          showImagePreview(data.imageUrl);
+          showNotification('Image uploaded successfully', 'success');
+        } else {
+          showNotification(data.message || 'Failed to upload image', 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('Failed to upload image', 'error');
+      }
+    }
+
+    // Show image preview
+    function showImagePreview(url) {
+      const previewContainer = document.getElementById('imagePreviewContainer');
+      const previewImg = document.getElementById('imagePreview');
+      
+      previewImg.src = url;
+      previewContainer.style.display = 'block';
+    }
+
+    // Remove image
+    function removeImage() {
+      document.getElementById('image_url').value = '';
+      document.getElementById('imageFile').value = '';
+      document.getElementById('imagePreviewContainer').style.display = 'none';
+    }
+
+    // Update excerpt character count
+    function updateExcerptCount() {
+      const excerpt = document.getElementById('excerpt').value;
+      document.getElementById('excerptCount').textContent = excerpt.length;
+    }
+
+    // Update word count
+    function updateWordCount() {
+      const content = document.getElementById('content').value;
+      const text = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      const words = text ? text.split(' ').length : 0;
+      document.getElementById('wordCount').textContent = words;
+    }
+
+    // AI Generation Form Submit
+    document.getElementById('aiGenerationForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const generateBtn = document.getElementById('generateBtn');
+      const generateBtnText = document.getElementById('generateBtnText');
+      const originalText = generateBtnText.textContent;
+      
+      // Get form values
+      const topicValue = document.getElementById('topic').value.trim();
+      const keywordsValue = document.getElementById('keywords').value.trim();
+      const categoryValue = document.getElementById('category').value;
+      const toneValue = document.getElementById('tone').value;
+      const wordCountValue = document.getElementById('wordCount').value;
+      
+      console.log('Form values:', {
+        topic: topicValue,
+        keywords: keywordsValue,
+        category: categoryValue,
+        tone: toneValue,
+        wordCount: wordCountValue
+      });
+      
+      // Validate
+      if (!topicValue) {
+        showNotification('Please enter a topic/prompt', 'error');
+        return;
+      }
+      
+      // Disable button and show loading
+      generateBtn.disabled = true;
+      generateBtnText.innerHTML = '<span class="loading-spinner"></span> Generating...';
+      
+      const formData = {
+        topic: topicValue,
+        keywords: keywordsValue,
+        category: categoryValue,
+        tone: toneValue,
+        wordCount: parseInt(wordCountValue)
+      };
+
+      try {
+        console.log('Sending request to generate article...');
+        const response = await fetch('/admin/api/blog/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+        console.log('Response:', data);
+        
+        if (data.success) {
+          // Fill the editor form with generated content
+          document.getElementById('title').value = data.article.title || '';
+          document.getElementById('excerpt').value = data.article.excerpt || '';
+          document.getElementById('content').value = data.article.content || '';
+          document.getElementById('tags').value = data.article.tags || '';
+          
+          // Set category in article form
+          const articleCategorySelect = document.getElementById('article_category');
+          if (articleCategorySelect) {
+            articleCategorySelect.value = data.article.category || categoryValue;
+          }
+          
+          updateExcerptCount();
+          updateWordCount();
+          
+          showNotification('✨ Article generated successfully! Review and edit as needed.', 'success');
+          
+          // Scroll to editor
+          setTimeout(() => {
+            document.getElementById('articleForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 500);
+        } else {
+          showNotification(data.message || 'Failed to generate article', 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('Failed to generate article. Please try again.', 'error');
+      } finally {
+        // Re-enable button
+        generateBtn.disabled = false;
+        generateBtnText.textContent = originalText;
+      }
+    });
+
+    // Article Form Submit
+    document.getElementById('articleForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const postId = document.getElementById('postId').value;
+      const isEdit = postId && postId.length > 0;
+      
+      // Validate required fields
+      const titleValue = document.getElementById('title').value.trim();
+      const contentValue = document.getElementById('content').value.trim();
+      
+      if (!titleValue || !contentValue) {
+        showNotification('Title and content are required', 'error');
+        return;
+      }
+      
+      const formData = {
+        title: titleValue,
+        excerpt: document.getElementById('excerpt').value.trim(),
+        content: contentValue,
+        author: document.getElementById('author').value.trim(),
+        category: document.getElementById('article_category').value,
+        tags: document.getElementById('tags').value.trim(),
+        image_url: document.getElementById('image_url').value.trim(),
+        is_published: document.getElementById('is_published').value
+      };
+
+      console.log('Saving article:', formData);
+
+      try {
+        const url = isEdit ? `/admin/api/blog/${postId}` : '/admin/api/blog';
+        const method = isEdit ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+        console.log('Save response:', data);
+        
+        if (data.success) {
+          showNotification('✅ ' + data.message, 'success');
+          setTimeout(() => {
+            window.location.href = '/admin/blog';
+          }, 1500);
+        } else {
+          showNotification(data.message || 'Failed to save article', 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('Failed to save article. Please try again.', 'error');
+      }
+    });
+
+    // Preview article
+    function previewArticle() {
+      const title = document.getElementById('title').value;
+      const content = document.getElementById('content').value;
+      
+      if (!title || !content) {
+        showNotification('Please fill in title and content first', 'error');
+        return;
+      }
+      
+      const previewSection = document.getElementById('previewSection');
+      const previewContent = document.getElementById('previewContent');
+      
+      previewContent.innerHTML = `
+        <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 1.5rem; color: #1f2937;">
+          ${title}
+        </h1>
+        ${content}
+      `;
+      
+      previewSection.style.display = 'block';
+      previewSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Clear form
+    function clearForm() {
+      if (confirm('Are you sure you want to clear the form?')) {
+        document.getElementById('aiGenerationForm').reset();
+        document.getElementById('articleForm').reset();
+        document.getElementById('imagePreviewContainer').style.display = 'none';
+        document.getElementById('previewSection').style.display = 'none';
+        updateExcerptCount();
+        updateWordCount();
+      }
+    }
+
+    // Show notification
+    function showNotification(message, type) {
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500'
+      };
+      
+      const icons = {
+        success: 'check-circle',
+        error: 'exclamation-circle',
+        info: 'info-circle'
+      };
+      
+      const notification = document.createElement('div');
+      notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${colors[type] || colors.info} text-white max-w-md`;
+      notification.innerHTML = `
+        <i class="fas fa-${icons[type] || icons.info}"></i>
+        ${message}
+      `;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, type === 'error' ? 5000 : 3000);
+    }
+  </script>
+</body>
+</html>
+

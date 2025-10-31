@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PixelNest Admin</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/img/favicon.png">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="/js/theme-manager.js"></script>
+  <%- include('../partials/admin-styles') %>
+  <style>
+    .blog-card {
+      background: linear-gradient(135deg, rgba(30, 27, 75, 0.6), rgba(49, 46, 129, 0.4));
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: all 0.3s;
+    }
+    .blog-card:hover {
+      border-color: rgba(139, 92, 246, 0.5);
+      box-shadow: 0 8px 24px rgba(139, 92, 246, 0.15);
+      transform: translateY(-2px);
+    }
+    .blog-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-published {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+    }
+    .status-draft {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+    }
+    .action-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+    .btn-edit {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+    .btn-edit:hover {
+      background: rgba(59, 130, 246, 0.3);
+    }
+    .btn-delete {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    .btn-delete:hover {
+      background: rgba(239, 68, 68, 0.3);
+    }
+    .btn-publish {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+    .btn-publish:hover {
+      background: rgba(34, 197, 94, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="flex h-screen overflow-hidden">
+    <%- include('../partials/admin-sidebar') %>
+
+    <div class="flex-1 ml-64 overflow-y-auto content-area flex flex-col">
+      <%- include('../partials/admin-header', { pageTitle: title }) %>
+
+      <main class="p-8 flex-1">
+        <!-- Header Actions -->
+        <div class="glass-strong rounded-xl p-6 mb-6">
+          <div class="flex justify-between items-center flex-wrap gap-4">
+            <div>
+              <h2 class="text-2xl font-bold text-white mb-2">
+                <i class="fas fa-blog text-violet-400"></i> Blog Management
+              </h2>
+              <p class="text-gray-400">Manage your blog articles and generate new content with AI</p>
+            </div>
+            <a href="/admin/blog/generate" class="btn-primary">
+              <i class="fas fa-wand-magic-sparkles"></i> Generate with AI
+            </a>
+          </div>
+        </div>
+
+        <% if (success) { %>
+          <div class="glass-strong rounded-xl p-4 mb-6 border-l-4 border-green-500">
+            <p class="text-green-400"><i class="fas fa-check-circle"></i> <%= success %></p>
+          </div>
+        <% } %>
+
+        <% if (error) { %>
+          <div class="glass-strong rounded-xl p-4 mb-6 border-l-4 border-red-500">
+            <p class="text-red-400"><i class="fas fa-exclamation-circle"></i> <%= error %></p>
+          </div>
+        <% } %>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div class="glass-strong rounded-xl p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-400 text-sm mb-1">Total Articles</p>
+                <p class="text-3xl font-bold text-white"><%= posts.length %></p>
+              </div>
+              <div class="w-12 h-12 rounded-full bg-violet-500/20 flex items-center justify-center">
+                <i class="fas fa-newspaper text-violet-400 text-xl"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-strong rounded-xl p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-400 text-sm mb-1">Published</p>
+                <p class="text-3xl font-bold text-white"><%= posts.filter(p => p.is_published).length %></p>
+              </div>
+              <div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                <i class="fas fa-check-circle text-green-400 text-xl"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-strong rounded-xl p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-400 text-sm mb-1">Drafts</p>
+                <p class="text-3xl font-bold text-white"><%= posts.filter(p => !p.is_published).length %></p>
+              </div>
+              <div class="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                <i class="fas fa-file-alt text-yellow-400 text-xl"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Blog Posts Grid -->
+        <div class="glass-strong rounded-xl p-6">
+          <h3 class="text-xl font-bold text-white mb-6">All Articles</h3>
+          
+          <% if (posts.length === 0) { %>
+            <div class="text-center py-12">
+              <i class="fas fa-blog text-6xl text-gray-600 mb-4"></i>
+              <p class="text-gray-400 text-lg mb-4">No blog articles yet</p>
+              <a href="/admin/blog/generate" class="btn-primary">
+                <i class="fas fa-wand-magic-sparkles"></i> Create Your First Article with AI
+              </a>
+            </div>
+          <% } else { %>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <% posts.forEach(post => { %>
+                <div class="blog-card">
+                  <% if (post.image_url) { %>
+                    <img src="<%= post.image_url %>" alt="<%= post.title %>" class="blog-image">
+                  <% } else { %>
+                    <div class="blog-image bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center">
+                      <i class="fas fa-image text-4xl text-gray-600"></i>
+                    </div>
+                  <% } %>
+
+                  <div class="mb-3">
+                    <span class="status-badge <%= post.is_published ? 'status-published' : 'status-draft' %>">
+                      <%= post.is_published ? 'Published' : 'Draft' %>
+                    </span>
+                  </div>
+
+                  <h4 class="text-lg font-bold text-white mb-2 line-clamp-2"><%= post.title %></h4>
+                  
+                  <% if (post.excerpt) { %>
+                    <p class="text-gray-400 text-sm mb-3 line-clamp-2"><%= post.excerpt %></p>
+                  <% } %>
+
+                  <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                    <span><i class="fas fa-user"></i> <%= post.author || 'Admin' %></span>
+                    <span><i class="fas fa-eye"></i> <%= post.views || 0 %> views</span>
+                  </div>
+
+                  <div class="flex gap-2">
+                    <button onclick="togglePublish(<%= post.id %>, <%= post.is_published %>)" 
+                            class="action-btn btn-publish flex-1">
+                      <i class="fas fa-<%= post.is_published ? 'eye-slash' : 'eye' %>"></i>
+                      <%= post.is_published ? 'Unpublish' : 'Publish' %>
+                    </button>
+                    <a href="/admin/blog/edit/<%= post.id %>" class="action-btn btn-edit">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <button onclick="deletePost(<%= post.id %>)" class="action-btn btn-delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          <% } %>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <%- include('../partials/admin-scripts') %>
+  
+  <script>
+    async function togglePublish(postId, isPublished) {
+      if (!confirm(`Are you sure you want to ${isPublished ? 'unpublish' : 'publish'} this article?`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/admin/api/blog/${postId}/publish`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          showNotification(data.message, 'success');
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showNotification(data.message, 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('Failed to toggle publish status', 'error');
+      }
+    }
+
+    async function deletePost(postId) {
+      if (!confirm('Are you sure you want to delete this article? This action cannot be undone.')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/admin/api/blog/${postId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          showNotification(data.message, 'success');
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showNotification(data.message, 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('Failed to delete article', 'error');
+      }
+    }
+
+    function showNotification(message, type) {
+      const notification = document.createElement('div');
+      notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+      } text-white`;
+      notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+        ${message}
+      `;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
+

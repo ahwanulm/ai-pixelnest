@@ -201,6 +201,299 @@ Enhanced: "Infectious indie pop anthem bursting with youthful energy and optimis
       return false;
     }
   }
+
+  /**
+   * Generate SEO-optimized blog article using Groq AI
+   * @param {Object} params - Blog generation parameters
+   * @param {string} params.topic - Main topic/prompt for the article
+   * @param {string} params.keywords - SEO keywords (comma-separated)
+   * @param {string} params.category - Article category
+   * @param {string} params.tone - Writing tone (professional, casual, technical, etc.)
+   * @param {number} params.wordCount - Target word count (default: 1500)
+   * @returns {Promise<Object>} Generated article with title, content, excerpt, tags
+   */
+  async generateBlogArticle(params) {
+    try {
+      const { topic, keywords = '', category = 'Technology', tone = 'professional', wordCount = 1500 } = params;
+
+      // Initialize if not already done
+      if (!this.apiKey) {
+        const initialized = await this.initialize();
+        if (!initialized) {
+          throw new Error('Groq API not configured');
+        }
+      }
+
+      // Generate comprehensive system prompt for blog article
+      const systemPrompt = `You are a professional SEO content writer and expert copywriter specializing in creating high-quality, engaging, and search engine optimized blog articles.
+
+CRITICAL REQUIREMENTS:
+1. Write in ${tone} tone with excellent readability
+2. Target word count: approximately ${wordCount} words
+3. MUST be 100% SEO optimized with proper keyword integration
+4. Include clear H2 and H3 headings for structure
+5. Write engaging, valuable content that provides real insights
+6. Use natural language while incorporating SEO keywords
+7. Include introduction, body sections, and conclusion
+8. Make it actionable and reader-friendly
+
+SEO OPTIMIZATION RULES:
+- Naturally integrate primary and secondary keywords throughout the content
+- Use keywords in headings (H2, H3) where relevant
+- Write compelling meta descriptions
+- Use semantic keywords and related terms
+- Create content that answers user search intent
+- Include internal linking opportunities (mention [link] where relevant)
+- Optimize for featured snippets with clear, concise answers
+
+CONTENT STRUCTURE:
+- Compelling introduction (hook + problem + solution preview)
+- Main body with 4-6 major sections (H2 headings)
+- Subsections as needed (H3 headings)
+- Actionable tips, examples, or insights
+- Strong conclusion with call-to-action
+
+FORMAT YOUR RESPONSE AS JSON:
+{
+  "title": "SEO-optimized title (50-60 characters)",
+  "excerpt": "Compelling meta description (150-160 characters)",
+  "content": "Full HTML article content with proper <h2>, <h3>, <p>, <ul>, <ol>, <strong>, <em> tags",
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
+  "seo_keywords": ["keyword1", "keyword2", "keyword3"]
+}
+
+CRITICAL JSON FORMATTING RULES:
+1. Return ONLY valid JSON, no markdown code blocks, no explanations
+2. In the "content" field, use HTML tags but ensure ALL newlines are properly part of the HTML structure (not raw line breaks)
+3. Use <p> tags for paragraphs, <h2> for main sections, <h3> for subsections
+4. Use <ul><li> for bullet points, <ol><li> for numbered lists
+5. Do NOT include raw line breaks in the JSON - structure content with proper HTML tags instead
+6. Ensure all quotes inside strings are properly escaped with backslash
+7. Make the content field one continuous HTML string without literal newlines
+
+EXAMPLE OF CORRECT FORMAT:
+{"title":"Example Title","excerpt":"Example excerpt","content":"<h2>Introduction</h2><p>This is the introduction paragraph with proper HTML formatting.</p><h2>Main Section</h2><p>Content here.</p><ul><li>Point 1</li><li>Point 2</li></ul>","tags":["tag1","tag2"],"seo_keywords":["keyword1","keyword2"]}
+
+IMPORTANT: Return ONLY valid JSON exactly as shown in the example format.`;
+
+      const userPrompt = `Generate a comprehensive, SEO-optimized blog article with the following parameters:
+
+TOPIC: ${topic}
+CATEGORY: ${category}
+TARGET KEYWORDS: ${keywords || 'Generate relevant keywords based on the topic'}
+TONE: ${tone}
+TARGET LENGTH: ${wordCount} words
+
+Create an engaging, well-structured article that:
+1. Provides genuine value to readers
+2. Is fully optimized for search engines
+3. Includes practical tips, examples, or insights
+4. Has a clear structure with proper headings
+5. Naturally incorporates keywords without stuffing
+6. Is informative, accurate, and up-to-date
+
+Make it the best article on this topic that could rank on the first page of Google.`;
+
+      console.log('🤖 Generating blog article with Groq AI...');
+
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: this.model,
+          messages: [
+            {
+              role: 'system',
+              content: systemPrompt
+            },
+            {
+              role: 'user',
+              content: userPrompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 8000, // Allow longer content
+          top_p: 0.9
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error?.message || 'Groq API request failed');
+      }
+
+      const data = await response.json();
+      const generatedContent = data.choices[0]?.message?.content?.trim();
+
+      if (!generatedContent) {
+        throw new Error('No content received from Groq');
+      }
+
+      console.log('📄 Raw response length:', generatedContent.length, 'characters');
+
+      // Parse JSON response
+      let articleData;
+      try {
+        // Try to extract JSON from markdown code blocks if present
+        let jsonString = generatedContent;
+        
+        const jsonMatch = generatedContent.match(/```json\n([\s\S]*?)\n```/) || 
+                         generatedContent.match(/```\n([\s\S]*?)\n```/);
+        
+        if (jsonMatch) {
+          jsonString = jsonMatch[1];
+        }
+        
+        // Clean up the JSON string - fix common issues
+        jsonString = this.sanitizeJsonString(jsonString);
+        
+        console.log('🔍 Attempting to parse JSON...');
+        articleData = JSON.parse(jsonString);
+        console.log('✅ JSON parsed successfully');
+        
+      } catch (parseError) {
+        console.error('❌ Failed to parse JSON response:', parseError);
+        console.error('📄 Raw content preview:', generatedContent.substring(0, 500));
+        
+        // Fallback: Try to extract content manually
+        try {
+          console.log('🔄 Attempting fallback parsing...');
+          articleData = this.fallbackParse(generatedContent);
+          console.log('✅ Fallback parsing successful');
+        } catch (fallbackError) {
+          console.error('❌ Fallback parsing also failed:', fallbackError);
+          throw new Error('Failed to parse AI-generated content. The AI response format was invalid. Please try again.');
+        }
+      }
+
+      console.log('✅ Blog article generated successfully');
+      return {
+        title: articleData.title || 'Untitled Article',
+        excerpt: articleData.excerpt || '',
+        content: articleData.content || generatedContent,
+        tags: Array.isArray(articleData.tags) ? articleData.tags.join(', ') : '',
+        seoKeywords: Array.isArray(articleData.seo_keywords) ? articleData.seo_keywords : [],
+        wordCount: this.countWords(articleData.content || generatedContent)
+      };
+
+    } catch (error) {
+      console.error('❌ Blog article generation error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Sanitize JSON string by fixing common issues
+   */
+  sanitizeJsonString(jsonString) {
+    if (!jsonString) return jsonString;
+    
+    try {
+      // Remove any BOM or invisible characters
+      jsonString = jsonString.replace(/^\uFEFF/, '');
+      
+      // Fix unescaped control characters in strings
+      // This is a bit tricky - we need to escape control chars within quotes
+      // but not break the JSON structure
+      
+      // First, try to parse as-is
+      JSON.parse(jsonString);
+      return jsonString; // If it parses, return as-is
+      
+    } catch (e) {
+      // If parsing fails, try to fix common issues
+      console.log('🔧 Attempting to fix JSON formatting...');
+      
+      // Replace literal newlines in strings with \n
+      // This is a simplified approach - match content within quotes
+      let fixed = jsonString.replace(/"content":\s*"([\s\S]*?)"\s*,/g, (match, content) => {
+        // Escape control characters
+        const escaped = content
+          .replace(/\\/g, '\\\\')  // Escape backslashes first
+          .replace(/\n/g, '\\n')   // Escape newlines
+          .replace(/\r/g, '\\r')   // Escape carriage returns
+          .replace(/\t/g, '\\t')   // Escape tabs
+          .replace(/"/g, '\\"');   // Escape quotes
+        return `"content": "${escaped}",`;
+      });
+      
+      // Try parsing the fixed version
+      try {
+        JSON.parse(fixed);
+        console.log('✅ JSON fixed successfully');
+        return fixed;
+      } catch (e2) {
+        console.log('⚠️ Could not auto-fix JSON, returning original');
+        return jsonString;
+      }
+    }
+  }
+
+  /**
+   * Fallback parser - extract content manually if JSON parsing fails
+   */
+  fallbackParse(content) {
+    console.log('🔍 Using fallback parser...');
+    
+    // Try to extract key fields using regex
+    const titleMatch = content.match(/"title":\s*"([^"]+)"/);
+    const excerptMatch = content.match(/"excerpt":\s*"([^"]+)"/);
+    const tagsMatch = content.match(/"tags":\s*\[([^\]]+)\]/);
+    
+    // For content, try to find it between "content": and the next field or end
+    let contentMatch = content.match(/"content":\s*"([\s\S]*?)"\s*[,}]/);
+    
+    // If that fails, try to get the whole remaining content
+    if (!contentMatch) {
+      const contentStart = content.indexOf('"content":');
+      if (contentStart !== -1) {
+        const remaining = content.substring(contentStart + 11); // Skip '"content": "'
+        contentMatch = [null, remaining.substring(0, remaining.lastIndexOf('}'))];
+      }
+    }
+
+    const article = {
+      title: titleMatch ? titleMatch[1] : 'AI Generated Article',
+      excerpt: excerptMatch ? excerptMatch[1] : '',
+      content: contentMatch ? contentMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : '<p>Article content could not be parsed. Please try regenerating.</p>',
+      tags: [],
+      seo_keywords: []
+    };
+
+    // Parse tags array
+    if (tagsMatch) {
+      try {
+        article.tags = tagsMatch[1]
+          .split(',')
+          .map(t => t.trim().replace(/['"]/g, ''))
+          .filter(t => t);
+      } catch (e) {
+        console.error('Failed to parse tags:', e);
+      }
+    }
+
+    console.log('📦 Fallback parsed:', {
+      hasTitle: !!article.title,
+      hasExcerpt: !!article.excerpt,
+      hasContent: !!article.content,
+      tagsCount: article.tags.length
+    });
+
+    return article;
+  }
+
+  /**
+   * Count words in HTML content
+   */
+  countWords(html) {
+    if (!html) return 0;
+    // Remove HTML tags and count words
+    const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    return text.split(' ').length;
+  }
 }
 
 module.exports = new GroqService();
