@@ -3183,6 +3183,7 @@ window.closeSunoPricingModal = closeSunoPricingModal;
 window.saveSunoModelsWithPricing = saveSunoModelsWithPricing;
 
 // Debug: Log when functions are available
+console.log({
   editCredits: typeof window.editCredits,
   openBrowseModal: typeof window.openBrowseModal,
   syncFalModels: typeof window.syncFalModels,
