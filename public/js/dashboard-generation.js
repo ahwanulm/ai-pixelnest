@@ -3349,7 +3349,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="relative w-64 h-64 flex-shrink-0">
                     <img src="${image.url}" alt="${imageLabel}" class="w-full h-full object-cover">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                    <div class="absolute top-2 right-2 flex gap-1.5">
+                    <div class="absolute top-2 right-2 flex gap-1.5 z-[10005]">
                         <button class="btn-fullscreen px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105 shadow-lg"
                                 data-url="${image.url}" data-prompt="${prompt.replace(/"/g, '&quot;')}" data-model="${modelName.replace(/"/g, '&quot;')}" 
                                 title="View Fullscreen">
@@ -3713,7 +3713,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <video src="${video.url}" controls class="w-full h-full object-cover">
                         Your browser does not support the video tag.
                     </video>
-                    <div class="absolute top-2 right-2 flex gap-1.5">
+                    <div class="absolute top-2 right-2 flex gap-1.5 z-[10005]">
                         <button class="btn-fullscreen px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105 shadow-lg"
                                 data-url="${video.url}" data-prompt="${prompt.replace(/"/g, '&quot;')}" data-model="${modelName.replace(/"/g, '&quot;')}" 
                                 title="View Fullscreen">
@@ -4113,7 +4113,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         class="w-full h-full"
                         style="background-color: #000; --poster-color: transparent;">
                     </model-viewer>
-                    <div class="absolute top-2 right-2 flex gap-1.5">
+                    <div class="absolute top-2 right-2 flex gap-1.5 z-[10005]">
                         <button class="btn-fullscreen-3d px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105 shadow-lg"
                                 data-url="${model.url}" data-prompt="${prompt.replace(/"/g, '&quot;')}" data-model="${modelName.replace(/"/g, '&quot;')}" 
                                 title="View Fullscreen">

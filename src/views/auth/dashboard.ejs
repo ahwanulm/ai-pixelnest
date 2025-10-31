@@ -1542,6 +1542,9 @@
                                 <button class="filter-btn px-3 py-1.5 text-xs rounded-lg bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-gray-300 transition-all" data-filter="video">
                                     Videos
                                 </button>
+                                <button class="filter-btn px-3 py-1.5 text-xs rounded-lg bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-gray-300 transition-all" data-filter="audio">
+                                    Audio
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1624,10 +1627,26 @@
             </div>
         </div>
         
-        <!-- Mobile Results Content (with top padding for fixed header and bottom for navbar) -->
-        <div class="flex-1 overflow-y-auto p-4 pt-20 pb-24" id="mobile-results-content" style="pointer-events: auto;">
+        <!-- Mobile Filter Bar (Compact Enhanced Style) -->
+        <div class="fixed top-[72px] left-0 right-0 z-[10002] bg-gradient-to-r from-zinc-950/98 to-zinc-900/98 backdrop-blur-xl border-b border-white/20 px-4 py-1.5 flex items-center gap-2 overflow-x-auto" style="pointer-events: auto;">
+                <button class="mobile-filter-btn active px-2 py-1 text-xs font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-all duration-200 whitespace-nowrap flex-shrink-0" data-filter="all">
+                    All
+                </button>
+                <button class="mobile-filter-btn px-2 py-1 text-xs font-medium text-gray-300 bg-white/10 rounded-md hover:bg-white/20 hover:text-white transition-all duration-200 whitespace-nowrap flex-shrink-0" data-filter="image">
+                    Images
+                </button>
+                <button class="mobile-filter-btn px-2 py-1 text-xs font-medium text-gray-300 bg-white/10 rounded-md hover:bg-white/20 hover:text-white transition-all duration-200 whitespace-nowrap flex-shrink-0" data-filter="video">
+                    Videos
+                </button>
+                <button class="mobile-filter-btn px-2 py-1 text-xs font-medium text-gray-300 bg-white/10 rounded-md hover:bg-white/20 hover:text-white transition-all duration-200 whitespace-nowrap flex-shrink-0" data-filter="audio">
+                    Audio
+                </button>
+        </div>
+        
+        <!-- Mobile Results Content (with top padding for fixed header and filter, and bottom for navbar) -->
+        <div class="flex-1 overflow-y-auto pb-24 pt-[110px]" id="mobile-results-content" style="pointer-events: auto;">
             <!-- Results will be loaded here dynamically -->
-            <div id="mobile-empty-state" class="flex flex-col items-center justify-center h-full text-center px-4">
+            <div id="mobile-empty-state" class="flex flex-col items-center justify-center h-full text-center px-4 mt-8">
                 <div class="w-20 h-20 bg-white/5 rounded-2xl flex items-center justify-center mb-4">
                     <svg class="w-10 h-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
@@ -1642,7 +1661,7 @@
                 </button>
             </div>
             
-            <div id="mobile-results-display" class="hidden space-y-4">
+            <div id="mobile-results-display" class="hidden space-y-4 px-4 mt-8">
                 <!-- Result cards will be dynamically added here -->
             </div>
         </div>
@@ -3778,6 +3797,11 @@
                 }
                 
                 console.log('✅ Mobile view sync complete');
+                
+                // Initialize mobile filters after syncing
+                setTimeout(() => {
+                    initializeMobileFilters();
+                }, 100);
             } else {
                 console.log('ℹ️ No results to display, showing empty state');
                 if (mobileEmptyState) mobileEmptyState.classList.remove('hidden');
@@ -3785,10 +3809,76 @@
             }
         }
         
+        // Initialize mobile filters
+        let mobileFiltersInitialized = false;
+        function initializeMobileFilters() {
+            const mobileFilterButtons = document.querySelectorAll('.mobile-filter-btn');
+            const mobileResultsDisplay = document.getElementById('mobile-results-display');
+            
+            if (!mobileFilterButtons.length || !mobileResultsDisplay) return;
+            
+            // Only initialize once to prevent duplicate event listeners
+            if (mobileFiltersInitialized) return;
+            mobileFiltersInitialized = true;
+            
+            mobileFilterButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const filter = this.getAttribute('data-filter');
+                    const allMobileFilterButtons = document.querySelectorAll('.mobile-filter-btn');
+                    
+                    // Update active state for compact enhanced button filter
+                    allMobileFilterButtons.forEach(b => {
+                        b.classList.remove('active', 'text-white', 'bg-blue-600', 'font-semibold', 'hover:bg-blue-700');
+                        b.classList.add('text-gray-300', 'bg-white/10', 'font-medium', 'hover:bg-white/20', 'hover:text-white');
+                    });
+                    this.classList.remove('text-gray-300', 'bg-white/10', 'font-medium', 'hover:bg-white/20', 'hover:text-white');
+                    this.classList.add('active', 'text-white', 'bg-blue-600', 'font-semibold', 'hover:bg-blue-700');
+                    
+                    // Apply filter to mobile results display
+                    const allMobileCards = mobileResultsDisplay.querySelectorAll('.result-card:not(.loading-card), .loading-card');
+                    allMobileCards.forEach(card => {
+                        const cardMode = card.getAttribute('data-mode');
+                        
+                        if (filter === 'all') {
+                            card.style.display = '';
+                            card.classList.remove('hidden');
+                        } else if (cardMode === filter) {
+                            card.style.display = '';
+                            card.classList.remove('hidden');
+                        } else {
+                            card.style.display = 'none';
+                            card.classList.add('hidden');
+                        }
+                    });
+                    
+                    // Update mobile results count after filtering
+                    updateMobileGenerationsCount();
+                });
+            });
+        }
+        
+        // Update mobile generations count
+        function updateMobileGenerationsCount() {
+            const mobileResultsDisplay = document.getElementById('mobile-results-display');
+            const mobileResultsSubtitle = document.getElementById('mobile-results-subtitle');
+            
+            if (!mobileResultsDisplay || !mobileResultsSubtitle) return;
+            
+            const visibleCards = mobileResultsDisplay.querySelectorAll('.result-card:not(.loading-card):not(.hidden)');
+            const count = visibleCards.length;
+            
+            mobileResultsSubtitle.textContent = `${count} generation${count !== 1 ? 's' : ''}`;
+        }
+        
         // Make functions globally available for mobile navbar and generation scripts
         window.openMobileResults = openMobileResults;
         window.closeMobileResults = closeMobileResults;
         window.syncResultsToMobile = syncResultsToMobile;
+        
+        // Initialize mobile filters on page load
+        setTimeout(() => {
+            initializeMobileFilters();
+        }, 500);
         
         // Event listeners for mobile results
         if (mobileResultsClose) {
