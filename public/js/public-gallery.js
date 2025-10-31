@@ -203,129 +203,202 @@ function openDetailModal(sharedId) {
     
     const type = isVideo ? 'VIDEO' : 'GAMBAR';
     
-    // Create modal content
+    // Create modal content - Instagram Style
     const modal = document.getElementById('detail-modal');
     if (!modal) return;
     
     modal.innerHTML = `
-        <div class="bg-zinc-900 rounded-xl max-w-4xl w-full max-h-[95vh] overflow-hidden border border-white/10 shadow-2xl flex flex-col" onclick="event.stopPropagation()">
-            <!-- Header (Compact) -->
-            <div class="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-zinc-900/50 flex-shrink-0">
-                <div class="flex items-center gap-1.5 flex-wrap min-w-0">
-                    <div class="px-1.5 py-0.5 ${isVideo ? 'bg-fuchsia-500/20 border-fuchsia-500/30' : 'bg-blue-500/20 border-blue-500/30'} border rounded text-[9px] font-semibold">
-                        <i class="fas fa-${isVideo ? 'video' : 'image'} ${isVideo ? 'text-fuchsia-400' : 'text-blue-400'} mr-0.5"></i> ${type}
-                    </div>
-                    ${model ? `<div class="px-1.5 py-0.5 bg-blue-500/20 border border-blue-500/30 rounded text-[9px] font-semibold text-blue-300 uppercase">${model.substring(0, 15)}</div>` : ''}
-                    ${dimensions ? `<div class="px-1.5 py-0.5 bg-blue-500/20 border border-blue-500/30 rounded text-[9px] font-semibold text-blue-300">${dimensions}</div>` : ''}
-                    <span class="text-gray-400 text-[10px] truncate">by <span class="text-white font-semibold">${creator.substring(0, 12)}</span></span>
-                </div>
-                <button id="close-modal-btn" class="w-7 h-7 bg-white/5 hover:bg-white/10 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 active:scale-95 z-10">
-                    <i class="fas fa-times text-gray-400 text-xs"></i>
-                </button>
-            </div>
+        <div class="bg-black rounded-none lg:rounded-2xl max-w-6xl w-full h-screen lg:h-[90vh] overflow-hidden flex flex-col lg:flex-row shadow-2xl animate-fade-in" onclick="event.stopPropagation()">
             
-            <!-- Content (Scrollable) -->
-            <div class="flex flex-col lg:flex-row overflow-hidden flex-1 min-h-0 relative">
-                <!-- Media Side -->
-                <div class="lg:w-2/3 bg-black flex items-center justify-center p-2 lg:p-4 flex-shrink-0 lg:flex-shrink relative">
+            <!-- Left: Media Container (Instagram Style - Black Background) -->
+            <div class="relative flex-1 bg-black flex items-center justify-center">
+                <!-- Close Button (Top Right - Mobile & Desktop) -->
+                <button id="close-modal-btn" class="absolute top-3 right-3 z-50 w-10 h-10 bg-black/60 backdrop-blur-md hover:bg-black/80 rounded-full flex items-center justify-center transition-all active:scale-90 border border-white/20">
+                    <i class="fas fa-times text-white text-lg"></i>
+                </button>
+                
+                <!-- Media Content -->
+                <div class="relative w-full h-full flex items-center justify-center p-0">
                     ${isVideo ? `
-                        <video src="${mediaUrl}" controls autoplay loop class="max-w-full max-h-[40vh] lg:max-h-[70vh] rounded-lg shadow-2xl">
+                        <video 
+                            src="${mediaUrl}" 
+                            controls 
+                            autoplay 
+                            loop 
+                            class="w-full h-full object-contain"
+                            style="max-height: 100%;">
                             Browser tidak mendukung video.
                         </video>
                     ` : `
-                        <img src="${mediaUrl}" alt="${prompt}" class="max-w-full max-h-[40vh] lg:max-h-[70vh] object-contain rounded-lg shadow-2xl">
+                        <img 
+                            src="${mediaUrl}" 
+                            alt="${prompt}" 
+                            class="w-full h-full object-contain select-none"
+                            style="max-height: 100%;">
                     `}
-                    
-                    <!-- Floating Stats Bar (Mobile Only - Top - Instagram Style) -->
-                    <div class="lg:hidden absolute top-4 left-4 right-4 flex items-center justify-center gap-2 z-10">
-                        <div class="flex items-center gap-3 bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/20 shadow-lg">
-                            <!-- Like Count -->
-                            <div class="flex items-center gap-1.5">
-                                <i class="fas fa-heart text-white text-xs drop-shadow-lg"></i>
-                                <span id="mobile-likes-count" class="text-white font-semibold text-xs">${likes.toLocaleString()}</span>
+                </div>
+                
+                <!-- Navigation Arrows (Desktop Only) -->
+                <button class="hidden lg:flex absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/60 backdrop-blur-md hover:bg-black/80 rounded-full items-center justify-center transition-all active:scale-90 border border-white/20 opacity-0 hover:opacity-100">
+                    <i class="fas fa-chevron-left text-white text-xl"></i>
+                </button>
+                <button class="hidden lg:flex absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/60 backdrop-blur-md hover:bg-black/80 rounded-full items-center justify-center transition-all active:scale-90 border border-white/20 opacity-0 hover:opacity-100">
+                    <i class="fas fa-chevron-right text-white text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Right: Info Panel (Instagram Style) -->
+            <div class="w-full lg:w-[400px] bg-zinc-950 flex flex-col border-t lg:border-t-0 lg:border-l border-zinc-800">
+                
+                <!-- Header: Creator Info -->
+                <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                        ${creator !== 'Anonymous' ? `
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                                ${creator.charAt(0).toUpperCase()}
                             </div>
-                            
-                            <!-- Divider -->
-                            <div class="w-px h-3 bg-white/30"></div>
-                            
-                            <!-- View Count -->
-                            <div class="flex items-center gap-1.5">
-                                <i class="fas fa-eye text-white text-xs drop-shadow-lg"></i>
-                                <span id="mobile-views-count" class="text-white font-semibold text-xs">${views.toLocaleString()}</span>
+                            <div class="min-w-0">
+                                <p class="text-white font-semibold text-sm truncate">${creator}</p>
+                                <p class="text-gray-400 text-xs">Creator</p>
+                            </div>
+                        ` : `
+                            <div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-user-secret text-gray-400"></i>
+                            </div>
+                            <div>
+                                <p class="text-white font-semibold text-sm">Anonymous</p>
+                                <p class="text-gray-400 text-xs">Creator</p>
+                            </div>
+                        `}
+                    </div>
+                    <button class="text-violet-400 hover:text-violet-300 text-xs font-semibold transition-colors">
+                        • • •
+                    </button>
+                </div>
+                
+                <!-- Scrollable Content Area -->
+                <div class="flex-1 overflow-y-auto" style="scrollbar-width: thin; scrollbar-color: rgba(139, 92, 246, 0.3) transparent;">
+                    
+                    <!-- Prompt Section -->
+                    <div class="px-4 py-4 border-b border-zinc-800">
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                                ${creator.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white text-sm leading-relaxed">
+                                    <span class="font-semibold">${creator}</span> 
+                                    <span id="prompt-text" class="text-gray-300" data-full-prompt="${prompt.replace(/"/g, '&quot;')}">
+                                        ${prompt.length > 150 ? prompt.substring(0, 150) + '...' : prompt}
+                                    </span>
+                                    ${prompt.length > 150 ? `
+                                        <button id="show-more-btn" class="text-violet-400 hover:text-violet-300 font-medium ml-1 transition-colors">
+                                            more
+                                        </button>
+                                    ` : ''}
+                                </p>
+                                ${prompt.length > 150 ? `
+                                    <button id="copy-prompt-caption-btn" data-prompt="${prompt.replace(/"/g, '&quot;')}" class="mt-2 text-xs text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-1">
+                                        <i class="far fa-copy"></i> Copy prompt
+                                    </button>
+                                ` : `
+                                    <button id="copy-prompt-caption-btn" data-prompt="${prompt.replace(/"/g, '&quot;')}" class="mt-2 text-xs text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-1">
+                                        <i class="far fa-copy"></i> Copy prompt
+                                    </button>
+                                `}
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Floating Action Buttons (Mobile Only - Instagram Style) -->
-                    <div class="lg:hidden absolute bottom-4 left-4 flex items-center gap-4 z-10">
-                        <!-- Like Button (Instagram Style) -->
-                        <button id="floating-like-btn" data-shared-id="${sharedId}" data-likes="${likes}" class="group flex items-center gap-2 transition-all duration-200 active:scale-90">
-                            <div class="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/20 group-active:bg-black/60 transition-all">
-                                <i class="fas fa-heart text-white text-base drop-shadow-lg"></i>
-                            </div>
-                            ${likes > 0 ? `
-                                <span id="like-count-badge" class="text-white text-sm font-semibold drop-shadow-lg bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/20">${likes > 999 ? '999+' : likes.toLocaleString()}</span>
+                    <!-- Technical Details -->
+                    <div class="px-4 py-4 space-y-3 border-b border-zinc-800">
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fas fa-cog"></i> Technical Details
+                        </h3>
+                        <div class="space-y-2">
+                            ${model ? `
+                                <div class="flex items-center justify-between py-2 px-3 bg-zinc-900/50 rounded-lg">
+                                    <span class="text-xs text-gray-400">Model</span>
+                                    <span class="text-xs text-white font-semibold">${model}</span>
+                                </div>
                             ` : ''}
-                        </button>
-                        
-                        <!-- Bookmark Button (Instagram Style) -->
-                        <button id="floating-bookmark-btn" data-shared-id="${sharedId}" class="group transition-all duration-200 active:scale-90">
-                            <div class="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/20 group-active:bg-black/60 transition-all">
-                                <i class="fas fa-bookmark text-white text-sm drop-shadow-lg"></i>
+                            ${dimensions ? `
+                                <div class="flex items-center justify-between py-2 px-3 bg-zinc-900/50 rounded-lg">
+                                    <span class="text-xs text-gray-400">Dimensions</span>
+                                    <span class="text-xs text-white font-semibold">${dimensions}</span>
+                                </div>
+                            ` : ''}
+                            <div class="flex items-center justify-between py-2 px-3 bg-zinc-900/50 rounded-lg">
+                                <span class="text-xs text-gray-400">Type</span>
+                                <span class="text-xs text-white font-semibold">${type}</span>
                             </div>
-                        </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Stats Section -->
+                    <div class="px-4 py-4 border-b border-zinc-800">
+                        <div class="flex items-center justify-around">
+                            <div class="text-center">
+                                <p id="likes-count" class="text-white font-bold text-lg">${likes.toLocaleString()}</p>
+                                <p class="text-gray-400 text-xs">Likes</p>
+                            </div>
+                            <div class="w-px h-10 bg-zinc-800"></div>
+                            <div class="text-center">
+                                <p id="views-count" class="text-white font-bold text-lg">${views.toLocaleString()}</p>
+                                <p class="text-gray-400 text-xs">Views</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Info Side (Scrollable) -->
-                <div class="lg:w-1/3 p-3 space-y-3 overflow-y-auto bg-zinc-900/30 flex-1">
-                    <!-- Stats (Compact & Inline - Desktop Only) -->
-                    <div class="hidden lg:flex items-center justify-center gap-4 bg-white/5 rounded-lg p-2 mb-3 border border-white/10">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-heart text-red-400 text-sm"></i>
-                            <div>
-                                <span id="likes-count" class="text-white font-bold text-sm">${likes.toLocaleString()}</span>
-                                <span class="text-gray-400 text-xs ml-1">likes</span>
-                            </div>
-                        </div>
-                        <div class="w-px h-4 bg-white/20"></div>
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-eye text-blue-400 text-sm"></i>
-                            <div>
-                                <span id="views-count" class="text-white font-bold text-sm">${views.toLocaleString()}</span>
-                                <span class="text-gray-400 text-xs ml-1">views</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Prompt (Smaller & Scrollable) -->
-                    <div>
-                        <h3 class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Prompt</h3>
-                        <p class="text-xs text-white leading-relaxed max-h-32 overflow-y-auto pr-2" style="scrollbar-width: thin; scrollbar-color: rgba(139, 92, 246, 0.5) transparent;">${prompt}</p>
-                    </div>
-                    
-                    <!-- Actions (Responsive) -->
-                    <div class="pt-2 border-t border-white/10 space-y-2">
-                        ${window.location.pathname !== '/dashboard' ? `
-                            <a href="/dashboard" class="block w-full px-3 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white text-center rounded-lg text-xs font-semibold transition-all hover:scale-105 shadow-lg">
-                                <i class="fas fa-magic mr-1"></i> Buat Serupa
-                            </a>
-                        ` : ''}
-                        
-                        <div class="grid grid-cols-2 gap-2">
-                            <button id="copy-prompt-btn" data-prompt="${prompt.replace(/"/g, '&quot;')}" class="px-2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1 active:scale-95">
-                                <i class="fas fa-copy"></i> Salin
+                <!-- Footer: Action Buttons (Instagram Style) -->
+                <div class="px-4 py-3 border-t border-zinc-800 bg-zinc-950 space-y-3">
+                    <!-- Like, Comment, Share Row -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <!-- Like Button -->
+                            <button id="floating-like-btn" data-shared-id="${sharedId}" data-likes="${likes}" class="group transition-all duration-200 active:scale-90">
+                                <i class="far fa-heart text-white text-2xl group-hover:scale-110 transition-transform"></i>
                             </button>
                             
-                            <a href="${mediaUrl}" download class="px-2 py-2 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1 active:scale-95">
-                                <i class="fas fa-download"></i> Unduh
-                            </a>
+                            <!-- Comment Button (Disabled for now) -->
+                            <button class="group transition-all duration-200 active:scale-90" disabled>
+                                <i class="far fa-comment text-gray-600 text-2xl"></i>
+                            </button>
+                            
+                            <!-- Share Button -->
+                            <button id="copy-prompt-btn" data-prompt="${prompt.replace(/"/g, '&quot;')}" class="group transition-all duration-200 active:scale-90">
+                                <i class="far fa-paper-plane text-white text-2xl group-hover:scale-110 transition-transform"></i>
+                            </button>
                         </div>
                         
-                        <button id="report-btn" data-shared-id="${sharedId}" class="w-full px-2 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-xs font-semibold transition-all border border-red-500/30 active:scale-95">
-                            <i class="fas fa-flag mr-1"></i> Laporkan
+                        <!-- Bookmark Button -->
+                        <button id="floating-bookmark-btn" data-shared-id="${sharedId}" class="group transition-all duration-200 active:scale-90">
+                            <i class="far fa-bookmark text-white text-2xl group-hover:scale-110 transition-transform"></i>
                         </button>
                     </div>
+                    
+                    <!-- Action Buttons Row -->
+                    <div class="grid grid-cols-2 gap-2">
+                        ${window.location.pathname !== '/dashboard' ? `
+                            <a href="/dashboard" class="px-4 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white text-center rounded-lg text-sm font-semibold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2">
+                                <i class="fas fa-magic"></i> Create Similar
+                            </a>
+                        ` : `
+                            <button id="copy-prompt-btn-2" data-prompt="${prompt.replace(/"/g, '&quot;')}" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 active:scale-95">
+                                <i class="fas fa-copy"></i> Copy Prompt
+                            </button>
+                        `}
+                        
+                        <a href="${mediaUrl}" download class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 active:scale-95">
+                            <i class="fas fa-download"></i> Download
+                        </a>
+                    </div>
+                    
+                    <!-- Report Button -->
+                    <button id="report-btn" data-shared-id="${sharedId}" class="w-full px-3 py-2 bg-zinc-900 hover:bg-zinc-800 text-gray-400 hover:text-red-400 rounded-lg text-xs font-medium transition-all border border-zinc-800 active:scale-95">
+                        <i class="fas fa-flag mr-1"></i> Report Content
+                    </button>
                 </div>
             </div>
         </div>
@@ -339,9 +412,13 @@ function openDetailModal(sharedId) {
     setTimeout(() => {
         const closeBtn = document.getElementById('close-modal-btn');
         const copyBtn = document.getElementById('copy-prompt-btn');
+        const copyBtn2 = document.getElementById('copy-prompt-btn-2');
+        const copyCaptionBtn = document.getElementById('copy-prompt-caption-btn');
         const reportBtn = document.getElementById('report-btn');
         const floatingLikeBtn = document.getElementById('floating-like-btn');
         const floatingBookmarkBtn = document.getElementById('floating-bookmark-btn');
+        const showMoreBtn = document.getElementById('show-more-btn');
+        const promptText = document.getElementById('prompt-text');
         
         if (closeBtn) {
             closeBtn.addEventListener('click', function(e) {
@@ -360,6 +437,49 @@ function openDetailModal(sharedId) {
             });
         }
         
+        if (copyBtn2) {
+            copyBtn2.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                const promptText = this.getAttribute('data-prompt');
+                copyPrompt(promptText);
+            });
+        }
+        
+        if (copyCaptionBtn) {
+            copyCaptionBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                const promptText = this.getAttribute('data-prompt');
+                copyPrompt(promptText);
+            });
+        }
+        
+        // Show More/Less button for prompt
+        if (showMoreBtn && promptText) {
+            let isExpanded = false;
+            const fullPrompt = promptText.getAttribute('data-full-prompt');
+            const truncatedPrompt = fullPrompt.substring(0, 150) + '...';
+            
+            showMoreBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                isExpanded = !isExpanded;
+                
+                if (isExpanded) {
+                    // Show full prompt
+                    promptText.textContent = fullPrompt;
+                    showMoreBtn.textContent = 'less';
+                    promptText.style.transition = 'all 0.3s ease';
+                } else {
+                    // Show truncated prompt
+                    promptText.textContent = truncatedPrompt;
+                    showMoreBtn.textContent = 'more';
+                }
+            });
+        }
+        
         if (reportBtn) {
             reportBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
@@ -374,7 +494,7 @@ function openDetailModal(sharedId) {
                 e.stopPropagation();
                 e.preventDefault();
                 const sharedId = this.getAttribute('data-shared-id');
-                toggleLike(this, sharedId);
+                toggleLikeInstagramStyle(this, sharedId);
             });
         }
         
@@ -383,32 +503,37 @@ function openDetailModal(sharedId) {
                 e.stopPropagation();
                 e.preventDefault();
                 const sharedId = this.getAttribute('data-shared-id');
-                toggleBookmark(this, sharedId);
+                toggleBookmarkInstagramStyle(this, sharedId);
             });
         }
     }, 50);
 }
 
-// Close detail modal
+// Close detail modal with smooth animation
 function closeDetailModal() {
-    
     const modal = document.getElementById('detail-modal');
     if (modal) {
-        modal.classList.add('hidden');
-        document.body.style.overflow = 'auto';
-        
-        // Stop any playing video
-        const video = modal.querySelector('video');
-        if (video) {
-            video.pause();
-            video.src = '';
+        // Add fade-out animation
+        const modalContent = modal.querySelector('div');
+        if (modalContent) {
+            modalContent.style.animation = 'fade-out 0.2s ease-out';
         }
         
-        // Clear modal content after animation
+        // Hide modal after animation
         setTimeout(() => {
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            
+            // Stop any playing video
+            const video = modal.querySelector('video');
+            if (video) {
+                video.pause();
+                video.currentTime = 0;
+            }
+            
+            // Clear modal content
             modal.innerHTML = '';
-        }, 300);
-        
+        }, 200);
     }
 }
 
@@ -495,7 +620,126 @@ async function reportGeneration(sharedId) {
     }
 }
 
-// Toggle Like
+// Toggle Like - Instagram Style (for new modal)
+async function toggleLikeInstagramStyle(button, sharedId) {
+    try {
+        const response = await fetch('/api/public-gallery/like', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                sharedId: parseInt(sharedId)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const isLiked = data.action === 'liked';
+            const icon = button.querySelector('i');
+            
+            // Animate icon
+            if (icon) {
+                if (isLiked) {
+                    // Change to filled heart with red color
+                    icon.classList.remove('far');
+                    icon.classList.add('fas', 'text-red-500');
+                    icon.style.animation = 'heartBeat 0.5s ease';
+                } else {
+                    // Change to outline heart with white color
+                    icon.classList.remove('fas', 'text-red-500');
+                    icon.classList.add('far', 'text-white');
+                }
+                
+                // Remove animation after it's done
+                setTimeout(() => {
+                    icon.style.animation = '';
+                }, 500);
+            }
+            
+            // Update like count
+            const currentLikes = parseInt(button.getAttribute('data-likes') || '0');
+            const newLikes = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
+            button.setAttribute('data-likes', newLikes);
+            
+            // Update likes count in modal
+            const likesCountEl = document.getElementById('likes-count');
+            if (likesCountEl) {
+                likesCountEl.textContent = newLikes.toLocaleString();
+                likesCountEl.parentElement.classList.add('scale-110');
+                setTimeout(() => {
+                    likesCountEl.parentElement.classList.remove('scale-110');
+                }, 200);
+            }
+            
+            // Show subtle notification
+            if (isLiked) {
+                showNotification('❤️ Liked', 'success');
+            }
+        } else {
+            showNotification(data.message || 'Failed to like', 'error');
+        }
+    } catch (error) {
+        console.error('Error toggling like:', error);
+        showNotification('Failed to like', 'error');
+    }
+}
+
+// Toggle Bookmark - Instagram Style (for new modal)
+async function toggleBookmarkInstagramStyle(button, sharedId) {
+    try {
+        const response = await fetch('/api/public-gallery/bookmark', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                sharedId: parseInt(sharedId)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const isBookmarked = data.action === 'bookmarked';
+            const icon = button.querySelector('i');
+            
+            // Animate icon
+            if (icon) {
+                if (isBookmarked) {
+                    // Change to filled bookmark
+                    icon.classList.remove('far');
+                    icon.classList.add('fas');
+                    icon.style.animation = 'heartBeat 0.3s ease';
+                } else {
+                    // Change to outline bookmark
+                    icon.classList.remove('fas');
+                    icon.classList.add('far');
+                }
+                
+                // Remove animation after it's done
+                setTimeout(() => {
+                    icon.style.animation = '';
+                }, 300);
+            }
+            
+            // Show subtle notification
+            if (isBookmarked) {
+                showNotification('🔖 Saved', 'success');
+            } else {
+                showNotification('Removed from saved', 'info');
+            }
+        } else {
+            showNotification(data.message || 'Failed to bookmark', 'error');
+        }
+    } catch (error) {
+        console.error('Error toggling bookmark:', error);
+        showNotification('Failed to bookmark', 'error');
+    }
+}
+
+// Toggle Like (Legacy - for gallery cards)
 async function toggleLike(button, sharedId) {
     
     try {
@@ -686,7 +930,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Animation for slide in
+// Animations for Instagram-style effects
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slide-in-right {
@@ -702,6 +946,86 @@ style.textContent = `
     
     .animate-slide-in-right {
         animation: slide-in-right 0.3s ease-out;
+    }
+    
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    
+    @keyframes fade-out {
+        from {
+            opacity: 1;
+            transform: scale(1);
+        }
+        to {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+    }
+    
+    .animate-fade-in {
+        animation: fade-in 0.2s ease-out;
+    }
+    
+    .animate-fade-out {
+        animation: fade-out 0.2s ease-out;
+    }
+    
+    @keyframes heartBeat {
+        0% {
+            transform: scale(1);
+        }
+        25% {
+            transform: scale(1.3);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+        75% {
+            transform: scale(1.25);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+    }
+    
+    .scale-110 {
+        transition: transform 0.2s ease;
+        transform: scale(1.1);
+    }
+    
+    /* Instagram-style scrollbar */
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: rgba(139, 92, 246, 0.3);
+        border-radius: 3px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(139, 92, 246, 0.5);
     }
 `;
 document.head.appendChild(style);

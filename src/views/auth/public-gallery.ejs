@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +15,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/output.css?v=<%= appVersion %>">
+    <script src="/js/theme-manager.js"></script>
     
     <style>
         /* Uniform Grid Layout */
@@ -747,8 +748,8 @@
         </section>
     </main>
     
-    <!-- Detail Modal (to be implemented in JS) -->
-    <div id="detail-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[10020] flex items-center justify-center p-4" onclick="if(event.target === this) closeDetailModal()">
+    <!-- Detail Modal (Instagram Style) -->
+    <div id="detail-modal" class="hidden fixed inset-0 bg-black/95 backdrop-blur-md z-[10020] flex items-center justify-center p-0 lg:p-4" onclick="if(event.target === this) closeDetailModal()">
         <!-- Modal content will be loaded dynamically -->
     </div>
     
