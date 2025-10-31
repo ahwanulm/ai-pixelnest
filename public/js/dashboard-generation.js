@@ -39,6 +39,33 @@ document.addEventListener('DOMContentLoaded', function() {
         return cleaned || modelName; // Return original if cleaning results in empty string
     }
     
+    // ✨ Helper function to format time as "X minutes/hours/days ago"
+    function timeAgo(date) {
+        if (!date) return 'Unknown time';
+        
+        const timestamp = typeof date === 'string' ? new Date(date) : date;
+        const now = new Date();
+        const secondsAgo = Math.floor((now - timestamp) / 1000);
+        
+        if (secondsAgo < 10) return 'just now';
+        if (secondsAgo < 60) return `${secondsAgo} seconds ago`;
+        
+        const minutesAgo = Math.floor(secondsAgo / 60);
+        if (minutesAgo < 60) return minutesAgo === 1 ? '1 minute ago' : `${minutesAgo} minutes ago`;
+        
+        const hoursAgo = Math.floor(minutesAgo / 60);
+        if (hoursAgo < 24) return hoursAgo === 1 ? '1 hour ago' : `${hoursAgo} hours ago`;
+        
+        const daysAgo = Math.floor(hoursAgo / 24);
+        if (daysAgo < 30) return daysAgo === 1 ? '1 day ago' : `${daysAgo} days ago`;
+        
+        const monthsAgo = Math.floor(daysAgo / 30);
+        if (monthsAgo < 12) return monthsAgo === 1 ? '1 month ago' : `${monthsAgo} months ago`;
+        
+        const yearsAgo = Math.floor(monthsAgo / 12);
+        return yearsAgo === 1 ? '1 year ago' : `${yearsAgo} years ago`;
+    }
+    
     // ✨ FIX: Get current mode dynamically (supports state restoration)
     function getCurrentMode() {
         const activeTab = document.querySelector('.creation-tab.active');
@@ -49,6 +76,30 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize with current active tab
     let currentMode = getCurrentMode();
     console.log('🎯 Initial mode detected:', currentMode);
+    
+    // ✨ Initialize SSE connection for real-time progress updates
+    if (window.queueClient && !window.queueClient.eventSource) {
+        console.log('📡 Initializing SSE connection for real-time progress...');
+        window.queueClient.connectSSE(
+            // onUpdate: Real-time progress updates
+            (data) => {
+                console.log(`📊 SSE Progress: Job ${data.jobId} - ${data.progress}% - ${data.status}`);
+                
+                // Find loading card for this job
+                const loadingCard = document.querySelector(`[data-job-id="${data.jobId}"]`);
+                if (loadingCard && typeof updateLoadingProgress === 'function') {
+                    console.log(`   ✅ Updating loading card: ${data.progress}%`);
+                    updateLoadingProgress(loadingCard, data.progress, data.status);
+                } else if (!loadingCard) {
+                    console.log(`   ⚠️  Loading card not found for job ${data.jobId}`);
+                }
+            },
+            // onComplete: Will be handled by individual pollJobStatus
+            null,
+            // onError: Will be handled by individual pollJobStatus
+            null
+        );
+    }
     
     // ✨ Re-check mode after delay to handle:
     // 1. State restoration (dashboard.js)
@@ -1126,6 +1177,60 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log('🎯 Generate button clicked - Current mode:', mode);
             
+            // ✨ SHOW LOADING CARD IMMEDIATELY (before any async operations!)
+            // ✨ Get fresh references (in case elements weren't ready initially)
+            const freshResultDisplay = document.getElementById('result-display');
+            const hasCreateLoadingCard = typeof createLoadingCard === 'function' || typeof window.createLoadingCard === 'function';
+            const createLoadingCardFn = typeof createLoadingCard === 'function' ? createLoadingCard : window.createLoadingCard;
+            
+            console.log('🔍 Loading card setup check:', {
+                resultDisplay: !!freshResultDisplay,
+                createLoadingCard: typeof createLoadingCard,
+                windowCreateLoadingCard: typeof window.createLoadingCard,
+                hasFunction: hasCreateLoadingCard
+            });
+            
+            let earlyLoadingCard = null;
+            
+            if (freshResultDisplay && hasCreateLoadingCard && createLoadingCardFn) {
+                freshResultDisplay.classList.remove('hidden');
+                freshResultDisplay.style.display = 'block'; // Force show
+                
+                try {
+                    earlyLoadingCard = createLoadingCardFn(mode);
+                    if (earlyLoadingCard) {
+                        earlyLoadingCard.setAttribute('data-generation-loading', 'true');
+                        earlyLoadingCard.setAttribute('data-temp-id', 'temp-loading'); // Temporary ID for early creation
+                        freshResultDisplay.insertBefore(earlyLoadingCard, freshResultDisplay.firstChild);
+                        console.log('✅ Loading card created IMMEDIATELY');
+                        
+                        // Scroll result into view
+                        if (window.innerWidth >= 1024) { // Desktop only
+                            freshResultDisplay.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    } else {
+                        console.error('❌ createLoadingCard returned null/undefined');
+                    }
+                } catch (error) {
+                    console.error('❌ Error creating loading card:', error);
+                }
+            } else {
+                console.error('❌ Cannot create loading card:', {
+                    resultDisplay: !!freshResultDisplay,
+                    hasCreateLoadingCard: hasCreateLoadingCard,
+                    createLoadingCardFn: !!createLoadingCardFn
+                });
+            }
+            
+            // Helper function to cleanup if validation fails
+            const cleanupEarlyLoading = () => {
+                if (earlyLoadingCard) {
+                    console.log('🧹 Removing early loading card (validation failed)');
+                    earlyLoadingCard.remove();
+                    earlyLoadingCard = null;
+                }
+            };
+            
             // ✅ FIX: Use specific textarea ID instead of querySelector
             // This fixes mobile/desktop consistency issue
             const textarea = mode === 'image' 
@@ -1162,12 +1267,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     const validation = window.validateAudioInputs();
                     if (!validation.isValid) {
                         console.warn('❌ Audio validation failed:', validation.errors);
+                        cleanupEarlyLoading();
                         showNotification(validation.errors[0], 'error');
                         return;
                     }
                 } else {
                     console.warn('⚠️ validateAudioInputs not available, using basic validation');
                     if (!initialPrompt) {
+                        cleanupEarlyLoading();
                         showNotification('Please enter text or prompt!', 'error');
                         return;
                     }
@@ -1196,18 +1303,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('📝 Textarea element:', textarea);
                     console.log('📝 Raw textarea value:', textarea?.value);
                     console.log('📝 Mode:', mode);
+                    cleanupEarlyLoading();
                     showNotification('Please enter a prompt!', 'error');
                     return;
                 }
                 
                 // For edit types, require upload
                 if (isEditType && !initialPrompt && !hasUpload) {
+                    cleanupEarlyLoading();
                     showNotification(mode === 'image' ? 'Please upload an image or enter a prompt!' : 'Please upload a video or enter a prompt!', 'error');
                     return;
                 }
                 
                 // For no-prompt models, check upload requirement
                 if (isNoPromptModel && !hasUpload) {
+                    cleanupEarlyLoading();
                     showNotification('Please upload an image!', 'error');
                     return;
                 }
@@ -1349,6 +1459,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         formData.append('startImageUrl', imageUrl);
                         console.log('🔗 Using image URL for edit operation:', imageUrl);
                     } else {
+                        cleanupEarlyLoading();
                         showNotification('Please upload an image or provide URL', 'error');
                         return;
                     }
@@ -1368,6 +1479,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const hasStartFrame = (startFrame && startFrame.files.length > 0) || (startUrl && startUrl.trim());
                     
                     if (!hasStartFrame) {
+                        cleanupEarlyLoading();
                         showNotification('⚠️ Image-to-Video requires start frame! Please upload an image.', 'error');
                         return;
                     }
@@ -1379,6 +1491,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const hasEndFrame = (endFrame && endFrame.files.length > 0) || (endUrl && endUrl.trim());
                         
                         if (!hasEndFrame) {
+                            cleanupEarlyLoading();
                             showNotification('⚠️ Advanced mode requires end frame! Please upload an end image.', 'error');
                             return;
                         }
@@ -1473,18 +1586,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadingState.style.display = 'none';
             }
             
-            // Show result display and create loading card
-            if (resultDisplay) {
-                resultDisplay.classList.remove('hidden');
-                resultDisplay.style.display = 'block';
+            // Loading card already created at the top! Just ensure result display is visible
+            // ✨ Get fresh reference
+            const currentResultDisplay = document.getElementById('result-display');
+            if (currentResultDisplay) {
+                currentResultDisplay.classList.remove('hidden');
+                currentResultDisplay.style.display = 'block'; // Force show
                 
-                // Create and insert loading card at the top
-                if (typeof createLoadingCard === 'function') {
-                    const loadingCard = createLoadingCard(mode);
-                    loadingCard.setAttribute('data-generation-loading', 'true');
-                    resultDisplay.insertBefore(loadingCard, resultDisplay.firstChild);
-                    console.log('✅ Loading card created');
-                }
+                // Loading card already created immediately after button click ✅
+                console.log('ℹ️  Loading card already shown (created early)');
                 
                 // 📱 Auto-redirect to mobile processing view on mobile devices
                 if (window.innerWidth < 1024) {
@@ -1497,6 +1607,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }, 100);
                 }
+            } else {
+                console.error('❌ result-display element not found!');
             }
             
             try {
@@ -1564,11 +1676,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('✅ Job queued:', data.jobId);
                 
                 // ✨ CRITICAL: Link loading card to job ID BEFORE polling starts
-                const loadingCards = document.querySelectorAll('[data-generation-loading="true"]');
-                const loadingCard = loadingCards[loadingCards.length - 1];
+                // First try to find temp loading card, fallback to latest loading card
+                let loadingCard = document.querySelector('[data-temp-id="temp-loading"]');
+                if (loadingCard) {
+                    console.log('✅ Found temp loading card (created early)');
+                    loadingCard.removeAttribute('data-temp-id');
+                } else {
+                    // Fallback: Get latest loading card
+                    const loadingCards = document.querySelectorAll('[data-generation-loading="true"]');
+                    loadingCard = loadingCards[loadingCards.length - 1];
+                    console.log('ℹ️  Using latest loading card as fallback');
+                }
+                
                 if (loadingCard) {
                     loadingCard.setAttribute('data-job-id', data.jobId);
-                    console.log(`✅ Linked loading card to job ${data.jobId} BEFORE polling`);
+                    console.log(`✅ Linked loading card to job ${data.jobId}`);
                     console.log('   Loading card element:', loadingCard);
                     console.log('   data-job-id attribute:', loadingCard.getAttribute('data-job-id'));
                 } else {
@@ -4907,6 +5029,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Cleanup on page unload
     window.addEventListener('beforeunload', () => {
         stopPricingCheck();
+        
+        // ✨ Cleanup SSE connection
+        if (window.queueClient) {
+            console.log('🧹 Cleaning up SSE connection on page unload');
+            window.queueClient.disconnectSSE();
+        }
     });
     
     // Expose functions for external use

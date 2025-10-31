@@ -82,7 +82,8 @@ const musicController = {
       console.log('🎵 Enqueueing music generation for user:', userId, {
         prompt: prompt.substring(0, 50) + '...',
         model,
-        vocal_gender: vocal_gender || 'auto',
+        make_instrumental: make_instrumental,
+        vocal_gender: vocal_gender || 'auto (not provided)',
         custom_mode,
         weirdness,
         style_weight,
@@ -92,14 +93,14 @@ const musicController = {
       // Prepare settings for worker
       const isInstrumental = make_instrumental === 'true' || make_instrumental === true;
       const settings = {
-        make_instrumental: isInstrumental,
-        custom_mode: custom_mode === 'true' || custom_mode === true,
-        vocal_gender: !isInstrumental && vocal_gender ? vocal_gender : null,
-        weirdness: parseFloat(weirdness) || 0.5,
-        style_weight: parseFloat(style_weight) || 0.7,
-        title: title || '',
-        tags: tags || '',
         advanced: {
+          make_instrumental: isInstrumental,
+          custom_mode: custom_mode === 'true' || custom_mode === true,
+          vocal_gender: !isInstrumental && vocal_gender ? vocal_gender : null,
+          weirdness: parseFloat(weirdness) || 0.5,
+          style_weight: parseFloat(style_weight) || 0.7,
+          title: title || '',
+          tags: tags || '',
           tempo: parseInt(tempo) || 120
         }
       };
@@ -137,7 +138,8 @@ const musicController = {
       console.log(`   💾 Created generation record: ${generationId}`);
 
       // Small delay to ensure database transaction is committed
-      await new Promise(resolve => setTimeout(resolve, 50));
+      // Increased to 200ms for deployment (50ms was too short in production)
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       // Enqueue job to worker
       const jobId = await queueManager.enqueue('ai-generation', {

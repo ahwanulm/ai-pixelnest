@@ -960,12 +960,21 @@
   <% } %>
 
   <script>
+    console.log('🎵 Music generation script loaded');
+    
     const musicForm = document.getElementById('musicForm');
     const generateBtn = document.getElementById('generateBtn');
     const btnText = document.getElementById('btnText');
     const resultsSection = document.getElementById('resultsSection');
     const musicResults = document.getElementById('musicResults');
     const userCreditsEl = document.getElementById('userCredits');
+    
+    console.log('📋 Element check:', {
+      musicForm: !!musicForm,
+      generateBtn: !!generateBtn,
+      resultsSection: !!resultsSection,
+      musicResults: !!musicResults
+    });
     
     // Update model info display
     function updateModelInfo() {
@@ -1291,15 +1300,26 @@
       // Add vocal gender only if not instrumental
       if (!isInstrumental) {
         const vocalGender = document.getElementById('vocal_gender').value;
+        console.log('🎤 Frontend - Vocal Gender Value:', vocalGender || '(empty - auto)');
         if (vocalGender) {
           formData.vocal_gender = vocalGender;
+          console.log('   ✅ Added to formData:', vocalGender);
+        } else {
+          console.log('   ℹ️  Empty - will use auto detection');
         }
+      } else {
+        console.log('🎤 Frontend - Instrumental mode, skipping vocal gender');
       }
       
       // Disable button and show loading
       generateBtn.disabled = true;
       generateBtn.classList.add('generating');
       btnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+      
+      // ✨ Show loading card IMMEDIATELY (before fetch)
+      console.log('🎬 Calling displayProcessingState() BEFORE fetch');
+      displayProcessingState('temp', formData);
+      console.log('✅ displayProcessingState() called');
       
       try {
         const response = await fetch('/music/generate', {
@@ -1320,8 +1340,8 @@
             userCreditsEl.textContent = data.remainingCredits + ' credits';
           }
           
-          // Show processing state
-          displayProcessingState(data.generationId, formData);
+          // Update loading card with real generation ID (already showing)
+          // displayProcessingState(data.generationId, formData); // Already shown above
           
           // Start SSE to listen for completion
           listenForCompletion(data.generationId, formData);
@@ -1330,6 +1350,16 @@
           musicForm.reset();
         } else {
           showNotification(data.message || 'Failed to generate music', 'error');
+          
+          // Hide loading card on error
+          const resultsSection = document.getElementById('resultsSection');
+          const musicResults = document.getElementById('musicResults');
+          if (resultsSection) {
+            resultsSection.classList.add('hidden');
+            resultsSection.style.display = 'none';
+          }
+          if (musicResults) musicResults.innerHTML = '';
+          
           generateBtn.disabled = false;
           generateBtn.classList.remove('generating');
           btnText.innerHTML = '<i class="fas fa-music mr-2"></i>Generate Music';
@@ -1337,6 +1367,16 @@
       } catch (error) {
         console.error('Error:', error);
         showNotification('An error occurred. Please try again.', 'error');
+        
+        // Hide loading card on error
+        const resultsSection = document.getElementById('resultsSection');
+        const musicResults = document.getElementById('musicResults');
+        if (resultsSection) {
+          resultsSection.classList.add('hidden');
+          resultsSection.style.display = 'none';
+        }
+        if (musicResults) musicResults.innerHTML = '';
+        
         generateBtn.disabled = false;
         generateBtn.classList.remove('generating');
         btnText.innerHTML = '<i class="fas fa-music mr-2"></i>Generate Music';
@@ -1344,7 +1384,17 @@
     });
     
     function displayMusicResults(data, formData) {
+      // ✨ Get fresh references
+      const resultsSection = document.getElementById('resultsSection');
+      const musicResults = document.getElementById('musicResults');
+      
+      if (!resultsSection || !musicResults) {
+        console.error('❌ Results elements not found!');
+        return;
+      }
+      
       resultsSection.classList.remove('hidden');
+      resultsSection.style.display = 'block'; // ✨ Force show
       
       // Clear previous results
       musicResults.innerHTML = '';
@@ -1466,20 +1516,51 @@
     let eventSource = null;
     
     function displayProcessingState(generationId, formData) {
+      // ✨ Get fresh references (in case elements weren't ready initially)
+      const resultsSection = document.getElementById('resultsSection');
+      const musicResults = document.getElementById('musicResults');
+      
+      if (!resultsSection || !musicResults) {
+        console.error('❌ Results elements not found!');
+        return;
+      }
+      
+      console.log('✅ Showing loading card in results section');
       resultsSection.classList.remove('hidden');
+      resultsSection.style.display = 'block'; // ✨ Force show
       musicResults.innerHTML = `
-        <div class="col-span-full glass-strong rounded-xl p-8 text-center">
+        <div id="loading-card-${generationId}" class="col-span-full glass-strong rounded-xl p-8 text-center">
           <div class="animate-pulse mb-4">
             <i class="fas fa-music text-6xl text-blue-400"></i>
           </div>
           <p class="text-xl font-bold mb-2">Generating your music...</p>
-          <p class="text-gray-400 mb-4">This may take 30-60 seconds</p>
-          <div class="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
-            <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse" style="width: 50%"></div>
+          <p class="text-gray-400 mb-2" id="progress-status-${generationId}">Initializing...</p>
+          <div class="w-full bg-gray-700 rounded-full h-2 overflow-hidden mb-2">
+            <div id="progress-bar-${generationId}" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500" style="width: 0%"></div>
           </div>
+          <p class="text-xs text-gray-500" id="progress-percent-${generationId}">0%</p>
         </div>
       `;
       resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    // Update progress for a specific generation
+    function updateProgress(generationId, progress, status) {
+      const progressBar = document.getElementById(`progress-bar-${generationId}`);
+      const progressPercent = document.getElementById(`progress-percent-${generationId}`);
+      const progressStatus = document.getElementById(`progress-status-${generationId}`);
+      
+      if (progressBar) {
+        progressBar.style.width = `${progress}%`;
+      }
+      if (progressPercent) {
+        progressPercent.textContent = `${progress}%`;
+      }
+      if (progressStatus && status) {
+        progressStatus.textContent = status;
+      }
+      
+      console.log(`📊 Progress updated: ${progress}% - ${status || ''}`);
     }
     
     function listenForCompletion(generationId, formData) {
@@ -1487,16 +1568,37 @@
       
       // Close existing connection if any
       if (eventSource) {
+        console.log('🔄 Closing previous SSE connection');
         eventSource.close();
+        eventSource = null;
       }
       
+      // Set initial progress
+      updateProgress(generationId, 10, 'Queued...');
+      
       // Connect to SSE endpoint
+      console.log('🔗 Connecting to SSE: /api/sse/generation-updates');
       eventSource = new EventSource('/api/sse/generation-updates');
       
       eventSource.addEventListener('message', (event) => {
         const data = JSON.parse(event.data);
         if (data.type === 'connected') {
           console.log('✅ SSE connected');
+        }
+      });
+      
+      // ✨ Listen for progress updates
+      eventSource.addEventListener('job-progress', (event) => {
+        const data = JSON.parse(event.data);
+        console.log('📊 Progress update:', data);
+        
+        // Check if this is our job
+        if (data.generationId === generationId) {
+          const progress = data.progress || 0;
+          const status = data.status || 'Processing...';
+          
+          // Update progress bar
+          updateProgress(generationId, progress, status);
         }
       });
       
@@ -1507,6 +1609,9 @@
         // Check if this is our job
         if (data.generationId === generationId) {
           console.log('🎵 Our music generation completed!');
+          
+          // Update progress to 100%
+          updateProgress(generationId, 100, 'Completed!');
           
           // Fetch the completed generation data
           try {
@@ -1534,6 +1639,7 @@
           
           // Close SSE
           if (eventSource) {
+            console.log('🔒 Closing SSE connection (job completed)');
             eventSource.close();
             eventSource = null;
           }
@@ -1552,17 +1658,24 @@
           generateBtn.classList.remove('generating');
           btnText.innerHTML = '<i class="fas fa-music mr-2"></i>Generate Music';
           
+          // Get fresh references
+          const resultsSection = document.getElementById('resultsSection');
+          const musicResults = document.getElementById('musicResults');
+          
           // Show error state
-          musicResults.innerHTML = `
-            <div class="col-span-full glass-strong rounded-xl p-8 text-center">
-              <i class="fas fa-exclamation-circle text-6xl text-red-400 mb-4"></i>
-              <p class="text-xl font-bold mb-2">Generation Failed</p>
-              <p class="text-gray-400">${data.error || 'Unknown error occurred'}</p>
-            </div>
-          `;
+          if (musicResults) {
+            musicResults.innerHTML = `
+              <div class="col-span-full glass-strong rounded-xl p-8 text-center">
+                <i class="fas fa-exclamation-circle text-6xl text-red-400 mb-4"></i>
+                <p class="text-xl font-bold mb-2">Generation Failed</p>
+                <p class="text-gray-400">${data.error || 'Unknown error occurred'}</p>
+              </div>
+            `;
+          }
           
           // Close SSE
           if (eventSource) {
+            console.log('🔒 Closing SSE connection (job failed)');
             eventSource.close();
             eventSource = null;
           }
@@ -1573,6 +1686,15 @@
         console.error('❌ SSE connection error:', error);
         // Auto-reconnect handled by browser
       };
+      
+      // Cleanup on page unload
+      window.addEventListener('beforeunload', () => {
+        if (eventSource) {
+          console.log('🧹 Cleaning up SSE on page unload');
+          eventSource.close();
+          eventSource = null;
+        }
+      });
       
       // Fallback: Check status via polling after 90 seconds
       setTimeout(async () => {

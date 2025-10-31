@@ -51,6 +51,13 @@ function isPermanentFailure(error) {
     return true;
   }
   
+  // 3b. Suno API Credits Issue - Service provider problem, not user problem
+  if (errorMessage.includes('suno api credits') || 
+      errorMessage.includes('administrator perlu top-up')) {
+    console.log('   🔴 Type: Suno API Out of Credits (permanent - requires admin action)');
+    return true;
+  }
+  
   // 4. Model Not Found - Database issue
   if (errorMessage.includes('model not found') || 
       errorMessage.includes('invalid model')) {
@@ -399,6 +406,34 @@ async function processAIGeneration(jobData, job) {
     console.error(`   Error: ${error.message}`);
     console.error(`   Duration: ${duration}s`);
     console.log('═══════════════════════════════════════════════');
+
+    // ⚠️ REFUND USER if error is due to Suno API credits issue
+    // This is not user's fault - it's a service provider issue
+    if (error.message && (error.message.includes('Suno API credits') || 
+                          error.message.includes('insufficient') ||
+                          error.message.includes('Administrator perlu top-up'))) {
+      console.log('💰 Refunding user - Suno API credits issue detected');
+      try {
+        // Get the cost that was already deducted
+        const jobInfo = await pool.query(
+          'SELECT cost_credits FROM ai_generation_history WHERE job_id = $1',
+          [jobId]
+        );
+        
+        if (jobInfo.rows.length > 0 && jobInfo.rows[0].cost_credits) {
+          const refundAmount = jobInfo.rows[0].cost_credits;
+          await User.updateCredits(
+            userId, 
+            refundAmount, 
+            'Refund', 
+            'Suno API service temporarily unavailable'
+          );
+          console.log(`   ✅ Refunded ${refundAmount} credits to user ${userId}`);
+        }
+      } catch (refundError) {
+        console.error('   ❌ Refund failed:', refundError.message);
+      }
+    }
 
     // Update job as failed
     await pool.query(`
@@ -810,12 +845,20 @@ async function generateAudio(modelId, prompt, settings, subType, jobId) {
     // Extract model version from metadata or model_id
     const modelVersion = metadata?.version || model_id.replace('suno-', '');
     
+    // ⚠️ IMPORTANT: Suno API has 2 modes:
+    // 1. Custom Mode (custom_mode: true): prompt = lyrics, style = genre/mood
+    // 2. Description Mode (custom_mode: false): prompt = description, AI generates lyrics
+    
+    // Check if lyrics are provided (dashboard audio mode)
+    const hasLyrics = settings.advanced?.lyrics && settings.advanced.lyrics.trim();
+    const customMode = settings.advanced?.custom_mode || hasLyrics || false;
+    
     // Prepare Suno-specific parameters
     const sunoParams = {
-      prompt: prompt,
+      prompt: hasLyrics ? settings.advanced.lyrics : prompt, // Use lyrics if provided
       model: modelVersion,
       make_instrumental: settings.advanced?.make_instrumental || false,
-      custom_mode: settings.advanced?.custom_mode || false,
+      custom_mode: customMode,
       title: settings.advanced?.title || '',
       tags: settings.advanced?.tags || '',
       weirdness: settings.advanced?.weirdness || 0.5,
@@ -823,9 +866,43 @@ async function generateAudio(modelId, prompt, settings, subType, jobId) {
       wait_audio: true
     };
     
+    if (hasLyrics) {
+      console.log(`   📝 Lyrics provided - switching to Custom Mode`);
+      console.log(`   📝 Lyrics: ${settings.advanced.lyrics.substring(0, 50)}...`);
+    }
+    
+    // Build tags array from advanced options
+    let tagsArray = [];
+    if (sunoParams.tags) {
+      tagsArray.push(sunoParams.tags);
+    }
+    
+    // Add genre if provided
+    if (settings.advanced?.genre) {
+      tagsArray.push(settings.advanced.genre);
+      console.log(`   🎸 Genre: ${settings.advanced.genre}`);
+    }
+    
+    // Add mood if provided
+    if (settings.advanced?.mood) {
+      tagsArray.push(settings.advanced.mood);
+      console.log(`   😊 Mood: ${settings.advanced.mood}`);
+    }
+    
+    // Add instruments if provided
+    if (settings.advanced?.instruments) {
+      tagsArray.push(settings.advanced.instruments);
+      console.log(`   🎹 Instruments: ${settings.advanced.instruments}`);
+    }
+    
     // Add vocal_gender if provided and not instrumental
     if (!sunoParams.make_instrumental && settings.advanced?.vocal_gender) {
       sunoParams.vocal_gender = settings.advanced.vocal_gender;
+      console.log(`   👤 Vocal Gender: ${settings.advanced.vocal_gender}`);
+    } else if (!sunoParams.make_instrumental) {
+      console.log(`   👤 Vocal Gender: auto (not specified)`);
+    } else {
+      console.log(`   🎸 Instrumental: Vocal gender not applicable`);
     }
     
     // Add tempo if provided (convert to tags/style description)
@@ -841,14 +918,22 @@ async function generateAudio(modelId, prompt, settings, subType, jobId) {
         tempoDesc = 'medium tempo';
       }
       
-      // Add tempo to tags/style
-      if (sunoParams.tags) {
-        sunoParams.tags += `, ${tempoDesc}`;
-      } else {
-        sunoParams.tags = tempoDesc;
-      }
-      
+      tagsArray.push(tempoDesc);
       console.log(`   🎵 Tempo: ${tempo} BPM (${tempoDesc})`);
+    }
+    
+    // Combine all tags
+    if (tagsArray.length > 0) {
+      sunoParams.tags = tagsArray.join(', ');
+    }
+    
+    // ⚠️ Log mode information
+    if (sunoParams.custom_mode) {
+      console.log(`   ✅ Custom Mode ENABLED`);
+      console.log(`   📝 Prompt = Lyrics, Tags = Style`);
+    } else {
+      console.log(`   ✅ Description Mode (custom_mode = false)`);
+      console.log(`   📝 Prompt = Description, AI will generate lyrics`);
     }
     
     console.log(`   🎵 Suno Model: ${modelVersion}`);

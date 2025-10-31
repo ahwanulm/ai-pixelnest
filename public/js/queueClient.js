@@ -70,6 +70,16 @@ class QueueClient {
       }
     });
 
+    // ✨ Job progress updates (REAL-TIME)
+    this.eventSource.addEventListener('job-progress', (event) => {
+      const data = JSON.parse(event.data);
+      console.log('📊 Progress update via SSE:', data.jobId, `${data.progress}%`, data.status);
+      
+      if (onUpdate) {
+        onUpdate(data);
+      }
+    });
+
     // Job completed
     this.eventSource.addEventListener('job-completed', (event) => {
       const data = JSON.parse(event.data);

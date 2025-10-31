@@ -199,7 +199,8 @@ const generationQueueController = {
 
       // ✨ Small delay to ensure database transaction is fully committed
       // This prevents race condition where worker reads before commit finishes
-      await new Promise(resolve => setTimeout(resolve, 50));
+      // Increased to 200ms for deployment (50ms was too short in production)
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       // 2. Enqueue job to pg-boss (include uploaded files!)
       const queueJobId = await queueManager.enqueue(

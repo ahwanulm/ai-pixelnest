@@ -237,7 +237,8 @@
                 this.classList.remove('bg-white/5', 'border-white/10');
                 this.classList.add('bg-blue-500/30', 'border-blue-500/50', 'active');
                 selectedVocalGender = this.getAttribute('data-gender') || 'auto';
-                console.log('👤 Vocal Gender:', selectedVocalGender);
+                const genderLabel = selectedVocalGender === 'm' ? 'Male' : selectedVocalGender === 'f' ? 'Female' : 'Auto';
+                console.log('👤 Vocal Gender:', selectedVocalGender, `(${genderLabel})`);
             });
         });
         
@@ -625,18 +626,35 @@
         
         // Add advanced options for music
         if (selectedAudioType === 'text-to-music') {
+            // Determine vocal gender value
+            let vocalGenderValue = null;
+            if (!isInstrumental && selectedVocalGender && selectedVocalGender !== 'auto') {
+                vocalGenderValue = selectedVocalGender; // 'm' or 'f'
+            }
+            
             const advanced = {
                 genre: selectedGenre || null,
                 mood: selectedMood || null,
                 tempo: selectedTempo || 120,
-                instrumental: isInstrumental,
-                vocal_gender: isInstrumental ? null : (selectedVocalGender || 'auto'),
+                make_instrumental: isInstrumental,
+                vocal_gender: vocalGenderValue,
                 instruments: document.getElementById('audio-instruments')?.value.trim() || null,
                 lyrics: document.getElementById('audio-lyrics')?.value.trim() || null
             };
             
+            // Log advanced options
+            console.log('🎨 Advanced Music Options:', {
+                genre: advanced.genre,
+                mood: advanced.mood,
+                tempo: advanced.tempo,
+                make_instrumental: advanced.make_instrumental,
+                vocal_gender: advanced.vocal_gender || '(auto/not set)',
+                instruments: advanced.instruments,
+                lyrics: advanced.lyrics ? `(${advanced.lyrics.length} chars)` : null
+            });
+            
             // Only add advanced if at least one option is set
-            if (advanced.genre || advanced.mood || advanced.tempo !== 120 || advanced.instrumental || advanced.vocal_gender || advanced.instruments || advanced.lyrics) {
+            if (advanced.genre || advanced.mood || advanced.tempo !== 120 || advanced.make_instrumental || advanced.vocal_gender || advanced.instruments || advanced.lyrics) {
                 data.advanced = advanced;
             }
         }

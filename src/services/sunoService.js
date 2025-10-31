@@ -54,9 +54,22 @@ class SunoService {
   /**
    * Generate music from text prompt (Callback-based)
    * Suno API will send results to callback URL when generation is complete
+   * 
+   * ⚠️ IMPORTANT - Suno API has 2 modes:
+   * 1. Description Mode (custom_mode: false):
+   *    - prompt = music description
+   *    - AI generates lyrics automatically
+   * 
+   * 2. Custom Mode (custom_mode: true):
+   *    - prompt = actual song lyrics
+   *    - tags/style = genre, mood, instruments
+   * 
    * @param {Object} params - Generation parameters
-   * @param {string} params.prompt - Description of the music to generate
+   * @param {string} params.prompt - Description OR lyrics (depends on custom_mode)
    * @param {boolean} params.make_instrumental - Whether to create instrumental music
+   * @param {boolean} params.custom_mode - Use custom lyrics mode
+   * @param {string} params.tags - Style/genre tags (combined with lyrics in custom mode)
+   * @param {string} params.vocal_gender - 'm' for male, 'f' for female (sent as vocalGender to API)
    * @param {string} params.model - Model version (v3_5, v4, v4_5, v4_5PLUS, v5)
    * @returns {Promise<Object>} Task info (results delivered via callback)
    */
@@ -87,8 +100,14 @@ class SunoService {
       console.log('   API URL:', `${this.baseUrl}/generate`);
       console.log('   Model:', model);
       console.log('   Prompt:', prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''));
-      console.log('   Vocal Gender:', vocal_gender || 'auto');
+      console.log('   Make Instrumental:', make_instrumental || instrumental);
+      console.log('   Vocal Gender:', vocal_gender || 'auto (not set)');
       console.log('   Custom Mode:', custom_mode);
+      if (custom_mode) {
+        console.log('   📝 Custom Mode: Prompt = Lyrics, Tags/Style = Genre/Mood');
+      } else {
+        console.log('   📝 Description Mode: Prompt = Description, AI generates lyrics');
+      }
       console.log('   Weirdness:', weirdness);
       console.log('   Style Weight:', style_weight);
 
@@ -108,12 +127,18 @@ class SunoService {
 
       // Optional parameters (if supported by Suno API)
       if (title) requestBody.title = title;
-      if (tags) requestBody.style = tags; // 'tags' maps to 'style' in Suno API
+      if (tags) {
+        requestBody.style = tags; // 'tags' maps to 'style' in Suno API
+        console.log(`   🏷️  Style/Tags: ${tags}`);
+      }
       
       // Try including advanced parameters (may or may not be supported)
       // If not supported, Suno API will ignore them
       if (!make_instrumental && !instrumental && vocal_gender) {
+        // Suno API uses 'vocalGender' field (camelCase): 'm' for male, 'f' for female
+        // Docs: https://docs.sunoapi.org/suno-api/generate-music
         requestBody.vocalGender = vocal_gender;
+        console.log(`   🎤 Setting vocal gender: ${vocal_gender} (${vocal_gender === 'm' ? 'Male' : vocal_gender === 'f' ? 'Female' : 'Unknown'})`);
       }
       
       // Add weirdness and styleWeight if provided
@@ -125,7 +150,19 @@ class SunoService {
         requestBody.styleWeight = parseFloat(style_weight);
       }
 
-      console.log('📤 Sending request body:', JSON.stringify(requestBody, null, 2));
+      console.log('📤 Sending request body to Suno API:');
+      console.log(JSON.stringify(requestBody, null, 2));
+      
+      // Highlight important fields
+      if (requestBody.style) {
+        console.log(`   ✅ Style/Tags: ${requestBody.style}`);
+      }
+      if (requestBody.vocalGender) {
+        console.log(`   ✅ Vocal Gender (vocalGender): ${requestBody.vocalGender} (${requestBody.vocalGender === 'm' ? 'Male' : requestBody.vocalGender === 'f' ? 'Female' : 'Unknown'})`);
+      }
+      if (requestBody.instrumental) {
+        console.log(`   🎸 Instrumental: ${requestBody.instrumental}`);
+      }
 
       const response = await fetch(`${this.baseUrl}/generate`, {
         method: 'POST',
@@ -148,7 +185,15 @@ class SunoService {
 
       // Check for API error response (code !== 200)
       if (data.code && data.code !== 200) {
-        const errorMessage = data.msg || data.message || `Suno API error: ${data.code}`;
+        let errorMessage = data.msg || data.message || `Suno API error: ${data.code}`;
+        
+        // Special handling for Suno API credit issues
+        if (errorMessage.includes('insufficient') || errorMessage.includes('credits')) {
+          errorMessage = '⚠️ Suno API credits habis! Administrator perlu top-up saldo Suno API. (Ini bukan masalah saldo user)';
+          console.error('❌ SUNO API OUT OF CREDITS!');
+          console.error('   Administrator needs to top up Suno API balance at: https://sunoapi.org');
+        }
+        
         console.error('❌ Suno API error:', {
           code: data.code,
           message: data.msg,
