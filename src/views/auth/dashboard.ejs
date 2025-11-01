@@ -132,6 +132,41 @@
             animation: slide-in-right 0.3s ease-out;
         }
         
+        /* Subtle Button Animations */
+        @keyframes pulse {
+            0% { 
+                transform: scale(1); 
+                opacity: 1; 
+            }
+            50% { 
+                transform: scale(1.05); 
+                opacity: 0.9; 
+            }
+            100% { 
+                transform: scale(1); 
+                opacity: 1; 
+            }
+        }
+        
+        /* Mobile navbar badge animation */
+        .badge-bounce {
+            animation: badgeBounce 0.5s ease-out;
+        }
+        
+        @keyframes badgeBounce {
+            0% { 
+                transform: scale(0.8); 
+                opacity: 0.5;
+            }
+            50% { 
+                transform: scale(1.2); 
+            }
+            100% { 
+                transform: scale(1); 
+                opacity: 1;
+            }
+        }
+        
         /* 
          * Z-Index Hierarchy (highest to lowest):
          * 10010 - Modal Controls (Close/Navigation buttons)
@@ -145,8 +180,45 @@
          * 10001 - Mobile Header
          */
         
-        /* Mobile Media Constraints - Prevent 9:16 content from being too tall */
+        /* Mobile Layout Optimizations */
         @media (max-width: 1023px) {
+            /* Ensure aside content is scrollable and doesn't overlap navbar */
+            aside {
+                padding-bottom: 85px !important;
+                position: relative;
+                height: 100vh;
+                max-height: 100vh;
+            }
+            
+            /* Run button container should be sticky at bottom for mobile */
+            .run-button-container {
+                position: sticky;
+                bottom: 0;
+                z-index: 50;
+                background: rgb(24, 24, 27); /* zinc-950 */
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+                margin-bottom: 0;
+            }
+            
+            /* Ensure scrollable content doesn't overlap with run button */
+            .flex-1.overflow-y-auto {
+                padding-bottom: 20px;
+                scrollbar-width: thin;
+                scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+            }
+            
+            /* Mobile navbar clearance - override overflow hidden for mobile */
+            body {
+                padding-bottom: 0;
+                overflow: visible;
+            }
+            
+            /* Main container adjustments for mobile */
+            .flex.h-screen {
+                height: 100vh;
+                overflow: hidden;
+            }
+            
             /* Video constraints */
             #mobile-results-display video,
             #mobile-results-content video {
@@ -238,7 +310,7 @@
     <!-- Modern Responsive Layout -->
     <div class="flex h-screen pt-14 lg:pt-0">
         <!-- Left Sidebar - Controls (Full width on mobile, 384px on desktop) -->
-        <aside class="w-full lg:w-96 bg-zinc-950 lg:border-r border-white/10 flex flex-col h-screen overflow-hidden">
+        <aside class="w-full lg:w-96 bg-zinc-950 lg:border-r border-white/10 flex flex-col h-screen overflow-hidden pb-20 lg:pb-0">
             <!-- Header -->
             <div class="p-6 border-b border-white/10">
                 <!-- Logo (Hidden on Mobile, visible on Desktop) -->
@@ -276,7 +348,7 @@
             </div>
 
             <!-- Scrollable Controls -->
-            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 lg:space-y-6">
                 <!-- Image Mode -->
                 <div id="image-mode" class="creation-mode active space-y-4">
                     <!-- Type (Custom Dropdown) -->
@@ -1284,7 +1356,7 @@
             </div>
 
             <!-- Run Button (Fixed Bottom) -->
-            <div class="p-6 border-t border-white/10 bg-zinc-950 space-y-3">
+            <div class="run-button-container p-4 lg:p-6 border-t border-white/10 bg-zinc-950 space-y-3 mt-auto">
                 <!-- Credit Cost Display -->
                 <div class="relative px-4 py-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg group hover:border-yellow-500/40 transition-all duration-300 hover:scale-[1.02] cursor-default">
                     <span class="absolute inset-0 bg-yellow-500/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
@@ -1323,17 +1395,6 @@
                 </div>
             </div>
             
-            <!-- Mobile Results Button (Show only on mobile when there are results) -->
-            <div class="lg:hidden border-t border-white/10 p-4">
-                <a href="#results" id="mobile-view-results-btn" class="hidden w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl text-center flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                    </svg>
-                    <span>View Results</span>
-                    <span id="results-count-badge" class="ml-auto bg-white/20 px-2 py-0.5 rounded-full text-xs">0</span>
-                </a>
-            </div>
         </aside>
 
         <!-- Main Area - Results (Hidden on mobile, visible on desktop) -->
@@ -1601,7 +1662,7 @@
     </div>
 
     <!-- Mobile Results View (Full Screen Overlay) - Only on Mobile -->
-    <div id="mobile-results-view" class="lg:hidden fixed inset-0 bg-zinc-950 z-[10002] hidden flex-col" style="padding-bottom: 80px; pointer-events: auto;">
+    <div id="mobile-results-view" class="lg:hidden fixed inset-0 bg-zinc-950 z-[10002] hidden flex-col" style="pointer-events: auto;">
         <!-- Mobile Results Header (No regular mobile header) -->
         <div class="fixed top-0 left-0 right-0 bg-zinc-950 border-b border-white/10 px-4 py-4 flex items-center gap-3 z-[10003]" style="pointer-events: auto;">
             <!-- Back Button -->
@@ -1644,7 +1705,7 @@
         </div>
         
         <!-- Mobile Results Content (with top padding for fixed header and filter, and bottom for navbar) -->
-        <div class="flex-1 overflow-y-auto pb-24 pt-[110px]" id="mobile-results-content" style="pointer-events: auto;">
+        <div class="flex-1 overflow-y-auto pb-24 pt-[110px] min-h-0" id="mobile-results-content" style="pointer-events: auto; height: 100vh; -webkit-overflow-scrolling: touch; touch-action: pan-y;">
             <!-- Results will be loaded here dynamically -->
             <div id="mobile-empty-state" class="flex flex-col items-center justify-center h-full text-center px-4 mt-8">
                 <div class="w-20 h-20 bg-white/5 rounded-2xl flex items-center justify-center mb-4">
@@ -1666,6 +1727,7 @@
             </div>
         </div>
     </div>
+
 
     <!-- Generation Detail Modal -->
     <div id="generation-detail-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-[10007] p-2 sm:p-4" onclick="closeGenerationDetailModal(event)">
@@ -3564,7 +3626,6 @@
         // ========================================
         const mobileResultsView = document.getElementById('mobile-results-view');
         const mobileResultsClose = document.getElementById('mobile-results-close');
-        const mobileViewResultsBtn = document.getElementById('mobile-view-results-btn');
         const mobileBackToCreate = document.getElementById('mobile-back-to-create');
         const mobileResultsDisplay = document.getElementById('mobile-results-display');
         const mobileEmptyState = document.getElementById('mobile-empty-state');
@@ -3577,7 +3638,19 @@
                 mobileResultsView.classList.remove('hidden');
                 mobileResultsView.classList.add('flex');
                 mobileResultsView.style.display = 'flex';
+                // Allow scroll on mobile results content
                 document.body.style.overflow = 'hidden';
+                
+                // Ensure mobile results content can scroll
+                const mobileResultsContent = document.getElementById('mobile-results-content');
+                if (mobileResultsContent) {
+                    mobileResultsContent.style.overflowY = 'auto';
+                    mobileResultsContent.style.touchAction = 'pan-y';
+                    mobileResultsContent.style.webkitOverflowScrolling = 'touch';
+                    mobileResultsContent.style.position = 'relative';
+                    mobileResultsContent.style.zIndex = '1';
+                    console.log('✅ Mobile results scroll enabled');
+                }
                 
                 // Hide aside (form) on mobile to prevent conflicts
                 const aside = document.querySelector('aside');
@@ -3674,6 +3747,24 @@
                     mobileResultsDisplay.innerHTML = '';
                     resultCards.forEach((card, index) => {
                         const clonedCard = card.cloneNode(true);
+                        
+                        // Ensure all critical attributes are copied to cloned card
+                        const generationId = card.getAttribute('data-generation-id');
+                        const metadata = card.getAttribute('data-metadata');
+                        const dataMode = card.getAttribute('data-mode');
+                        
+                        if (generationId) {
+                            clonedCard.setAttribute('data-generation-id', generationId);
+                        }
+                        if (metadata) {
+                            clonedCard.setAttribute('data-metadata', metadata);
+                        }
+                        if (dataMode) {
+                            clonedCard.setAttribute('data-mode', dataMode);
+                        }
+                        
+                        console.log(`🔄 Cloning card ${index + 1}/${resultCards.length} with generation-id: ${generationId}`);
+                        
                         mobileResultsDisplay.appendChild(clonedCard);
                         
                         // Handle loading cards - restart animation after cloning
@@ -3728,7 +3819,25 @@
                                     e.stopPropagation();
                                     e.preventDefault();
                                     
-                                    console.log('📤 Opening share modal');
+                                    console.log('📤 Opening share modal from mobile clone');
+                                    console.log('🔍 Cloned card element:', clonedCard);
+                                    console.log('🔍 Cloned card data-generation-id:', clonedCard.getAttribute('data-generation-id'));
+                                    console.log('🔍 Cloned card classes:', clonedCard.className);
+                                    
+                                    // Check if the cloned card has data-generation-id
+                                    const generationId = clonedCard.getAttribute('data-generation-id');
+                                    if (!generationId) {
+                                        console.error('❌ Cloned card missing data-generation-id attribute');
+                                        console.log('🔍 Original card:', card);
+                                        console.log('🔍 Original card data-generation-id:', card.getAttribute('data-generation-id'));
+                                        
+                                        // Try to copy the attribute from original card
+                                        const originalId = card.getAttribute('data-generation-id');
+                                        if (originalId) {
+                                            clonedCard.setAttribute('data-generation-id', originalId);
+                                            console.log('✅ Fixed missing data-generation-id on cloned card');
+                                        }
+                                    }
                                     
                                     if (typeof window.openShareModal === 'function') {
                                         window.openShareModal(btn);
@@ -3901,12 +4010,6 @@
             console.warn('⚠️ Mobile results close button not found');
         }
         
-        if (mobileViewResultsBtn) {
-            mobileViewResultsBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                openMobileResults();
-            });
-        }
         
         if (mobileBackToCreate) {
             console.log('✅ Mobile back to create button found, attaching listener');
@@ -3975,14 +4078,31 @@
             const resultDisplay = document.getElementById('result-display');
             const resultCards = resultDisplay ? resultDisplay.children : [];
             
-            if (mobileViewResultsBtn) {
+            // Update mobile navbar badge
+            const mobileProcessingBadge = document.getElementById('mobile-processing-badge');
+            if (mobileProcessingBadge) {
                 if (resultCards.length > 0) {
-                    mobileViewResultsBtn.classList.remove('hidden');
-                    mobileViewResultsBtn.classList.add('flex');
-                    const badge = document.getElementById('results-count-badge');
-                    if (badge) badge.textContent = resultCards.length;
+                    const oldCount = parseInt(mobileProcessingBadge.textContent) || 0;
+                    const newCount = resultCards.length;
+                    
+                    // Update count
+                    mobileProcessingBadge.textContent = newCount;
+                    mobileProcessingBadge.classList.remove('hidden');
+                    
+                    // Add bounce animation for new/updated count
+                    if (oldCount !== newCount) {
+                        mobileProcessingBadge.classList.add('badge-bounce');
+                        
+                        // Remove animation class after completion
+                        setTimeout(() => {
+                            mobileProcessingBadge.classList.remove('badge-bounce');
+                        }, 500);
+                    }
+                    
+                    console.log(`📊 Mobile navbar badge updated: ${oldCount} → ${newCount}`);
                 } else {
-                    mobileViewResultsBtn.classList.add('hidden');
+                    mobileProcessingBadge.classList.add('hidden');
+                    console.log('📊 Mobile navbar badge hidden');
                 }
             }
             

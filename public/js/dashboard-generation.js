@@ -3355,8 +3355,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 title="View Fullscreen">
                             <i class="fas fa-expand"></i>
                         </button>
-                        <button onclick="openShareModal(this)" 
-                                class="btn-share px-2 py-1 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105 shadow-lg"
+                        <button class="btn-share px-2 py-1 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105 shadow-lg"
                                 title="Share to Public Gallery">
                             <i class="fas fa-share-alt"></i>
                         </button>
@@ -3432,8 +3431,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 title="Fullscreen">
                             <i class="fas fa-expand"></i>
                         </button>
-                        <button onclick="openShareModal(this)" 
-                                class="btn-share px-2 py-1 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs font-semibold transition"
+                        <button class="btn-share px-2 py-1 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs font-semibold transition"
                                 title="Share">
                             <i class="fas fa-share-alt"></i>
                         </button>
@@ -3479,6 +3477,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 const prompt = btn.getAttribute('data-prompt');
                 const model = btn.getAttribute('data-model');
                 openFullscreenViewer(url, 0, { prompt, model });
+            });
+        });
+
+        // Add event listeners for share buttons
+        card.querySelectorAll('.btn-share').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                console.log('📤 Opening share modal from generated card');
+                
+                if (typeof window.openShareModal === 'function') {
+                    window.openShareModal(btn);
+                } else {
+                    console.error('❌ openShareModal not available');
+                }
             });
         });
         
@@ -3719,8 +3733,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 title="View Fullscreen">
                             <i class="fas fa-expand"></i>
                         </button>
-                        <button onclick="openShareModal(this)" 
-                                class="btn-share px-2 py-1 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105 shadow-lg"
+                        <button class="btn-share px-2 py-1 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105 shadow-lg"
                                 title="Share to Public Gallery">
                             <i class="fas fa-share-alt"></i>
                         </button>
@@ -3802,8 +3815,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 title="Fullscreen">
                             <i class="fas fa-expand"></i>
                         </button>
-                        <button onclick="openShareModal(this)" 
-                                class="btn-share px-2 py-1 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs font-semibold transition"
+                        <button class="btn-share px-2 py-1 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs font-semibold transition"
                                 title="Share">
                             <i class="fas fa-share-alt"></i>
                         </button>
@@ -3849,6 +3861,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 const prompt = btn.getAttribute('data-prompt');
                 const model = btn.getAttribute('data-model');
                 openFullscreenViewer(url, 0, { prompt, model });
+            });
+        });
+
+        // Add event listeners for share buttons
+        card.querySelectorAll('.btn-share').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                console.log('📤 Opening share modal from generated video card');
+                
+                if (typeof window.openShareModal === 'function') {
+                    window.openShareModal(btn);
+                } else {
+                    console.error('❌ openShareModal not available');
+                }
             });
         });
         
