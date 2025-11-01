@@ -5244,6 +5244,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                             
                             // Remove loading card after delay
+                            // ✅ Use longer delay for audio (Suno multi-track)
+                            const refreshDelay = job.generation_type === 'audio' ? 1000 : 500;
                             setTimeout(() => {
                                 loadingCard.remove();
                                 
@@ -5257,7 +5259,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 if (typeof showNotification === 'function') {
                                     showNotification('Generation complete!', 'success');
                                 }
-                            }, 500);
+                            }, refreshDelay);
                         },
                         (error) => {
                             // onError: Show error
@@ -5293,6 +5295,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (typeof completeLoading === 'function') {
                                 completeLoading(loadingCard);
                             }
+                            // ✅ Use longer delay for audio (Suno multi-track)
+                            const refreshDelay = job.generation_type === 'audio' ? 1000 : 500;
                             setTimeout(() => {
                                 loadingCard.remove();
                                 
@@ -5303,7 +5307,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 if (typeof showNotification === 'function') {
                                     showNotification('Generation complete!', 'success');
                                 }
-                            }, 500);
+                            }, refreshDelay);
                         },
                         (error) => {
                             console.error(`❌ Job ${job.jobId} failed:`, error);

@@ -12,6 +12,7 @@ const { pool } = require('../config/database');
 const falAiService = require('../services/falAiService');
 const sunoService = require('../services/sunoService');
 const videoStorage = require('../utils/videoStorage');
+const User = require('../models/User'); // ✅ CRITICAL: Needed for refund logic
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -251,14 +252,7 @@ async function processAIGeneration(jobData, job) {
     // 1. Update status to 'processing'
     await updateJobStatus(jobId, 'processing', 0);
 
-    // 2. Check user credits
-    const user = await getUserById(userId);
-    
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    // 3. Calculate required credits
+    // 2. Calculate required credits FIRST (before checking balance)
     const modelId = settings.modelId;
     // Pass subType for accurate cost calculation (image-to-video vs text-to-video)
     const costSettings = {
@@ -267,10 +261,30 @@ async function processAIGeneration(jobData, job) {
       subType: subType
     };
     const creditsCost = await calculateCreditsCost(modelId, costSettings);
-
-    if (user.credits < creditsCost) {
-      throw new Error(`Insufficient credits. Need ${creditsCost}, have ${user.credits}`);
+    
+    // 3. ✅ ATOMIC: Check AND Deduct credits in single query to prevent race conditions
+    // This ensures concurrent jobs don't cause credit issues
+    console.log(`💰 Attempting to deduct ${creditsCost} credits from user ${userId}...`);
+    
+    const deductResult = await pool.query(`
+      UPDATE users 
+      SET credits = credits - $1
+      WHERE id = $2 AND credits >= $1
+      RETURNING id, name, email, credits
+    `, [creditsCost, userId]);
+    
+    if (deductResult.rows.length === 0) {
+      // Either user not found OR insufficient credits
+      const userCheck = await pool.query('SELECT credits FROM users WHERE id = $1', [userId]);
+      if (userCheck.rows.length === 0) {
+        throw new Error('User not found');
+      }
+      const currentCredits = userCheck.rows[0].credits;
+      throw new Error(`Insufficient credits. Need ${creditsCost}, have ${currentCredits}`);
     }
+    
+    const user = deductResult.rows[0];
+    console.log(`✅ Credits deducted! New balance: ${user.credits}`);
 
     // 4. Update progress - Starting generation
     await updateJobStatus(jobId, 'processing', 10);
@@ -293,8 +307,8 @@ async function processAIGeneration(jobData, job) {
     
     const storedUrl = await storeResult(userId, result, generationType);
 
-    // 7. Deduct credits
-    await deductUserCredits(userId, creditsCost);
+    // 7. ✅ Credits already deducted at the beginning (atomic operation)
+    // No need to deduct again here
 
     // 8. Update job status
     if (storedUrl === null) {
@@ -364,9 +378,17 @@ async function processAIGeneration(jobData, job) {
     // 9. Publish event
     if (storedUrl !== null) {
       // Completed immediately
+      // ✅ Get database ID for SSE event (frontend needs this)
+      const dbIdResult = await pool.query(
+        'SELECT id FROM ai_generation_history WHERE job_id = $1',
+        [jobId]
+      );
+      const generationId = dbIdResult.rows[0]?.id;
+      
       await queueManager.publish('generation.completed', {
         userId,
         jobId,
+        generationId, // ✅ Add database ID for frontend matching
         resultUrl: storedUrl,
         type: generationType,
         creditsCost,
@@ -374,9 +396,17 @@ async function processAIGeneration(jobData, job) {
       });
     } else {
       // Processing via callback
+      // ✅ Get database ID for SSE event
+      const dbIdResult = await pool.query(
+        'SELECT id FROM ai_generation_history WHERE job_id = $1',
+        [jobId]
+      );
+      const generationId = dbIdResult.rows[0]?.id;
+      
       await queueManager.publish('generation.processing', {
         userId,
         jobId,
+        generationId, // ✅ Add database ID for frontend matching
         taskId: result.taskId || result.audio_id,
         type: generationType,
         message: 'Awaiting callback'
@@ -401,38 +431,45 @@ async function processAIGeneration(jobData, job) {
     
     console.log('═══════════════════════════════════════════════');
     console.error(`❌ [${new Date().toISOString()}] Generation Failed`);
-    console.error(`   Job ID: ${jobId}`);
-    console.error(`   User ID: ${userId}`);
+    console.error(`   Job ID: ${jobId || 'N/A'}`);
+    console.error(`   User ID: ${userId || 'N/A'}`);
+    console.error(`   Type: ${generationType || 'N/A'} - ${subType || 'N/A'}`);
+    console.error(`   Model: ${settings?.modelId || 'N/A'}`);
     console.error(`   Error: ${error.message}`);
     console.error(`   Duration: ${duration}s`);
     console.log('═══════════════════════════════════════════════');
 
-    // ⚠️ REFUND USER if error is due to Suno API credits issue
-    // This is not user's fault - it's a service provider issue
-    if (error.message && (error.message.includes('Suno API credits') || 
-                          error.message.includes('insufficient') ||
-                          error.message.includes('Administrator perlu top-up'))) {
-      console.log('💰 Refunding user - Suno API credits issue detected');
+    // ✅ REFUND CREDITS if they were already deducted
+    // Credits are deducted at the start (atomic operation), so refund on any error
+    // EXCEPT for "Insufficient credits" error (credits weren't deducted in that case)
+    const shouldRefund = !error.message?.includes('Insufficient credits') && 
+                         typeof creditsCost !== 'undefined' && 
+                         typeof userId !== 'undefined';
+    
+    if (shouldRefund) {
+      console.log(`💰 Refunding ${creditsCost} credits to user ${userId}...`);
       try {
-        // Get the cost that was already deducted
-        const jobInfo = await pool.query(
-          'SELECT cost_credits FROM ai_generation_history WHERE job_id = $1',
-          [jobId]
+        await pool.query(
+          'UPDATE users SET credits = credits + $1 WHERE id = $2',
+          [creditsCost, userId]
         );
-        
-        if (jobInfo.rows.length > 0 && jobInfo.rows[0].cost_credits) {
-          const refundAmount = jobInfo.rows[0].cost_credits;
-          await User.updateCredits(
-            userId, 
-            refundAmount, 
-            'Refund', 
-            'Suno API service temporarily unavailable'
-          );
-          console.log(`   ✅ Refunded ${refundAmount} credits to user ${userId}`);
-        }
+        console.log(`   ✅ Refunded ${creditsCost} credits to user ${userId}`);
       } catch (refundError) {
         console.error('   ❌ Refund failed:', refundError.message);
+        // Log to database for manual refund
+        try {
+          await pool.query(
+            `INSERT INTO refund_log (user_id, amount, reason, error, created_at) 
+             VALUES ($1, $2, $3, $4, NOW())`,
+            [userId, creditsCost, error.message, refundError.message]
+          );
+        } catch (logError) {
+          // If even logging fails, just console error
+          console.error('   ❌ Failed to log refund error:', logError.message);
+        }
       }
+    } else if (error.message?.includes('Insufficient credits')) {
+      console.log('   ℹ️  No refund needed - credits were not deducted');
     }
 
     // Update job as failed
@@ -445,11 +482,21 @@ async function processAIGeneration(jobData, job) {
       WHERE job_id = $2
     `, [error.message, jobId]);
 
-    // Publish failure event
+    // ✅ Get database ID for SSE event (frontend needs this)
+    const dbIdResult = await pool.query(
+      'SELECT id FROM ai_generation_history WHERE job_id = $1',
+      [jobId]
+    );
+    const generationId = dbIdResult.rows[0]?.id;
+
+    // Publish failure event with informative error message
     await queueManager.publish('generation.failed', {
       userId,
       jobId,
-      error: error.message,
+      generationId, // ✅ Include database ID for frontend matching
+      error: error.message, // ✅ Already contains informative message
+      type: generationType || 'unknown',
+      modelId: settings?.modelId || 'unknown'
     });
 
     // ✨ SMART RETRY: Detect permanent errors (should NOT retry)
@@ -569,7 +616,12 @@ async function generateImage(modelId, prompt, settings, uploadedFiles, jobId) {
   );
 
   if (modelQuery.rows.length === 0) {
-    throw new Error('Model not found');
+    // ✅ Informative error message
+    const errorMessage = `Model "${modelId}" tidak ditemukan di sistem. ` +
+      `Model mungkin tidak aktif atau telah dihapus. ` +
+      `Silakan pilih model lain atau hubungi administrator jika masalah berlanjut.`;
+    console.error(`❌ Model lookup failed: ${modelId}`);
+    throw new Error(errorMessage);
   }
 
   const { model_id, name, type } = modelQuery.rows[0];
@@ -787,7 +839,12 @@ async function generateVideo(modelId, prompt, settings, uploadedFiles, jobId) {
   );
 
   if (modelQuery.rows.length === 0) {
-    throw new Error('Model not found');
+    // ✅ Informative error message
+    const errorMessage = `Model "${modelId}" tidak ditemukan di sistem. ` +
+      `Model mungkin tidak aktif atau telah dihapus. ` +
+      `Silakan pilih model lain atau hubungi administrator jika masalah berlanjut.`;
+    console.error(`❌ Model lookup failed: ${modelId}`);
+    throw new Error(errorMessage);
   }
 
   const { model_id, name, type, max_duration } = modelQuery.rows[0];
@@ -903,7 +960,12 @@ async function generateAudio(modelId, prompt, settings, subType, jobId) {
   );
 
   if (modelQuery.rows.length === 0) {
-    throw new Error('Model not found');
+    // ✅ Informative error message
+    const errorMessage = `Model "${modelId}" tidak ditemukan di sistem. ` +
+      `Model mungkin tidak aktif atau telah dihapus. ` +
+      `Silakan pilih model lain atau hubungi administrator jika masalah berlanjut.`;
+    console.error(`❌ Model lookup failed: ${modelId}`);
+    throw new Error(errorMessage);
   }
 
   const { model_id, name, type, provider, metadata } = modelQuery.rows[0];
@@ -946,8 +1008,10 @@ async function generateAudio(modelId, prompt, settings, subType, jobId) {
     const customMode = settings.advanced?.custom_mode || hasLyrics || false;
     
     // Prepare Suno-specific parameters
+    let finalPrompt = hasLyrics ? settings.advanced.lyrics : prompt;
+    
     const sunoParams = {
-      prompt: hasLyrics ? settings.advanced.lyrics : prompt, // Use lyrics if provided
+      prompt: finalPrompt, // Will be modified below if vocal gender is set
       model: modelVersion,
       make_instrumental: settings.advanced?.make_instrumental || false,
       custom_mode: customMode,
@@ -990,7 +1054,37 @@ async function generateAudio(modelId, prompt, settings, subType, jobId) {
     // Add vocal_gender if provided and not instrumental
     if (!sunoParams.make_instrumental && settings.advanced?.vocal_gender) {
       sunoParams.vocal_gender = settings.advanced.vocal_gender;
-      console.log(`   👤 Vocal Gender: ${settings.advanced.vocal_gender}`);
+      
+      // ✅ TRIPLE REINFORCEMENT for maximum reliability:
+      // 1. vocalGender parameter (API hint)
+      // 2. Text descriptor in tags (style context)
+      // 3. Text descriptor in prompt (direct instruction)
+      
+      const genderDescriptor = settings.advanced.vocal_gender === 'm' ? 'male' : 
+                              settings.advanced.vocal_gender === 'f' ? 'female' : null;
+      const genderLabel = genderDescriptor ? `${genderDescriptor} vocalist` : null;
+      
+      if (genderDescriptor && genderLabel) {
+        // Method 2: Add to tags
+        tagsArray.push(genderLabel);
+        
+        // Method 3: Add to prompt (only if NOT custom mode with lyrics)
+        // In custom mode with lyrics, prompt IS the lyrics and should not be modified
+        if (!hasLyrics && !sunoParams.custom_mode) {
+          // Add vocal gender descriptor to prompt for non-custom mode
+          sunoParams.prompt = `${finalPrompt} with ${genderDescriptor} vocals`;
+          console.log(`   👤 Vocal Gender: ${settings.advanced.vocal_gender}`);
+          console.log(`   ✅ Method 1: vocalGender parameter = "${settings.advanced.vocal_gender}"`);
+          console.log(`   ✅ Method 2: Added "${genderLabel}" to tags`);
+          console.log(`   ✅ Method 3: Modified prompt to include "${genderDescriptor} vocals"`);
+        } else {
+          // Custom mode: only use parameter + tags (don't modify lyrics/prompt)
+          console.log(`   👤 Vocal Gender: ${settings.advanced.vocal_gender}`);
+          console.log(`   ✅ Method 1: vocalGender parameter = "${settings.advanced.vocal_gender}"`);
+          console.log(`   ✅ Method 2: Added "${genderLabel}" to tags`);
+          console.log(`   ℹ️  Method 3: Skipped (custom mode - preserving original lyrics/prompt)`);
+        }
+      }
     } else if (!sunoParams.make_instrumental) {
       console.log(`   👤 Vocal Gender: auto (not specified)`);
     } else {
@@ -1318,7 +1412,12 @@ async function calculateCreditsCost(modelId, settings) {
   `, [modelId]);
 
   if (result.rows.length === 0) {
-    throw new Error('Model not found');
+    // ✅ Informative error message
+    const errorMessage = `Model "${modelId}" tidak ditemukan di sistem. ` +
+      `Model mungkin tidak aktif atau telah dihapus. ` +
+      `Silakan pilih model lain atau hubungi administrator jika masalah berlanjut.`;
+    console.error(`❌ Model lookup failed for cost calculation: ${modelId}`);
+    throw new Error(errorMessage);
   }
 
   const { name, type, cost, max_duration, metadata } = result.rows[0];

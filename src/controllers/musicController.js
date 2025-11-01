@@ -2,6 +2,7 @@ const sunoService = require('../services/sunoService');
 const User = require('../models/User');
 const { pool } = require('../config/database');
 const queueManager = require('../queue/pgBossQueue');
+const crypto = require('crypto');
 
 const musicController = {
   /**
@@ -61,7 +62,7 @@ const musicController = {
       const modelData = modelQuery.rows[0];
       const baseCost = parseFloat(modelData.cost);
 
-      // Check user credits
+      // Check user credits (don't deduct yet - worker will handle it)
       const user = await User.findById(userId);
       if (!user) {
         return res.status(404).json({
@@ -90,9 +91,10 @@ const musicController = {
         tempo
       });
 
-      // Prepare settings for worker
+      // Prepare settings for worker (matching generationQueueController pattern)
       const isInstrumental = make_instrumental === 'true' || make_instrumental === true;
       const settings = {
+        modelId: modelData.model_id, // ✅ CRITICAL: Worker expects modelId in settings
         advanced: {
           make_instrumental: isInstrumental,
           custom_mode: custom_mode === 'true' || custom_mode === true,
@@ -105,51 +107,47 @@ const musicController = {
         }
       };
 
-      // Deduct credits upfront
-      await User.updateCredits(userId, -baseCost, 'Music Generation', `Generating music: ${title || prompt.substring(0, 50)}`);
+      // Generate unique job ID (matching generationQueueController pattern)
+      const jobId = `job_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
 
-      // Save generation to database with 'processing' status
+      // Insert to database with 'pending' status (worker will update to 'processing')
       const insertQuery = `
         INSERT INTO ai_generation_history 
-        (user_id, model_used, prompt, status, cost_credits, generation_type, sub_type, settings, metadata)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING id, created_at
+        (user_id, job_id, model_used, prompt, status, generation_type, sub_type, settings, progress, started_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+        RETURNING id, job_id
       `;
 
       const insertValues = [
         userId,
+        jobId, // ✅ Use generated jobId
         modelData.model_id,
         prompt,
-        'processing',
-        baseCost,
+        'pending', // ✅ Start with 'pending', worker will change to 'processing'
         'audio',
-        'music-suno',
+        'text-to-music', // ✅ Match worker's expectation for subType
         JSON.stringify(settings),
-        JSON.stringify({ 
-          model,
-          provider: 'Suno',
-          source: 'music-page'
-        })
+        0
       ];
 
       const insertResult = await pool.query(insertQuery, insertValues);
-      const generationId = insertResult.rows[0].id;
+      const dbId = insertResult.rows[0].id;
 
-      console.log(`   💾 Created generation record: ${generationId}`);
+      console.log(`   💾 Created generation record: ${dbId} with job_id: ${jobId}`);
 
       // Small delay to ensure database transaction is committed
-      // Increased to 200ms for deployment (50ms was too short in production)
       await new Promise(resolve => setTimeout(resolve, 200));
 
-      // Enqueue job to worker
-      const jobId = await queueManager.enqueue('ai-generation', {
-        generationId,
+      // Enqueue job to worker (matching generationQueueController pattern)
+      const queueJobId = await queueManager.enqueue('ai-generation', {
         userId,
-        modelId: modelData.id,
+        jobId, // ✅ Pass jobId (string) not generationId (number)
+        generationType: 'audio', // ✅ Worker expects 'generationType'
+        subType: 'text-to-music', // ✅ Match worker's audio generation logic
         prompt,
-        settings,
-        generationType: 'audio',
-        subType: 'music-suno'
+        settings, // ✅ Contains modelId and advanced options
+        dbJobId: dbId,
+        uploadedFiles: {} // ✅ Empty for music (no file uploads)
       }, {
         priority: 5, // Higher priority for music
         retryLimit: 2,
@@ -157,31 +155,22 @@ const musicController = {
         expireInSeconds: 60 * 15 // 15 minutes
       });
 
-      console.log(`   📤 Job enqueued: ${jobId}`);
+      console.log(`   📤 Job enqueued: ${queueJobId}`);
 
       // Return job info immediately
       res.json({
         success: true,
         message: 'Music generation started',
-        jobId,
-        generationId,
-        status: 'processing',
-        creditsUsed: baseCost,
-        remainingCredits: user.credits - baseCost,
-        estimatedTime: '30-60 seconds'
+        jobId: insertResult.rows[0].job_id, // ✅ Return the job_id from database
+        id: dbId, // ✅ Also return database ID
+        status: 'pending',
+        estimatedTime: '30-60 seconds',
+        cost: baseCost, // ✅ Include cost for frontend display
+        modelName: modelData.model_id
       });
 
     } catch (error) {
       console.error('❌ Music generation enqueue error:', error);
-      
-      // Refund credits if job failed to enqueue
-      if (error.message && !error.message.includes('Insufficient credits')) {
-        try {
-          await User.updateCredits(req.user.id, baseCost, 'Refund', 'Music generation failed to start');
-        } catch (refundError) {
-          console.error('❌ Refund failed:', refundError);
-        }
-      }
       
       res.status(500).json({
         success: false,

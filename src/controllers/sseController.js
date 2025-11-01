@@ -58,12 +58,13 @@ const sseController = {
 
     // Subscribe to job completion events
     const completionHandler = async (job) => {
-      const { userId: jobUserId, jobId, resultUrl, type } = job.data;
+      const { userId: jobUserId, jobId, generationId, resultUrl, type } = job.data;
 
       // Only send to the user who owns the job
       if (jobUserId === userId) {
         sendSSE(res, 'job-completed', {
           jobId,
+          generationId, // ✅ Include database ID for frontend matching
           resultUrl,
           type,
           timestamp: new Date().toISOString()
@@ -72,11 +73,12 @@ const sseController = {
     };
 
     const failureHandler = async (job) => {
-      const { userId: jobUserId, jobId, error } = job.data;
+      const { userId: jobUserId, jobId, generationId, error } = job.data;
 
       if (jobUserId === userId) {
         sendSSE(res, 'job-failed', {
           jobId,
+          generationId, // ✅ Include database ID for frontend matching
           error,
           timestamp: new Date().toISOString()
         });

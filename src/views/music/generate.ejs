@@ -734,7 +734,7 @@
             <button
               type="submit"
               id="generateBtn"
-              class="w-full py-4 gradient-pink rounded-lg font-bold text-lg hover:shadow-lg hover:shadow-pink-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full py-4 gradient-pink rounded-lg font-bold text-lg hover:shadow-lg hover:shadow-pink-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
               <%= !sunoAvailable ? 'disabled' : '' %>
             >
               <i class="fas fa-music mr-2"></i>
@@ -1254,6 +1254,16 @@
     musicForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
+      // ✅ CRITICAL: Immediate disable to prevent double-submit
+      if (generateBtn.disabled) {
+        console.log('⚠️ Generation already in progress, ignoring submit');
+        return;
+      }
+      
+      generateBtn.disabled = true;
+      generateBtn.classList.add('generating');
+      btnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+      
       // Determine generation mode
       const isCustomMode = !document.getElementById('customMode').classList.contains('hidden');
       const isInstrumental = document.getElementById('make_instrumental').value === 'true';
@@ -1276,10 +1286,18 @@
         
         if (!lyrics) {
           showNotification('Please enter song lyrics', 'error');
+          // Re-enable button on validation error
+          generateBtn.disabled = false;
+          generateBtn.classList.remove('generating');
+          btnText.innerHTML = '<i class="fas fa-music mr-2"></i>Generate Music';
           return;
         }
         if (!style) {
           showNotification('Please enter music style', 'error');
+          // Re-enable button on validation error
+          generateBtn.disabled = false;
+          generateBtn.classList.remove('generating');
+          btnText.innerHTML = '<i class="fas fa-music mr-2"></i>Generate Music';
           return;
         }
         
@@ -1291,6 +1309,10 @@
         
         if (!description) {
           showNotification('Please enter a music description', 'error');
+          // Re-enable button on validation error
+          generateBtn.disabled = false;
+          generateBtn.classList.remove('generating');
+          btnText.innerHTML = '<i class="fas fa-music mr-2"></i>Generate Music';
           return;
         }
         
@@ -1312,10 +1334,7 @@
         console.log('🎤 Frontend - Instrumental mode, skipping vocal gender');
       }
       
-      // Disable button and show loading
-      generateBtn.disabled = true;
-      generateBtn.classList.add('generating');
-      btnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+      // ✅ Button already disabled at the start - no need to disable again here
       
       // ✨ Show loading card IMMEDIATELY (before fetch)
       console.log('🎬 Calling displayProcessingState() BEFORE fetch');
@@ -1334,18 +1353,22 @@
         const data = await response.json();
         
         if (data.success) {
-          showNotification('Music generation started! Waiting for results...', 'success');
+          const costText = data.cost ? ` (${data.cost} credits)` : '';
+          showNotification(`Music generation started! Waiting for results...${costText}`, 'success');
           
-          // Update credits display
-          if (data.remainingCredits !== undefined) {
-            userCreditsEl.textContent = data.remainingCredits + ' credits';
+          // ✅ Display cost in loading card
+          if (data.cost) {
+            displayProcessingStateWithCost(data.id, formData, data.cost, data.modelName);
+          } else {
+            displayProcessingState(data.id, formData);
           }
           
-          // Update loading card with real generation ID (already showing)
-          // displayProcessingState(data.generationId, formData); // Already shown above
-          
           // Start SSE to listen for completion
-          listenForCompletion(data.generationId, formData);
+          // ✅ Use data.id (database ID) for SSE tracking
+          listenForCompletion(data.id, formData);
+          
+          // ✅ Keep button disabled - SSE will re-enable when complete
+          console.log('✅ Generation started - button will remain disabled until completion');
           
           // Reset form
           musicForm.reset();
@@ -1545,6 +1568,45 @@
       resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
     
+    function displayProcessingStateWithCost(generationId, formData, cost, modelName) {
+      // ✨ Get fresh references (in case elements weren't ready initially)
+      const resultsSection = document.getElementById('resultsSection');
+      const musicResults = document.getElementById('musicResults');
+      
+      if (!resultsSection || !musicResults) {
+        console.error('❌ Results elements not found!');
+        return;
+      }
+      
+      console.log('✅ Showing loading card with cost in results section');
+      resultsSection.classList.remove('hidden');
+      resultsSection.style.display = 'block'; // ✨ Force show
+      musicResults.innerHTML = `
+        <div id="loading-card-${generationId}" class="col-span-full glass-strong rounded-xl p-8 text-center">
+          <div class="animate-pulse mb-4">
+            <i class="fas fa-music text-6xl text-blue-400"></i>
+          </div>
+          <p class="text-xl font-bold mb-2">Generating your music...</p>
+          <div class="flex items-center justify-center gap-4 mb-3 text-sm">
+            <div class="flex items-center gap-2 px-3 py-1 bg-purple-500/20 rounded-full">
+              <i class="fas fa-robot text-purple-400"></i>
+              <span class="text-gray-300">${modelName || 'Suno AI'}</span>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-1 bg-yellow-500/20 rounded-full">
+              <i class="fas fa-coins text-yellow-400"></i>
+              <span class="text-yellow-300 font-semibold">${cost} credits</span>
+            </div>
+          </div>
+          <p class="text-gray-400 mb-2" id="progress-status-${generationId}">Initializing...</p>
+          <div class="w-full bg-gray-700 rounded-full h-2 overflow-hidden mb-2">
+            <div id="progress-bar-${generationId}" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500" style="width: 0%"></div>
+          </div>
+          <p class="text-xs text-gray-500" id="progress-percent-${generationId}">0%</p>
+        </div>
+      `;
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
     // Update progress for a specific generation
     function updateProgress(generationId, progress, status) {
       const progressBar = document.getElementById(`progress-bar-${generationId}`);
@@ -1576,6 +1638,24 @@
       
       // Set initial progress
       updateProgress(generationId, 10, 'Queued...');
+      
+      // ✅ Safety timeout: Re-enable button after 5 minutes if no response
+      const safetyTimeout = setTimeout(() => {
+        console.warn('⏱️ Safety timeout reached (5 min) - re-enabling button');
+        generateBtn.disabled = false;
+        generateBtn.classList.remove('generating');
+        btnText.innerHTML = '<i class="fas fa-music mr-2"></i>Generate Music';
+        
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+        }
+        
+        showNotification('Generation taking longer than expected. Please check your history.', 'warning');
+      }, 5 * 60 * 1000); // 5 minutes
+      
+      // Store timeout ID for cleanup
+      window.generationTimeout = safetyTimeout;
       
       // Connect to SSE endpoint
       console.log('🔗 Connecting to SSE: /api/sse/generation-updates');
@@ -1633,6 +1713,12 @@
             showNotification('Music completed but failed to load. Please refresh.', 'warning');
           }
           
+          // ✅ Clear safety timeout
+          if (window.generationTimeout) {
+            clearTimeout(window.generationTimeout);
+            window.generationTimeout = null;
+          }
+          
           // Re-enable button
           generateBtn.disabled = false;
           generateBtn.classList.remove('generating');
@@ -1653,6 +1739,12 @@
         if (data.generationId === generationId) {
           console.error('❌ Music generation failed:', data.error);
           showNotification(data.error || 'Music generation failed', 'error');
+          
+          // ✅ Clear safety timeout
+          if (window.generationTimeout) {
+            clearTimeout(window.generationTimeout);
+            window.generationTimeout = null;
+          }
           
           // Re-enable button
           generateBtn.disabled = false;

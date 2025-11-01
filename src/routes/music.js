@@ -114,8 +114,8 @@ router.post('/callback/suno', async (req, res) => {
                   // Create a new record for additional tracks
                   const insertQuery = `
                     INSERT INTO ai_generation_history 
-                    (user_id, model_used, prompt, result_url, result_data, metadata, status, cost_credits, generation_type, sub_type, completed_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+                    (user_id, model_used, prompt, result_url, metadata, status, cost_credits, generation_type, sub_type, completed_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
                     RETURNING id
                   `;
                   
@@ -124,7 +124,6 @@ router.post('/callback/suno', async (req, res) => {
                     originalGen.model_used,
                     originalGen.prompt,
                     track.audio_url,
-                    null, // result_data
                     JSON.stringify({ 
                       track, 
                       all_tracks: readyTracks,
@@ -145,6 +144,24 @@ router.post('/callback/suno', async (req, res) => {
                 console.error(`   ❌ Error processing track ${i + 1}:`, trackError.message);
               }
             }
+            
+            // ✅ CRITICAL: Emit SSE completion event AFTER all tracks are created
+            // This ensures frontend soft refresh gets ALL tracks
+            console.log(`   📡 Emitting SSE completion event for all ${readyTracks.length} tracks`);
+            
+            const queueManager = require('../queue/pgBossQueue');
+            await queueManager.publish('generation.completed', {
+              userId: originalGen.user_id,
+              jobId: originalGen.job_id,
+              generationId: originalGen.id, // ✅ Include database ID for frontend matching
+              resultUrl: readyTracks[0].audio_url,
+              type: 'audio',
+              multiTrack: readyTracks.length > 1,
+              trackCount: readyTracks.length,
+              timestamp: new Date().toISOString()
+            });
+            
+            console.log(`   ✅ All ${readyTracks.length} track(s) processed and notification sent!`);
           } else {
             console.warn(`   ⚠️ No matching generation found for task_id: ${task_id}`);
             console.warn(`   Search pattern: %${task_id}%`);
