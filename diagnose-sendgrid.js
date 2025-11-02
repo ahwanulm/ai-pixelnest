@@ -46,7 +46,7 @@ async function diagnoseSendGrid() {
   if (emailFrom) {
     log('green', '✅', `EMAIL_FROM: ${emailFrom}`);
   } else {
-    log('red', '❌', 'EMAIL_FROM not set (using default: noreply@pixelnest.com)');
+    log('red', '❌', 'EMAIL_FROM not set (using default: noreply@pixelnest.id)');
   }
 
   // ========================================
@@ -99,7 +99,7 @@ async function diagnoseSendGrid() {
   log('cyan', '\n🔍', 'Step 3: Validating SendGrid API Key...\n');
   
   const activeApiKey = dbConfig?.api_key || envApiKey;
-  const activeEmailFrom = dbConfig?.additional_config?.email_from || emailFrom || 'noreply@pixelnest.com';
+  const activeEmailFrom = dbConfig?.additional_config?.email_from || emailFrom || 'noreply@pixelnest.id';
   
   if (!activeApiKey) {
     log('red', '❌', 'CRITICAL: No SendGrid API Key found anywhere!');

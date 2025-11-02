@@ -189,7 +189,7 @@ npm run dev
 ### 2. Buat Admin User
 ```bash
 npm run create-admin
-# Default: admin@pixelnest.com / admin123
+# Default: admin@pixelnest.id / admin123
 ```
 
 ### 3. Test Fitur

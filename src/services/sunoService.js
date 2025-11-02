@@ -110,6 +110,7 @@ class SunoService {
       }
       console.log('   Weirdness:', weirdness);
       console.log('   Style Weight:', style_weight);
+      console.log('   🎼 Expected Results: 2 tracks (Suno default dual track generation)');
 
       // Convert model to Suno format (v5 -> V5, v4_5 -> V4_5, v3_5 -> V3_5, etc)
       const modelFormatted = model.toUpperCase();
@@ -122,7 +123,9 @@ class SunoService {
         instrumental: make_instrumental || instrumental,
         model: modelFormatted,
         // Callback URL from config (set in admin panel)
-        callBackUrl: this.callbackUrl
+        callBackUrl: this.callbackUrl,
+        // ✅ IMPORTANT: Ensure Suno returns 2 results (dual track)
+        wait_audio: false // false = callback when ready, true = wait for all tracks
       };
 
       // Optional parameters (if supported by Suno API)
@@ -154,6 +157,7 @@ class SunoService {
       console.log(JSON.stringify(requestBody, null, 2));
       
       // Highlight important fields
+      console.log(`   🎵 wait_audio: ${requestBody.wait_audio} (Ensures 2 track results)`);
       if (requestBody.style) {
         console.log(`   ✅ Style/Tags: ${requestBody.style}`);
       }
@@ -223,13 +227,16 @@ class SunoService {
       const taskId = data.data.taskId;
       console.log('✅ Suno task created:', taskId);
       console.log('   ℹ️  Results will be sent to callback URL when ready (~30-60s)');
+      console.log('   🎼 Expecting 2 tracks from Suno (dual track generation)');
+      console.log('   📞 Callback type: "first" (track 1 ready) → "complete" (both tracks ready)');
       
       // Suno API is callback-based - results delivered via webhook
       return { 
         taskId,
         status: 'processing',
-        message: 'Music generation started. Awaiting callback.',
-        callback_based: true
+        message: 'Music generation started. Awaiting callback with 2 tracks.',
+        callback_based: true,
+        expected_tracks: 2
       };
       
     } catch (error) {

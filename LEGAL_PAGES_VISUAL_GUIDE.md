@@ -102,7 +102,7 @@ Halaman **Terms of Service** dan **Privacy Policy** telah didesain ulang dengan 
 │  │     Jln Pendidikan Pringgasela...       │ │
 │  │                                          │ │
 │  │ [✉️] Email                              │ │
-│  │     legal@pixelnest.com                 │ │
+│  │     legal@pixelnest.id                 │ │
 │  └────────────────────────────────────────┘ │
 │       ↑ Glass card with border              │
 └──────────────────────────────────────────────┘
@@ -302,7 +302,7 @@ Ubah gradient badges di setiap section:
 Edit di section terakhir (Contact Us/Contact Information):
 ```html
 <p>Jln Pendidikan Pringgasela...</p>
-<a href="mailto:legal@pixelnest.com">...</a>
+<a href="mailto:legal@pixelnest.id">...</a>
 ```
 
 ---

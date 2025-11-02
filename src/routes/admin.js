@@ -1,7 +1,23 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const adminController = require('../controllers/adminController');
 const { ensureAdmin, logAdminActivity } = require('../middleware/admin');
+
+// Configure multer for SQL file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024 // 50MB max
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.originalname.endsWith('.sql') || file.originalname.endsWith('.txt')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only .sql or .txt files are allowed'));
+    }
+  }
+});
 
 // Apply admin middleware to all routes
 router.use(ensureAdmin);
@@ -12,6 +28,9 @@ router.get('/dashboard', adminController.getDashboard);
 
 // ============ USER MANAGEMENT ============
 router.get('/users', adminController.getUsers);
+router.post('/users', logAdminActivity('create_user'), adminController.createUser);
+router.get('/users/backup', logAdminActivity('backup_users'), adminController.backupUsers);
+router.post('/users/import', upload.single('sqlFile'), logAdminActivity('import_users'), adminController.importUsers);
 router.get('/users/:id', adminController.getUserDetails);
 router.put('/users/:id', logAdminActivity('update_user'), adminController.updateUser);
 router.post('/users/:id/credits', logAdminActivity('add_credits'), adminController.addCredits);

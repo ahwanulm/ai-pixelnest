@@ -40,7 +40,7 @@ fi
 # Check EMAIL_FROM
 if [ -z "$EMAIL_FROM" ]; then
     if [ -z "$EMAIL_USER" ]; then
-        echo "⚠️  EMAIL_FROM: NOT SET (will use default: noreply@pixelnest.com)"
+        echo "⚠️  EMAIL_FROM: NOT SET (will use default: noreply@pixelnest.id)"
     else
         echo "✅ EMAIL_FROM: Using EMAIL_USER ($EMAIL_USER)"
     fi

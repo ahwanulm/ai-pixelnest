@@ -171,12 +171,12 @@ Maintenance:       Simplified
 
 **Before**:
 ```
-https://pixelnest.com/audio → Audio Studio page
+https://pixelnest.id/audio → Audio Studio page
 ```
 
 **After**:
 ```
-https://pixelnest.com/audio → 404 Not Found
+https://pixelnest.id/audio → 404 Not Found
 ```
 
 **Solution**: Users should go to `/dashboard` and click Audio tab

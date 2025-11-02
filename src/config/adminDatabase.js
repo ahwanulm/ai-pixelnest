@@ -153,7 +153,7 @@ const createAdminTables = async () => {
     const googleCallbackUrl = process.env.GOOGLE_CALLBACK_URL || defaultCallbackUrl;
     
     const sendgridApiKey = process.env.SENDGRID_API_KEY || '';
-    const emailFrom = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@pixelnest.com';
+    const emailFrom = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@pixelnest.id';
     
     const sunoApiKey = process.env.SUNO_API_KEY || '';
     

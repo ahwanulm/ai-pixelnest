@@ -16,7 +16,7 @@ async function migrateSendGrid() {
     const existingConfig = await client.query(checkQuery, ['SENDGRID']);
     
     const sendgridApiKey = process.env.SENDGRID_API_KEY || '';
-    const emailFrom = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@pixelnest.com';
+    const emailFrom = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@pixelnest.id';
     const emailFromName = 'PixelNest';
     
     if (existingConfig.rows.length > 0) {

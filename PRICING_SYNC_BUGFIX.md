@@ -296,7 +296,7 @@ npm run dev
 ╚══════════════════════════════════════════════════════════╝
 🔄 Mode: LIVE (will update database)
 🔄 Force Update: false
-👤 User: admin@pixelnest.com
+👤 User: admin@pixelnest.id
 
 📊 Updating Veo 3.1: $0.30 → $0.50
 💰 Credits: 4.5 → 6.5

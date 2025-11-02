@@ -189,6 +189,294 @@ const Admin = {
     return result.rows[0];
   },
 
+  // Create new user (by admin)
+  async createUser(userData) {
+    const bcrypt = require('bcrypt');
+    const { name, email, password, phone, role, credits, isActive } = userData;
+    
+    // Check if user already exists
+    const checkQuery = 'SELECT id FROM users WHERE email = $1';
+    const checkResult = await pool.query(checkQuery, [email]);
+    
+    if (checkResult.rows.length > 0) {
+      throw new Error('Email sudah terdaftar');
+    }
+    
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    
+    // Generate unique referral code
+    const referralCode = 'USER' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+      
+      // Create user
+      const insertQuery = `
+        INSERT INTO users (
+          name,
+          email,
+          password_hash,
+          phone,
+          role,
+          credits,
+          is_active,
+          email_verified,
+          activated_at,
+          referral_code,
+          created_at
+        ) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW()) 
+        RETURNING id, name, email, phone, role, credits, is_active, referral_code, created_at
+      `;
+      
+      const insertValues = [
+        name,
+        email,
+        hashedPassword,
+        phone || null,
+        role || 'user',
+        credits || 0,
+        isActive !== undefined ? isActive : true,
+        true, // email_verified - set to true for admin-created users
+        isActive ? new Date() : null, // activated_at - set if active
+        referralCode
+      ];
+      
+      const result = await client.query(insertQuery, insertValues);
+      const newUser = result.rows[0];
+      
+      // If credits > 0, log the initial credit transaction
+      if (credits > 0) {
+        const creditLogQuery = `
+          INSERT INTO credit_transactions 
+          (user_id, amount, transaction_type, description, balance_after)
+          VALUES ($1, $2, 'credit', 'Initial credits from admin', $3)
+        `;
+        await client.query(creditLogQuery, [newUser.id, credits, credits]);
+      }
+      
+      await client.query('COMMIT');
+      return newUser;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
+
+  // Backup all users to SQL format
+  async backupUsersToSQL() {
+    try {
+      // Get all users (no limit)
+      const query = `
+        SELECT 
+          id, name, email, password_hash, phone, role, credits, 
+          is_active, subscription_plan, subscription_expires_at,
+          avatar_url, google_id, email_verified, activation_code,
+          activation_code_expires_at, activated_at, referral_code,
+          referred_by, province, city, address, last_login, created_at
+        FROM users 
+        ORDER BY id ASC
+      `;
+      
+      const result = await pool.query(query);
+      const users = result.rows;
+      
+      // Generate SQL file content
+      let sqlContent = `-- PixelNest Users Backup
+-- Generated: ${new Date().toISOString()}
+-- Total Users: ${users.length}
+-- 
+-- IMPORTANT: This backup includes password hashes
+-- Only use this file in a secure environment
+--
+
+`;
+
+      // Add table structure comment
+      sqlContent += `-- Users Table Structure\n`;
+      sqlContent += `-- This SQL will INSERT users into the existing 'users' table\n`;
+      sqlContent += `-- Duplicate emails will be skipped by the import process\n\n`;
+
+      // Generate INSERT statements
+      users.forEach((user, index) => {
+        sqlContent += `-- User ${index + 1}: ${user.name} (${user.email})\n`;
+        
+        const values = [
+          this.escapeSQLString(user.name),
+          this.escapeSQLString(user.email),
+          this.escapeSQLString(user.password_hash),
+          user.phone ? this.escapeSQLString(user.phone) : 'NULL',
+          this.escapeSQLString(user.role || 'user'),
+          user.credits || 0,
+          user.is_active ? 'true' : 'false',
+          user.subscription_plan ? this.escapeSQLString(user.subscription_plan) : 'NULL',
+          user.subscription_expires_at ? this.escapeSQLString(user.subscription_expires_at.toISOString()) : 'NULL',
+          user.avatar_url ? this.escapeSQLString(user.avatar_url) : 'NULL',
+          user.google_id ? this.escapeSQLString(user.google_id) : 'NULL',
+          user.email_verified ? 'true' : 'false',
+          user.activation_code ? this.escapeSQLString(user.activation_code) : 'NULL',
+          user.activation_code_expires_at ? this.escapeSQLString(user.activation_code_expires_at.toISOString()) : 'NULL',
+          user.activated_at ? this.escapeSQLString(user.activated_at.toISOString()) : 'NULL',
+          user.referral_code ? this.escapeSQLString(user.referral_code) : 'NULL',
+          user.referred_by ? user.referred_by : 'NULL',
+          user.province ? this.escapeSQLString(user.province) : 'NULL',
+          user.city ? this.escapeSQLString(user.city) : 'NULL',
+          user.address ? this.escapeSQLString(user.address) : 'NULL',
+          user.last_login ? this.escapeSQLString(user.last_login.toISOString()) : 'NULL',
+          this.escapeSQLString(user.created_at.toISOString())
+        ];
+        
+        sqlContent += `INSERT INTO users (name, email, password_hash, phone, role, credits, is_active, subscription_plan, subscription_expires_at, avatar_url, google_id, email_verified, activation_code, activation_code_expires_at, activated_at, referral_code, referred_by, province, city, address, last_login, created_at)\n`;
+        sqlContent += `VALUES (${values.join(', ')});\n\n`;
+      });
+      
+      sqlContent += `-- End of backup\n`;
+      sqlContent += `-- Total: ${users.length} users\n`;
+      
+      return sqlContent;
+    } catch (error) {
+      console.error('Error creating backup:', error);
+      throw error;
+    }
+  },
+
+  // Helper function to escape SQL strings
+  escapeSQLString(str) {
+    if (str === null || str === undefined) {
+      return 'NULL';
+    }
+    // Escape single quotes and wrap in quotes
+    return `'${String(str).replace(/'/g, "''")}'`;
+  },
+
+  // Import users from SQL content
+  async importUsersFromSQL(sqlContent) {
+    const client = await pool.connect();
+    let imported = 0;
+    let skipped = 0;
+    
+    try {
+      await client.query('BEGIN');
+      
+      // Parse SQL INSERT statements
+      const insertRegex = /INSERT INTO users \([^)]+\)\s*VALUES\s*\(([^;]+)\);/gi;
+      let match;
+      
+      while ((match = insertRegex.exec(sqlContent)) !== null) {
+        try {
+          const valuesString = match[1];
+          
+          // Parse values (this is simplified - in production, use a proper SQL parser)
+          const values = this.parseInsertValues(valuesString);
+          
+          if (values && values.length >= 2) {
+            const email = values[1]; // email is second value
+            
+            // Check if user already exists
+            const checkQuery = 'SELECT id FROM users WHERE email = $1';
+            const checkResult = await client.query(checkQuery, [email]);
+            
+            if (checkResult.rows.length > 0) {
+              skipped++;
+              continue;
+            }
+            
+            // Insert user with all fields
+            const insertQuery = `
+              INSERT INTO users (
+                name, email, password_hash, phone, role, credits, is_active, 
+                subscription_plan, subscription_expires_at, avatar_url, google_id, 
+                email_verified, activation_code, activation_code_expires_at, 
+                activated_at, referral_code, referred_by, province, city, address, 
+                last_login, created_at
+              ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 
+                $16, $17, $18, $19, $20, $21, $22
+              )
+            `;
+            
+            await client.query(insertQuery, values);
+            imported++;
+          }
+        } catch (insertError) {
+          console.error('Error inserting user:', insertError);
+          skipped++;
+        }
+      }
+      
+      await client.query('COMMIT');
+      
+      return { imported, skipped };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
+
+  // Helper to parse INSERT values
+  parseInsertValues(valuesString) {
+    const values = [];
+    let currentValue = '';
+    let inQuotes = false;
+    let i = 0;
+    
+    while (i < valuesString.length) {
+      const char = valuesString[i];
+      
+      if (char === "'" && (i === 0 || valuesString[i - 1] !== '\\')) {
+        if (!inQuotes) {
+          inQuotes = true;
+        } else if (i + 1 < valuesString.length && valuesString[i + 1] === "'") {
+          // Handle escaped quote ''
+          currentValue += "'";
+          i++; // Skip next quote
+        } else {
+          inQuotes = false;
+        }
+      } else if (char === ',' && !inQuotes) {
+        values.push(this.cleanValue(currentValue.trim()));
+        currentValue = '';
+      } else {
+        currentValue += char;
+      }
+      
+      i++;
+    }
+    
+    // Add last value
+    if (currentValue.trim()) {
+      values.push(this.cleanValue(currentValue.trim()));
+    }
+    
+    return values;
+  },
+
+  // Clean parsed value
+  cleanValue(value) {
+    if (value === 'NULL' || value === 'null') {
+      return null;
+    }
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
+    // Remove quotes if present
+    if (value.startsWith("'") && value.endsWith("'")) {
+      return value.slice(1, -1).replace(/''/g, "'");
+    }
+    return value;
+  },
+
   // ============ PROMO CODES ============
   
   // Get all promo codes

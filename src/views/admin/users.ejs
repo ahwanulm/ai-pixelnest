@@ -44,6 +44,7 @@
       opacity: 1;
     }
     
+    /* Modal Styles - Following Admin Theme */
     .modal {
       display: none;
       position: fixed;
@@ -52,36 +53,242 @@
       top: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.8);
-      backdrop-filter: blur(5px);
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      padding: 20px;
     }
     .modal.active {
       display: flex;
       align-items: center;
       justify-content: center;
+      animation: fadeIn 0.2s ease-out;
     }
     .modal-content {
-      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
-      border-radius: 16px;
-      max-width: 500px;
-      width: 90%;
+      background: linear-gradient(135deg, rgba(24, 24, 27, 0.98) 0%, rgba(39, 39, 42, 0.98) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 20px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
       padding: 2rem;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 
+                  0 0 0 1px rgba(139, 92, 246, 0.1),
+                  0 0 40px rgba(139, 92, 246, 0.15);
+      animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    .modal-content::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .modal-content::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    }
+    
+    .modal-content::-webkit-scrollbar-thumb {
+      background: rgba(139, 92, 246, 0.5);
+      border-radius: 4px;
+    }
+    
+    .modal-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(139, 92, 246, 0.7);
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+    }
+    
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a78bfa, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+    }
+    
+    .modal-subtitle {
+      color: #9ca3af;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+    
+    .close-modal-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      color: #9ca3af;
+      font-size: 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .close-modal-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #f87171;
+      transform: scale(1.1);
+    }
+    
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #d1d5db;
+      margin-bottom: 0.5rem;
+    }
+    
+    .form-label .required {
+      color: #ef4444;
+      margin-left: 2px;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--bg-dark);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: white;
+      font-size: 0.9375rem;
+      transition: all 0.2s;
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+    
+    .form-input::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .form-hint {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-top: 0.375rem;
+    }
+    
+    .form-hint i {
+      font-size: 0.625rem;
+    }
+    
+    .form-checkbox-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      background: rgba(139, 92, 246, 0.05);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 10px;
+      transition: all 0.2s;
+    }
+    
+    .form-checkbox-wrapper:hover {
+      background: rgba(139, 92, 246, 0.08);
+      border-color: rgba(139, 92, 246, 0.3);
+    }
+    
+    .form-checkbox {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 2px solid rgba(139, 92, 246, 0.5);
+      background: rgba(139, 92, 246, 0.1);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .form-checkbox:checked {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    
     .quick-amount-btn {
-      padding: 8px 16px;
+      padding: 0.625rem 1rem;
       background: rgba(139, 92, 246, 0.1);
       border: 1px solid rgba(139, 92, 246, 0.3);
       border-radius: 8px;
       color: #a78bfa;
       cursor: pointer;
       transition: all 0.2s;
-      font-size: 14px;
+      font-size: 0.875rem;
+      font-weight: 500;
     }
+    
     .quick-amount-btn:hover {
       background: rgba(139, 92, 246, 0.2);
       border-color: rgba(139, 92, 246, 0.5);
       transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+    }
+    
+    .btn-submit {
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      color: white;
+      font-weight: 600;
+      transition: all 0.2s;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+    
+    .btn-submit:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+    }
+    
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .btn-cancel {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #d1d5db;
+      transition: all 0.2s;
+    }
+    
+    .btn-cancel:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
     }
   </style>
 </head>
@@ -93,8 +300,22 @@
       <%- include('../partials/admin-header', { pageTitle: title }) %>
 
       <main class="p-8 flex-1">
-        <!-- Search Bar -->
+        <!-- Search Bar & Add User Button -->
         <div class="glass-strong rounded-xl p-6 mb-6">
+          <div class="flex flex-wrap gap-4 items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-white">User Management</h2>
+            <div class="flex flex-wrap gap-3">
+              <button onclick="openAddUserModal()" class="px-6 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition font-medium">
+                <i class="fas fa-user-plus mr-2"></i> Add New User
+              </button>
+              <button onclick="backupUsers()" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition font-medium">
+                <i class="fas fa-download mr-2"></i> Backup SQL
+              </button>
+              <button onclick="openImportModal()" class="px-6 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg transition font-medium">
+                <i class="fas fa-upload mr-2"></i> Import SQL
+              </button>
+            </div>
+          </div>
           <form method="GET" action="/admin/users" class="flex flex-wrap gap-4">
             <input type="text" name="search" value="<%= search %>" 
                    placeholder="Search users..." 
@@ -191,63 +412,229 @@
     </div>
   </div>
 
+  <!-- Add User Modal -->
+  <div id="addUserModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">Add New User</h3>
+          <p class="modal-subtitle">Create a new user account</p>
+        </div>
+        <button onclick="closeAddUserModal()" class="close-modal-btn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <form onsubmit="createUser(event)" id="addUserForm">
+        <div class="form-group">
+          <label class="form-label">Full Name <span class="required">*</span></label>
+          <input type="text" id="newUserName" name="name" required 
+                 placeholder="Enter full name"
+                 class="form-input" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Email <span class="required">*</span></label>
+          <input type="email" id="newUserEmail" name="email" required 
+                 placeholder="user@example.com"
+                 class="form-input" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Password <span class="required">*</span></label>
+          <input type="password" id="newUserPassword" name="password" required 
+                 placeholder="Min. 6 characters"
+                 minlength="6"
+                 class="form-input" />
+          <p class="form-hint">
+            <i class="fas fa-info-circle"></i> Minimum 6 characters required
+          </p>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input type="tel" id="newUserPhone" name="phone" 
+                 placeholder="Optional phone number"
+                 class="form-input" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Role <span class="required">*</span></label>
+          <select id="newUserRole" name="role" required class="form-input">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Initial Credits</label>
+          <input type="number" id="newUserCredits" name="credits" value="0" min="0"
+                 placeholder="0"
+                 class="form-input" />
+          <p class="form-hint">
+            <i class="fas fa-coins"></i> Starting credit balance for the user
+          </p>
+        </div>
+        
+        <div class="form-group">
+          <div class="form-checkbox-wrapper">
+            <input type="checkbox" id="newUserActive" name="isActive" checked class="form-checkbox" />
+            <label for="newUserActive" class="text-sm text-gray-300 cursor-pointer">
+              <i class="fas fa-check-circle text-green-400 mr-1"></i>
+              Account is active and can login
+            </label>
+          </div>
+        </div>
+        
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 px-4 py-3 rounded-lg font-medium btn-submit">
+            <i class="fas fa-user-plus mr-2"></i> Create User
+          </button>
+          <button type="button" onclick="closeAddUserModal()" 
+                  class="px-6 py-3 rounded-lg font-medium btn-cancel">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Import Users Modal -->
+  <div id="importModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">Import Users from SQL</h3>
+          <p class="modal-subtitle">Upload SQL backup file to restore users</p>
+        </div>
+        <button onclick="closeImportModal()" class="close-modal-btn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <form onsubmit="importUsers(event)" id="importForm" enctype="multipart/form-data">
+        <div class="form-group">
+          <label class="form-label">SQL File <span class="required">*</span></label>
+          <div class="relative">
+            <input type="file" id="sqlFile" name="sqlFile" accept=".sql,.txt" required
+                   class="form-input cursor-pointer" 
+                   onchange="updateFileName(this)" />
+          </div>
+          <p class="form-hint">
+            <i class="fas fa-info-circle"></i> Select a .sql backup file to import users
+          </p>
+        </div>
+        
+        <div class="form-group">
+          <div class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+            <div class="flex items-start gap-3">
+              <i class="fas fa-exclamation-triangle text-yellow-400 text-lg mt-1"></i>
+              <div class="text-sm text-gray-300">
+                <strong class="text-yellow-400">Warning:</strong>
+                <ul class="mt-2 space-y-1 text-xs">
+                  <li>• Existing users with duplicate emails will be skipped</li>
+                  <li>• This operation cannot be undone</li>
+                  <li>• Make sure the SQL file is from a trusted source</li>
+                  <li>• Large files may take time to process</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 px-4 py-3 rounded-lg font-medium btn-submit">
+            <i class="fas fa-upload mr-2"></i> Import Users
+          </button>
+          <button type="button" onclick="closeImportModal()" 
+                  class="px-6 py-3 rounded-lg font-medium btn-cancel">
+            Cancel
+          </button>
+        </div>
+      </form>
+      
+      <!-- Progress Indicator -->
+      <div id="importProgress" style="display: none;" class="mt-4">
+        <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+          <div class="flex items-center gap-3">
+            <i class="fas fa-spinner fa-spin text-blue-400"></i>
+            <div class="text-sm text-gray-300">
+              <strong class="text-blue-400">Processing...</strong>
+              <p class="text-xs mt-1" id="importStatus">Reading SQL file...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Quick Edit Credits Modal -->
   <div id="quickEditCreditsModal" class="modal">
     <div class="modal-content">
-      <div class="flex items-center justify-between mb-6">
+      <div class="modal-header">
         <div>
-          <h3 class="text-xl font-bold text-white">Edit Credits</h3>
-          <p class="text-sm text-gray-400 mt-1" id="editUserName"></p>
+          <h3 class="modal-title">Edit Credits</h3>
+          <p class="modal-subtitle" id="editUserName"></p>
         </div>
-        <button onclick="closeModal()" class="text-gray-400 hover:text-white">
-          <i class="fas fa-times text-xl"></i>
+        <button onclick="closeModal()" class="close-modal-btn">
+          <i class="fas fa-times"></i>
         </button>
       </div>
       
       <form onsubmit="updateQuickCredits(event)" id="quickEditForm">
         <input type="hidden" id="editUserId">
         
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-300 mb-2">Current Credits</label>
-          <div class="px-4 py-3 bg-white/5 border border-white/10 rounded-lg">
-            <span class="text-2xl font-bold text-blue-400" id="currentCredits">0</span>
+        <div class="form-group">
+          <label class="form-label">Current Credits</label>
+          <div class="px-5 py-4 bg-gradient-to-r from-blue-500/10 to-violet-500/10 border border-blue-500/30 rounded-xl text-center">
+            <div class="text-xs text-gray-400 mb-1">Balance</div>
+            <span class="text-3xl font-bold text-blue-400" id="currentCredits">0</span>
+            <div class="text-xs text-gray-400 mt-1">credits</div>
           </div>
         </div>
         
         <!-- Quick Amount Buttons -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-300 mb-2">Quick Add</label>
+        <div class="form-group">
+          <label class="form-label">Quick Add</label>
           <div class="grid grid-cols-4 gap-2">
-            <button type="button" onclick="setAmount(10)" class="quick-amount-btn">+10</button>
-            <button type="button" onclick="setAmount(50)" class="quick-amount-btn">+50</button>
-            <button type="button" onclick="setAmount(100)" class="quick-amount-btn">+100</button>
-            <button type="button" onclick="setAmount(500)" class="quick-amount-btn">+500</button>
+            <button type="button" onclick="setAmount(10)" class="quick-amount-btn">
+              <i class="fas fa-plus text-xs"></i> 10
+            </button>
+            <button type="button" onclick="setAmount(50)" class="quick-amount-btn">
+              <i class="fas fa-plus text-xs"></i> 50
+            </button>
+            <button type="button" onclick="setAmount(100)" class="quick-amount-btn">
+              <i class="fas fa-plus text-xs"></i> 100
+            </button>
+            <button type="button" onclick="setAmount(500)" class="quick-amount-btn">
+              <i class="fas fa-plus text-xs"></i> 500
+            </button>
           </div>
         </div>
         
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-300 mb-2">Amount to Add/Subtract</label>
+        <div class="form-group">
+          <label class="form-label">Amount to Add/Subtract</label>
           <input type="number" id="quickCreditAmount" name="amount" required 
-                 placeholder="Enter amount (use - for deduction)"
-                 class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none" />
-          <p class="text-xs text-gray-400 mt-1">
-            <i class="fas fa-info-circle"></i> Positive to add, negative to subtract
+                 placeholder="Enter amount (use - to subtract)"
+                 class="form-input" />
+          <p class="form-hint">
+            <i class="fas fa-info-circle"></i> Use positive numbers to add, negative to subtract
           </p>
         </div>
         
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-300 mb-2">Description (Optional)</label>
-          <textarea id="quickCreditDescription" name="description" rows="2"
-                    placeholder="Reason for adjustment..."
-                    class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-violet-500 focus:outline-none"></textarea>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea id="quickCreditDescription" name="description" rows="3"
+                    placeholder="Optional reason for this adjustment..."
+                    class="form-input resize-none"></textarea>
         </div>
         
-        <div class="flex gap-3">
-          <button type="submit" class="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition font-medium">
+        <div class="flex gap-3 mt-6">
+          <button type="submit" class="flex-1 px-4 py-3 rounded-lg font-medium btn-submit">
             <i class="fas fa-save mr-2"></i> Save Changes
           </button>
           <button type="button" onclick="closeModal()" 
-                  class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition">
+                  class="px-6 py-3 rounded-lg font-medium btn-cancel">
             Cancel
           </button>
         </div>
@@ -259,6 +646,206 @@
   
   <script>
     let currentEditUser = null;
+    
+    // Backup users to SQL
+    async function backupUsers() {
+      try {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Creating backup...';
+        btn.disabled = true;
+        
+        const response = await fetch('/admin/users/backup', {
+          method: 'GET'
+        });
+        
+        if (!response.ok) {
+          throw new Error('Backup failed');
+        }
+        
+        // Get the blob
+        const blob = await response.blob();
+        
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        a.download = `pixelnest_users_backup_${timestamp}.sql`;
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        showNotification('✓ Backup downloaded successfully!', 'success');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      } catch (error) {
+        console.error('Error backing up users:', error);
+        showNotification('✗ Failed to create backup', 'error');
+        btn.innerHTML = '<i class="fas fa-download mr-2"></i> Backup SQL';
+        btn.disabled = false;
+      }
+    }
+    
+    // Open import modal
+    function openImportModal() {
+      document.getElementById('importForm').reset();
+      document.getElementById('importProgress').style.display = 'none';
+      document.getElementById('importModal').classList.add('active');
+    }
+    
+    // Close import modal
+    function closeImportModal() {
+      document.getElementById('importModal').classList.remove('active');
+    }
+    
+    // Update file name display
+    function updateFileName(input) {
+      const fileName = input.files[0]?.name || 'No file selected';
+      console.log('Selected file:', fileName);
+    }
+    
+    // Import users from SQL
+    async function importUsers(e) {
+      e.preventDefault();
+      
+      const fileInput = document.getElementById('sqlFile');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        showNotification('✗ Please select a file', 'error');
+        return;
+      }
+      
+      // Show progress
+      document.getElementById('importProgress').style.display = 'block';
+      document.getElementById('importStatus').textContent = 'Reading SQL file...';
+      
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Importing...';
+      submitBtn.disabled = true;
+      
+      try {
+        const formData = new FormData();
+        formData.append('sqlFile', file);
+        
+        document.getElementById('importStatus').textContent = 'Uploading and processing...';
+        
+        const response = await fetch('/admin/users/import', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          document.getElementById('importStatus').textContent = 'Import completed!';
+          showNotification(
+            `✓ Import successful! Imported: ${data.imported}, Skipped: ${data.skipped}`, 
+            'success'
+          );
+          
+          // Close modal and reload after delay
+          setTimeout(() => {
+            closeImportModal();
+            window.location.reload();
+          }, 2000);
+        } else {
+          throw new Error(data.message || 'Import failed');
+        }
+      } catch (error) {
+        console.error('Error importing users:', error);
+        document.getElementById('importProgress').style.display = 'none';
+        showNotification('✗ Failed to import users: ' + error.message, 'error');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
+    }
+    
+    // Open add user modal
+    function openAddUserModal() {
+      document.getElementById('addUserForm').reset();
+      document.getElementById('newUserActive').checked = true;
+      document.getElementById('newUserCredits').value = 0;
+      document.getElementById('newUserRole').value = 'user';
+      document.getElementById('addUserModal').classList.add('active');
+      
+      // Focus on name input
+      setTimeout(() => {
+        document.getElementById('newUserName').focus();
+      }, 100);
+    }
+    
+    // Close add user modal
+    function closeAddUserModal() {
+      document.getElementById('addUserModal').classList.remove('active');
+    }
+    
+    // Create new user
+    async function createUser(e) {
+      e.preventDefault();
+      
+      const formData = {
+        name: document.getElementById('newUserName').value,
+        email: document.getElementById('newUserEmail').value,
+        password: document.getElementById('newUserPassword').value,
+        phone: document.getElementById('newUserPhone').value || null,
+        role: document.getElementById('newUserRole').value,
+        credits: parseInt(document.getElementById('newUserCredits').value) || 0,
+        isActive: document.getElementById('newUserActive').checked
+      };
+      
+      // Validate
+      if (!formData.name || !formData.email || !formData.password) {
+        showNotification('✗ Please fill all required fields', 'error');
+        return;
+      }
+      
+      if (formData.password.length < 6) {
+        showNotification('✗ Password must be at least 6 characters', 'error');
+        return;
+      }
+      
+      // Show loading
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Creating...';
+      submitBtn.disabled = true;
+      
+      try {
+        const response = await fetch('/admin/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showNotification('✓ User created successfully!', 'success');
+          closeAddUserModal();
+          
+          // Reload page to show new user
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        } else {
+          showNotification('✗ Error: ' + data.message, 'error');
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('✗ Failed to create user', 'error');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
+    }
     
     // Open quick edit modal
     function openQuickEditCredits(user) {
@@ -358,13 +945,27 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeModal();
+        closeAddUserModal();
+        closeImportModal();
       }
     });
     
-    // Close modal on outside click
+    // Close modals on outside click
     document.getElementById('quickEditCreditsModal').addEventListener('click', (e) => {
       if (e.target.id === 'quickEditCreditsModal') {
         closeModal();
+      }
+    });
+    
+    document.getElementById('addUserModal').addEventListener('click', (e) => {
+      if (e.target.id === 'addUserModal') {
+        closeAddUserModal();
+      }
+    });
+    
+    document.getElementById('importModal').addEventListener('click', (e) => {
+      if (e.target.id === 'importModal') {
+        closeImportModal();
       }
     });
   </script>

@@ -48,7 +48,7 @@ Masukkan email Anda, lalu tekan Enter.
 
 **Contoh:**
 ```
-Enter user email: admin@pixelnest.com
+Enter user email: admin@pixelnest.id
 ✅ User successfully promoted to admin!
 ```
 

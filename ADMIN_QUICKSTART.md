@@ -47,7 +47,7 @@ npm run make-admin
 
 Example:
 ```
-Enter user email: admin@pixelnest.com
+Enter user email: admin@pixelnest.id
 ✅ User successfully promoted to admin!
 ```
 

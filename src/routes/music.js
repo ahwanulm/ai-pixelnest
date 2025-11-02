@@ -33,9 +33,13 @@ router.post('/callback/suno', async (req, res) => {
         console.log(`   Type: ${callbackType}`);
         console.log(`   Task ID: ${task_id}`);
         console.log(`   Tracks: ${tracks?.length || 0}`);
+        console.log(`   🎼 Expected: 2 tracks (Suno dual track generation)`);
         
         // ✅ Process both 'first' and 'complete' callbacks
         // Suno sends 'first' when first track is ready, 'complete' when all done
+        // Suno ALWAYS generates 2 tracks - we handle them separately:
+        //   - Track 1: Updates original generation record
+        //   - Track 2: Creates NEW generation record (separate card in UI)
         if ((callbackType === 'first' || callbackType === 'complete') && Array.isArray(tracks) && tracks.length > 0) {
         // Update database with completed tracks
         const { pool } = require('../config/database');

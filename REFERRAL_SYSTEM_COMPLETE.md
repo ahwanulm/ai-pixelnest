@@ -11,7 +11,7 @@ Sistem referral PixelNest memungkinkan user untuk mendapatkan penghasilan dengan
 ### 👥 User Features
 1. **Unique Referral Link**
    - Setiap user mendapat link referral unik
-   - Format: `https://pixelnest.com/register?ref=ABC123`
+   - Format: `https://pixelnest.id/register?ref=ABC123`
    - Dark themed card dengan shimmer effect
 
 2. **Real-time Earnings Tracking**

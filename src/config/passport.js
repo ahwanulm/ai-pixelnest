@@ -40,47 +40,29 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-// Function to get Google OAuth config from database or fallback to .env
-async function getGoogleOAuthConfig() {
-  try {
-    const result = await pool.query(
-      "SELECT api_key, api_secret, endpoint_url FROM api_configs WHERE service_name = 'GOOGLE_OAUTH' AND is_active = true"
-    );
-    
-    if (result.rows.length > 0 && result.rows[0].api_key) {
-      return {
-        clientID: result.rows[0].api_key,
-        clientSecret: result.rows[0].api_secret,
-        callbackURL: result.rows[0].endpoint_url
-      };
-    }
-  } catch (error) {
-    console.log('⚠️  Reading Google OAuth from .env (database not configured)');
-  }
-  
-  // Fallback to .env
-  return {
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5005/auth/google/callback'
-  };
+// Initialize Google Strategy IMMEDIATELY with .env values (synchronous)
+// This ensures strategy is registered before routes are loaded
+const initialConfig = {
+  clientID: process.env.GOOGLE_CLIENT_ID || 'dummy-client-id',
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy-secret',
+  callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5005/auth/google/callback'
+};
+
+// Check if Google OAuth is configured
+const isGoogleConfigured = process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET;
+
+if (!isGoogleConfigured) {
+  console.log('⚠️  Google OAuth not configured in .env. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET');
+  console.log('⚠️  Using dummy values - Google login will not work until configured');
 }
 
-// Initialize Google OAuth Strategy
-(async () => {
-  const config = await getGoogleOAuthConfig();
-  
-  if (!config.clientID || !config.clientSecret) {
-    console.log('⚠️  Google OAuth not configured. Please set up in admin panel or .env');
-    return;
-  }
-
-  passport.use(
-    new GoogleStrategy(
-      {
-        ...config,
-        passReqToCallback: true // Enable access to req object
-      },
+// Register strategy SYNCHRONOUSLY to avoid "Unknown authentication strategy" error
+passport.use(
+  new GoogleStrategy(
+    {
+      ...initialConfig,
+      passReqToCallback: true // Enable access to req object
+    },
     async (req, accessToken, refreshToken, profile, done) => {
       try {
         // Check if user already exists
@@ -113,8 +95,27 @@ async function getGoogleOAuthConfig() {
   )
 );
 
-console.log('✅ Google OAuth strategy initialized');
-})();
+console.log('✅ Google OAuth strategy registered' + (isGoogleConfigured ? ' with .env config' : ' (not configured)'));
+
+// Function to update Google OAuth config from database (async, happens after startup)
+async function updateGoogleOAuthConfig() {
+  try {
+    const result = await pool.query(
+      "SELECT api_key, api_secret, endpoint_url FROM api_configs WHERE service_name = 'GOOGLE_OAUTH' AND is_active = true"
+    );
+    
+    if (result.rows.length > 0 && result.rows[0].api_key) {
+      console.log('ℹ️  Google OAuth config found in database');
+      console.log('ℹ️  Note: To use database config, restart the server after updating admin panel');
+      // We can't hot-reload strategy config, so this is just informational
+    }
+  } catch (error) {
+    // Silent fail - database might not be ready yet
+  }
+}
+
+// Check database config in background (don't block startup)
+updateGoogleOAuthConfig();
 
 module.exports = passport;
 

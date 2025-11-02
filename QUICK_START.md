@@ -237,7 +237,7 @@ npm run verify-db
 npm run create-admin
 # Username: admin
 # Password: admin123
-# Email: admin@pixelnest.com
+# Email: admin@pixelnest.id
 
 # Opsi 2: Promote existing user to admin
 npm run make-admin

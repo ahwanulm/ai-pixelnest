@@ -165,7 +165,7 @@ Get pricing change history
       "new_price": 0.50,
       "old_credits": 4.5,
       "new_credits": 6.5,
-      "change_reason": "Auto-sync by admin@pixelnest.com",
+      "change_reason": "Auto-sync by admin@pixelnest.id",
       "changed_at": "2026-01-26T10:30:00Z"
     }
   ]

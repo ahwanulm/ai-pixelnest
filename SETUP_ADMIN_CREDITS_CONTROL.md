@@ -44,7 +44,7 @@ npm run dev
 ### **1. Login as Admin**
 ```
 URL: http://localhost:5005/admin
-Email: admin@pixelnest.com
+Email: admin@pixelnest.id
 Password: [your admin password]
 ```
 

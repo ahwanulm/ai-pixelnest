@@ -159,7 +159,7 @@ const settings = {
 ## 🔄 How It Works Now
 
 ### Registration Flow
-1. User A shares referral link: `https://pixelnest.com/login?ref=ABC12345`
+1. User A shares referral link: `https://pixelnest.id/login?ref=ABC12345`
 2. User B registers using that link
 3. ✅ User B is marked as referred by User A (in database: `referred_by` field)
 4. ❌ **NO BONUS** is given to User A yet

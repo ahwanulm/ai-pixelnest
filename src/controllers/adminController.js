@@ -155,6 +155,133 @@ const adminController = {
     }
   },
 
+  async createUser(req, res) {
+    try {
+      const { name, email, password, phone, role, credits, isActive } = req.body;
+      
+      // Validate required fields
+      if (!name || !email || !password) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Name, email, and password are required' 
+        });
+      }
+      
+      // Validate password length
+      if (password.length < 6) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Password must be at least 6 characters' 
+        });
+      }
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid email format' 
+        });
+      }
+      
+      const newUser = await Admin.createUser({
+        name,
+        email,
+        password,
+        phone,
+        role,
+        credits: parseInt(credits) || 0,
+        isActive
+      });
+      
+      res.json({ 
+        success: true, 
+        message: 'User created successfully', 
+        user: newUser 
+      });
+    } catch (error) {
+      console.error('Error creating user:', error);
+      
+      // Handle duplicate email error
+      if (error.message === 'Email sudah terdaftar') {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Email already registered' 
+        });
+      }
+      
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to create user', 
+        error: error.message 
+      });
+    }
+  },
+
+  async backupUsers(req, res) {
+    try {
+      console.log('📦 Creating users backup...');
+      
+      const sqlContent = await Admin.backupUsersToSQL();
+      
+      // Set headers for file download
+      res.setHeader('Content-Type', 'application/sql');
+      res.setHeader('Content-Disposition', `attachment; filename="pixelnest_users_backup_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)}.sql"`);
+      
+      res.send(sqlContent);
+      
+      console.log('✅ Backup created successfully');
+    } catch (error) {
+      console.error('Error creating backup:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to create backup', 
+        error: error.message 
+      });
+    }
+  },
+
+  async importUsers(req, res) {
+    try {
+      console.log('📥 Starting users import...');
+      
+      // Check if file was uploaded (multer)
+      if (!req.file) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'No SQL file uploaded' 
+        });
+      }
+      
+      const sqlFile = req.file;
+      
+      // Read file content from buffer
+      const sqlContent = sqlFile.buffer.toString('utf8');
+      
+      console.log(`📄 File: ${sqlFile.originalname}`);
+      console.log(`📄 File size: ${(sqlFile.size / 1024).toFixed(2)} KB`);
+      
+      // Import users
+      const result = await Admin.importUsersFromSQL(sqlContent);
+      
+      console.log(`✅ Import completed: ${result.imported} imported, ${result.skipped} skipped`);
+      
+      res.json({ 
+        success: true, 
+        message: 'Users imported successfully', 
+        imported: result.imported,
+        skipped: result.skipped
+      });
+    } catch (error) {
+      console.error('Error importing users:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to import users', 
+        error: error.message 
+      });
+    }
+  },
+
   // ============ PROMO CODES ============
   
   async getPromoCodes(req, res) {

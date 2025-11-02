@@ -296,7 +296,7 @@ post.category.includes('YOUR_CATEGORY') ? 'bg-YOUR_COLOR-500/10 text-YOUR_COLOR-
 Edit `blog-post.ejs` section "Share Buttons", add:
 
 ```html
-<a href="https://wa.me/?text=<%= encodeURIComponent(post.title + ' ' + 'https://pixelnest.com/blog/' + post.slug) %>" target="_blank" class="w-10 h-10 glass rounded-xl...">
+<a href="https://wa.me/?text=<%= encodeURIComponent(post.title + ' ' + 'https://pixelnest.id/blog/' + post.slug) %>" target="_blank" class="w-10 h-10 glass rounded-xl...">
   <!-- WhatsApp Icon -->
 </a>
 ```

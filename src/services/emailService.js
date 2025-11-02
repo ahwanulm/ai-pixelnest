@@ -56,7 +56,7 @@ class EmailService {
           endpoint_url: 'https://api.sendgrid.com/v3',
           is_active: true,
           additional_config: {
-            email_from: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@pixelnest.com',
+            email_from: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@pixelnest.id',
             email_from_name: 'PixelNest'
           }
         };
@@ -100,7 +100,7 @@ class EmailService {
         this.config = {
           apiKey: config.api_key,
           endpointUrl: config.endpoint_url || 'https://api.sendgrid.com/v3',
-          emailFrom: config.additional_config?.email_from || 'noreply@pixelnest.com',
+          emailFrom: config.additional_config?.email_from || 'noreply@pixelnest.id',
           emailFromName: config.additional_config?.email_from_name || 'PixelNest',
           isActive: config.is_active
         };
@@ -1558,7 +1558,7 @@ class EmailService {
       <p><strong>PIXELNEST</strong></p>
       <p>© ${new Date().getFullYear()} PixelNest - AI Automation Platform</p>
       <p style="margin-top: 15px; font-size: 12px;">
-        Butuh bantuan? <a href="mailto:support@pixelnest.com" style="color: #10b981; text-decoration: none;">Hubungi Support</a>
+        Butuh bantuan? <a href="mailto:support@pixelnest.id" style="color: #10b981; text-decoration: none;">Hubungi Support</a>
       </p>
     </div>
   </div>

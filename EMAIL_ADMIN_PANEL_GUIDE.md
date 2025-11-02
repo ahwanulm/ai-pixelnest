@@ -305,7 +305,7 @@ WHERE service_name = 'EMAIL';
 ```sql
 UPDATE api_configs 
 SET additional_config = additional_config || 
-  '{"from_name": "PixelNest Team", "reply_to": "support@pixelnest.com"}'::jsonb
+  '{"from_name": "PixelNest Team", "reply_to": "support@pixelnest.id"}'::jsonb
 WHERE service_name = 'EMAIL';
 ```
 
