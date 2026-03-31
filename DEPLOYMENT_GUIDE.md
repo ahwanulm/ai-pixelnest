@@ -255,6 +255,43 @@ docker-compose down
 
 ## 🚀 Platform-Specific Deployment
 
+### VPS Auto-Deploy (Recommended)
+
+Proyek ini sudah dilengkapi dengan script *auto-deploy* yang sangat sederhana untuk VPS berbasis Ubuntu (Disarankan Ubuntu 20.04 / 22.04). Script ini akan otomatis melakukan instalasi Nginx, PostgreSQL, Node.js, PM2, dan sertifikat SSL Let's Encrypt.
+
+**Langkah 1: Build file deployment (Zip)**
+Di komputer lokal Anda, jalankan:
+```bash
+npm run deploy:zip
+```
+Ini akan membuat file `pixelnest-deployment.zip` yang siap dikirim ke server.
+
+**Langkah 2: Jalankan Script Auto-Deploy**
+Selanjutnya, jalankan script deploy VPS:
+```bash
+npm run deploy:vps
+```
+Anda akan diminta memasukkan:
+1. Nama Domain (contoh: `pixelnest.id`)
+2. SSH Username (contoh: `root`)
+3. IP VPS Anda
+4. Port SSH (biasanya `22`)
+
+Script akan secara otomatis mengunggah zip, mengekstraknya di `/var/www/pixelnest`, memasang *dependencies*, setup Nginx dengan SSL, dan menjalankan aplikasi dengan PM2.
+
+**Langkah 3: Konfigurasi API Keys (Post-Deployment)**
+Setelah script selesai, masuk ke VPS Anda:
+```bash
+ssh root@<IP_VPS_ANDA>
+nano /var/www/pixelnest/.env
+```
+Masukkan API key spesifik yang Anda perlukan (seperti `FAL_KEY`, `TRIPAY_API_KEY`, credential Google OAuth, dll).
+
+Lalu restart aplikasi:
+```bash
+pm2 restart pixelnest
+```
+
 ### Heroku
 
 ```bash
