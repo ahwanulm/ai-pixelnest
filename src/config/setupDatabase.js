@@ -109,11 +109,11 @@ async function createDefaultAdmin() {
   try {
     // Check if admin already exists
     const checkAdmin = await client.query(
-      "SELECT id FROM users WHERE email = 'admin@pixelnest.pro'"
+      "SELECT id FROM users WHERE email = 'admin@pixelnest.id'"
     );
 
     if (checkAdmin.rows.length > 0) {
-      console.log('ℹ️  Admin user already exists (admin@pixelnest.pro)');
+      console.log('ℹ️  Admin user already exists (admin@pixelnest.id)');
       return;
     }
 
@@ -136,7 +136,7 @@ async function createDefaultAdmin() {
         referral_code,
         created_at
       ) VALUES (
-        'admin@pixelnest.pro',
+        'admin@pixelnest.id',
         'Administrator',
         $1,
         'admin',

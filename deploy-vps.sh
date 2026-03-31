@@ -70,14 +70,14 @@ if [ "$CONFIRM" != "y" ]; then
     exit 1
 fi
 
-# Check if ZIP file exists
-ZIP_FILE=$(ls pixelnest-deployment-*.zip 2>/dev/null | head -n 1)
-if [ -z "$ZIP_FILE" ]; then
-    log_error "No deployment ZIP file found. Please run 'npm run deploy:zip' first."
+# Check if deployment archive exists
+DEPLOY_FILE=$(ls pixelnest-deployment-*.zip pixelnest-deployment-*.tar.gz 2>/dev/null | head -n 1)
+if [ -z "$DEPLOY_FILE" ]; then
+    log_error "No deployment archive found. Please run 'npm run deploy:zip' first."
     exit 1
 fi
 
-log_success "Found deployment ZIP: $ZIP_FILE"
+log_success "Found deployment archive: $DEPLOY_FILE"
 
 # Create deployment script for VPS
 cat > /tmp/vps_deploy.sh << 'DEPLOY_SCRIPT'
@@ -159,7 +159,11 @@ sudo chown -R $USER:$USER $APP_DIR
 # Extract application
 log_info "Extracting application..."
 cd $APP_DIR
-unzip -q pixelnest-deployment-*.zip
+if ls pixelnest-deployment-*.zip 1> /dev/null 2>&1; then
+    unzip -q pixelnest-deployment-*.zip
+elif ls pixelnest-deployment-*.tar.gz 1> /dev/null 2>&1; then
+    tar -xzf pixelnest-deployment-*.tar.gz
+fi
 cd pixelnest
 
 # Install dependencies
@@ -321,7 +325,7 @@ chmod +x /tmp/vps_deploy.sh
 
 # Transfer files
 log_info "Uploading files to VPS..."
-scp -P $SSH_PORT "$ZIP_FILE" $SSH_USER@$VPS_IP:~/
+scp -P $SSH_PORT "$DEPLOY_FILE" $SSH_USER@$VPS_IP:~/
 
 # Execute deployment script
 log_info "Starting deployment on VPS..."

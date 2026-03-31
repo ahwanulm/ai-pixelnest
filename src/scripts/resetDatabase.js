@@ -181,7 +181,7 @@ async function resetDatabase() {
     console.log('  ✓ All tables recreated with fresh structure');
     console.log('  ✓ Default admin user created');
     console.log('\n👤 Default Admin Credentials:');
-    console.log('  Email: admin@pixelnest.pro');
+    console.log('  Email: admin@pixelnest.id');
     console.log('  Password: andr0Hardcore');
     console.log('  Credits: 999,999');
     console.log('\n💡 Next Steps:');

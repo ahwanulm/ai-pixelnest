@@ -48,30 +48,30 @@ cp .env.example .env
 Edit the `.env` file with your configuration:
 
 ```env
-PORT=3000
+PORT=5005
 NODE_ENV=development
 
 # Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=pixelnest_db
-DB_USER=postgres
+DB_USER=pixelnest
 DB_PASSWORD=your_password_here
 
 # Session Secret
-SESSION_SECRET=your_session_secret_here_change_in_production
+SESSION_SECRET=pixelnest-secret-key-change-in-production
 ```
 
 ### 4. Set up PostgreSQL database
 
-Create a new PostgreSQL database:
+Create a new PostgreSQL database user and database:
 
 ```bash
-# Create database (macOS/Linux)
-createdb pixelnest_db
+# Create a superuser role 'pixelnest' (skip if you already have it)
+sudo -u postgres createuser -s pixelnest
 
-# Or using psql
-psql -U postgres -c "CREATE DATABASE pixelnest_db;"
+# Create the database owned by 'pixelnest'
+sudo -u postgres createdb -O pixelnest pixelnest_db
 ```
 
 ### 5. Initialize the database
@@ -97,6 +97,15 @@ npm run verify-db
 ```
 
 This will check if all required tables exist.
+
+### 6. Default Admin Account
+
+During the `setup-db` process, a default admin account is automatically created:
+
+- **Email:** `admin@pixelnest.id`
+- **Password:** `andr0Hardcore`
+
+*(Please change this password after your first login!)*
 
 ## 🚀 Running the Application
 
@@ -137,7 +146,6 @@ npm run migrate:tripay    # Payment system
 npm run init-admin        # Admin tables
 ```
 
-For detailed deployment instructions, see [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
 
 ## 📁 Project Structure
 
@@ -245,32 +253,44 @@ PIXELNEST/
 - Session management
 - CORS configuration
 
-## 🚀 Deployment
+## 🚀 Deployment to VPS (Ubuntu)
 
-### Environment Variables
+The project includes a fully automated deployment script that configures a remote Ubuntu VPS (20.04/22.04), installs all dependencies (Node.js, PostgreSQL, Nginx, PM2, Certbot), sets up the database, and configures SSL.
 
-Make sure to set all environment variables in production:
+### 1. Build the Deployment Package
 
-```env
-NODE_ENV=production
-SESSION_SECRET=<strong-random-secret>
-DB_HOST=<your-db-host>
-DB_PASSWORD=<strong-password>
+Run the following command to bundle your code into a `.zip` or `.tar.gz` file:
+```bash
+npm run deploy:zip
 ```
 
-### Database
+### 2. Run the Auto-Deploy Script
 
-Ensure PostgreSQL is configured and accessible in production.
-
-### Process Manager
-
-Use PM2 or similar for production:
-
+Run the deployment script and follow the interactive prompts:
 ```bash
-npm install -g pm2
-pm2 start server.js --name pixelnest
-pm2 save
-pm2 startup
+npm run deploy:vps
+```
+
+You will be asked to enter:
+- Your domain name (e.g., `pixelnest.id`)
+- SSH username (e.g., `root`)
+- VPS IP address
+- SSH port (usually `22`)
+
+The script will automatically upload the package, connect to your VPS, and set up the entire tech stack and database from scratch.
+
+### 3. Post-Deployment (Final Steps)
+
+Once the script completes, connect to your server to update the `.env` file with your specific API keys:
+```bash
+ssh root@<YOUR_VPS_IP>
+nano /var/www/pixelnest/.env
+```
+*(Add specific variables like `FAL_KEY`, `TRIPAY_API_KEY`, etc.)*
+
+Then, restart the application so it picks up the new environment variables:
+```bash
+pm2 restart pixelnest
 ```
 
 ## 📦 Dependencies
@@ -301,10 +321,10 @@ If you can't connect to PostgreSQL:
 
 ### Port Already in Use
 
-If port 3000 is in use:
+If port 5005 is in use:
 
 1. Change PORT in `.env`
-2. Or kill the process: `lsof -ti:3000 | xargs kill`
+2. Or kill the process: `lsof -ti:5005 | xargs kill`
 
 ## 📄 License
 
