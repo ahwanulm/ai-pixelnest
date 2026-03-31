@@ -15,6 +15,14 @@ Modern AI automation website built with Node.js, Express, EJS, and PostgreSQL.
 - **Pricing Plans**: Flexible pricing display
 - **Testimonials**: Social proof sections
 
+## 📸 Screenshots
+
+### User Dashboard
+![User Dashboard](public/images/dashboard-user.png)
+
+### Admin Dashboard
+![Admin Dashboard](public/images/admin-dashboard.png)
+
 ## 📋 Prerequisites
 
 Before you begin, ensure you have the following installed:
